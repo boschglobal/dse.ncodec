@@ -29,12 +29,14 @@ typedef struct ABCodecInstance {
     char*   interface_id_str;
     char*   swc_id_str;
     char*   ecu_id_str;
+    char*   cc_id_str; /* Communication Controller. */
     /* Internal representation. */
     uint8_t bus_id;
     uint8_t node_id;
     uint8_t interface_id;
     uint8_t swc_id;
     uint8_t ecu_id;
+    uint8_t cc_id;
 
     /* Flatbuffer resources. */
     flatcc_builder_t fbs_builder;

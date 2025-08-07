@@ -7,6 +7,8 @@
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/stream/stream.h>
+#include <dse/ncodec/interface/frame.h>
+#include <dse/ncodec/interface/pdu.h>
 
 
 #define UNUSED(x)     ((void)x)

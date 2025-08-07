@@ -16,6 +16,10 @@ static int AutomotiveBus_Stream_Pdu_IpV4_verify_table(flatcc_table_verifier_desc
 static int AutomotiveBus_Stream_Pdu_IpV6_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int AutomotiveBus_Stream_Pdu_IpMessageMetadata_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int AutomotiveBus_Stream_Pdu_StructMetadata_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table(flatcc_table_verifier_descriptor_t *td);
+static int AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int AutomotiveBus_Stream_Pdu_Pdu_verify_table(flatcc_table_verifier_descriptor_t *td);
 static int AutomotiveBus_Stream_Pdu_Stream_verify_table(flatcc_table_verifier_descriptor_t *td);
 
@@ -37,12 +41,23 @@ static int AutomotiveBus_Stream_Pdu_IpAddr_union_verifier(flatcc_union_verifier_
     }
 }
 
+static int AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_verifier(flatcc_union_verifier_descriptor_t *ud)
+{
+    switch (ud->type) {
+    case 1: return flatcc_verify_union_table(ud, AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_table); /* Config */
+    case 2: return flatcc_verify_union_table(ud, AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_table); /* Status */
+    case 3: return flatcc_verify_union_table(ud, AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table); /* Lpdu */
+    default: return flatcc_verify_ok;
+    }
+}
+
 static int AutomotiveBus_Stream_Pdu_TransportMetadata_union_verifier(flatcc_union_verifier_descriptor_t *ud)
 {
     switch (ud->type) {
     case 1: return flatcc_verify_union_table(ud, AutomotiveBus_Stream_Pdu_CanMessageMetadata_verify_table); /* Can */
     case 2: return flatcc_verify_union_table(ud, AutomotiveBus_Stream_Pdu_IpMessageMetadata_verify_table); /* Ip */
     case 3: return flatcc_verify_union_table(ud, AutomotiveBus_Stream_Pdu_StructMetadata_verify_table); /* Struct */
+    case 4: return flatcc_verify_union_table(ud, AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_table); /* Flexray */
     default: return flatcc_verify_ok;
     }
 }
@@ -65,6 +80,26 @@ static inline int AutomotiveBus_Stream_Pdu_IpAddressV6_verify_as_root_with_type_
 static inline int AutomotiveBus_Stream_Pdu_IpAddressV6_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
 {
     return flatcc_verify_struct_as_root(buf, bufsiz, fid, 16, 2);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_struct_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_identifier, 3, 1);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_struct_as_typed_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_type_hash, 3, 1);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_struct_as_typed_root(buf, bufsiz, thash, 3, 1);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_struct_as_root(buf, bufsiz, fid, 3, 1);
 }
 
 static int AutomotiveBus_Stream_Pdu_CanMessageMetadata_verify_table(flatcc_table_verifier_descriptor_t *td)
@@ -285,6 +320,150 @@ static inline int AutomotiveBus_Stream_Pdu_StructMetadata_verify_as_root_with_ty
     return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &AutomotiveBus_Stream_Pdu_StructMetadata_verify_table);
 }
 
+static int AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 1, 1) /* bit_rate */)) return ret;
+    if ((ret = flatcc_verify_field(td, 1, 2, 2) /* macrotick_per_cycle */)) return ret;
+    if ((ret = flatcc_verify_field(td, 2, 2, 2) /* microtick_per_cycle */)) return ret;
+    if ((ret = flatcc_verify_field(td, 3, 2, 2) /* network_idle_start */)) return ret;
+    if ((ret = flatcc_verify_field(td, 4, 2, 2) /* static_slot_length */)) return ret;
+    if ((ret = flatcc_verify_field(td, 5, 2, 2) /* static_slot_count */)) return ret;
+    if ((ret = flatcc_verify_field(td, 6, 1, 1) /* minislot_length */)) return ret;
+    if ((ret = flatcc_verify_field(td, 7, 2, 2) /* minislot_count */)) return ret;
+    if ((ret = flatcc_verify_field(td, 8, 4, 4) /* static_slot_payload_length */)) return ret;
+    if ((ret = flatcc_verify_field(td, 9, 1, 1) /* transmit_mode */)) return ret;
+    if ((ret = flatcc_verify_field(td, 10, 1, 1) /* channels_enabled */)) return ret;
+    if ((ret = flatcc_verify_field(td, 11, 1, 1) /* coldstart_node */)) return ret;
+    if ((ret = flatcc_verify_field(td, 12, 1, 1) /* sync_node */)) return ret;
+    if ((ret = flatcc_verify_field(td, 13, 1, 1) /* coldstart_attempts */)) return ret;
+    if ((ret = flatcc_verify_field(td, 14, 1, 1) /* wakeup_channel_select */)) return ret;
+    if ((ret = flatcc_verify_field(td, 15, 1, 1) /* single_slot_enabled */)) return ret;
+    if ((ret = flatcc_verify_field(td, 16, 2, 2) /* key_slot_id */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 17, 0, &AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table) /* key_slot_lpdu */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 18, 0, 1, 1, INT64_C(4294967295)) /* key_slot_payload */)) return ret;
+    if ((ret = flatcc_verify_table_vector_field(td, 19, 0, &AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table) /* frame_table */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayConfig_identifier, &AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayConfig_type_identifier, &AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_table);
+}
+
+static int AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 2, 2) /* macrotick */)) return ret;
+    if ((ret = flatcc_verify_field(td, 1, 1, 1) /* cycle */)) return ret;
+    if ((ret = flatcc_verify_field(td, 2, 3, 1) /* channel_a */)) return ret;
+    if ((ret = flatcc_verify_field(td, 3, 3, 1) /* channel_b */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayStatus_identifier, &AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayStatus_type_identifier, &AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &AutomotiveBus_Stream_Pdu_FlexrayStatus_verify_table);
+}
+
+static int AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_field(td, 0, 1, 1) /* cycle */)) return ret;
+    if ((ret = flatcc_verify_field(td, 1, 1, 1) /* null_frame */)) return ret;
+    if ((ret = flatcc_verify_field(td, 2, 1, 1) /* sync_frame */)) return ret;
+    if ((ret = flatcc_verify_field(td, 3, 1, 1) /* startup_frame */)) return ret;
+    if ((ret = flatcc_verify_field(td, 4, 1, 1) /* payload_preamble */)) return ret;
+    if ((ret = flatcc_verify_field(td, 5, 1, 1) /* status */)) return ret;
+    if ((ret = flatcc_verify_field(td, 6, 2, 2) /* slot_id */)) return ret;
+    if ((ret = flatcc_verify_field(td, 7, 1, 1) /* payload_length */)) return ret;
+    if ((ret = flatcc_verify_field(td, 8, 1, 1) /* cycle_repetition */)) return ret;
+    if ((ret = flatcc_verify_field(td, 9, 1, 1) /* base_cycle */)) return ret;
+    if ((ret = flatcc_verify_field(td, 10, 2, 2) /* frame_table_index */)) return ret;
+    if ((ret = flatcc_verify_field(td, 11, 2, 2) /* lpdu_table_index */)) return ret;
+    if ((ret = flatcc_verify_field(td, 12, 1, 1) /* direction */)) return ret;
+    if ((ret = flatcc_verify_field(td, 13, 1, 1) /* channel */)) return ret;
+    if ((ret = flatcc_verify_field(td, 14, 1, 1) /* transmit_mode */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayLpdu_identifier, &AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayLpdu_type_identifier, &AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table);
+}
+
+static int AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_table(flatcc_table_verifier_descriptor_t *td)
+{
+    int ret;
+    if ((ret = flatcc_verify_union_field(td, 1, 0, &AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_verifier) /* metadata */)) return ret;
+    return flatcc_verify_ok;
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_as_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayMetadata_identifier, &AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_as_typed_root(const void *buf, size_t bufsiz)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, AutomotiveBus_Stream_Pdu_FlexrayMetadata_type_identifier, &AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_as_root_with_identifier(const void *buf, size_t bufsiz, const char *fid)
+{
+    return flatcc_verify_table_as_root(buf, bufsiz, fid, &AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_table);
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_as_root_with_type_hash(const void *buf, size_t bufsiz, flatbuffers_thash_t thash)
+{
+    return flatcc_verify_table_as_typed_root(buf, bufsiz, thash, &AutomotiveBus_Stream_Pdu_FlexrayMetadata_verify_table);
+}
+
 static int AutomotiveBus_Stream_Pdu_Pdu_verify_table(flatcc_table_verifier_descriptor_t *td)
 {
     int ret;
@@ -293,6 +472,7 @@ static int AutomotiveBus_Stream_Pdu_Pdu_verify_table(flatcc_table_verifier_descr
     if ((ret = flatcc_verify_union_field(td, 3, 0, &AutomotiveBus_Stream_Pdu_TransportMetadata_union_verifier) /* transport */)) return ret;
     if ((ret = flatcc_verify_field(td, 4, 4, 4) /* swc_id */)) return ret;
     if ((ret = flatcc_verify_field(td, 5, 4, 4) /* ecu_id */)) return ret;
+    if ((ret = flatcc_verify_field(td, 6, 4, 4) /* cc_id */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -321,6 +501,7 @@ static int AutomotiveBus_Stream_Pdu_Stream_verify_table(flatcc_table_verifier_de
     int ret;
     if ((ret = flatcc_verify_table_vector_field(td, 0, 0, &AutomotiveBus_Stream_Pdu_Pdu_verify_table) /* pdus */)) return ret;
     if ((ret = flatcc_verify_field(td, 1, 4, 4) /* node_uid */)) return ret;
+    if ((ret = flatcc_verify_field(td, 2, 8, 8) /* simulation_time */)) return ret;
     return flatcc_verify_ok;
 }
 

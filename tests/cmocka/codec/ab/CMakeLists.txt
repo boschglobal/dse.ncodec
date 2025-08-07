@@ -10,8 +10,6 @@ set(FLATCC_INCLUDE_DIR ${DSE_NCODEC_SOURCE_DIR}/schema/abs/flatcc/include)
 add_executable(test_codec_ab
     __test__.c
     test_codec.c
-    test_can_fbs.c
-    test_pdu_fbs.c
     ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
     ${DSE_NCODEC_SOURCE_DIR}/codec/ab/codec.c
     ${DSE_NCODEC_SOURCE_DIR}/codec/ab/frame_fbs.c
@@ -41,3 +39,11 @@ target_link_libraries(test_codec_ab
         m
 )
 install(TARGETS test_codec_ab)
+
+
+
+# Targets
+# =======
+
+add_subdirectory(frame)
+add_subdirectory(pdu)

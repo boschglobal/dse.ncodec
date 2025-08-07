@@ -4,11 +4,11 @@
 
 #include <dse/testing.h>
 
-extern int run_codec_tests(void);
+extern int run_can_fbs_tests(void);
 
 int main()
 {
     int rc = 0;
-    //rc |= run_codec_tests();
+    rc |= run_can_fbs_tests();
     return rc;
 }

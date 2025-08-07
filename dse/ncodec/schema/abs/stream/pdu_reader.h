@@ -22,6 +22,11 @@ typedef const AutomotiveBus_Stream_Pdu_IpAddressV6_t *AutomotiveBus_Stream_Pdu_I
 typedef AutomotiveBus_Stream_Pdu_IpAddressV6_t *AutomotiveBus_Stream_Pdu_IpAddressV6_mutable_struct_t;
 typedef const AutomotiveBus_Stream_Pdu_IpAddressV6_t *AutomotiveBus_Stream_Pdu_IpAddressV6_vec_t;
 typedef AutomotiveBus_Stream_Pdu_IpAddressV6_t *AutomotiveBus_Stream_Pdu_IpAddressV6_mutable_vec_t;
+typedef struct AutomotiveBus_Stream_Pdu_FlexrayChannelStatus AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t;
+typedef const AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t *AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_struct_t;
+typedef AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t *AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_mutable_struct_t;
+typedef const AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t *AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_vec_t;
+typedef AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t *AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_mutable_vec_t;
 
 typedef const struct AutomotiveBus_Stream_Pdu_CanMessageMetadata_table *AutomotiveBus_Stream_Pdu_CanMessageMetadata_table_t;
 typedef struct AutomotiveBus_Stream_Pdu_CanMessageMetadata_table *AutomotiveBus_Stream_Pdu_CanMessageMetadata_mutable_table_t;
@@ -51,6 +56,22 @@ typedef const struct AutomotiveBus_Stream_Pdu_StructMetadata_table *AutomotiveBu
 typedef struct AutomotiveBus_Stream_Pdu_StructMetadata_table *AutomotiveBus_Stream_Pdu_StructMetadata_mutable_table_t;
 typedef const flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_StructMetadata_vec_t;
 typedef flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_StructMetadata_mutable_vec_t;
+typedef const struct AutomotiveBus_Stream_Pdu_FlexrayConfig_table *AutomotiveBus_Stream_Pdu_FlexrayConfig_table_t;
+typedef struct AutomotiveBus_Stream_Pdu_FlexrayConfig_table *AutomotiveBus_Stream_Pdu_FlexrayConfig_mutable_table_t;
+typedef const flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_FlexrayConfig_vec_t;
+typedef flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_FlexrayConfig_mutable_vec_t;
+typedef const struct AutomotiveBus_Stream_Pdu_FlexrayStatus_table *AutomotiveBus_Stream_Pdu_FlexrayStatus_table_t;
+typedef struct AutomotiveBus_Stream_Pdu_FlexrayStatus_table *AutomotiveBus_Stream_Pdu_FlexrayStatus_mutable_table_t;
+typedef const flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_FlexrayStatus_vec_t;
+typedef flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_FlexrayStatus_mutable_vec_t;
+typedef const struct AutomotiveBus_Stream_Pdu_FlexrayLpdu_table *AutomotiveBus_Stream_Pdu_FlexrayLpdu_table_t;
+typedef struct AutomotiveBus_Stream_Pdu_FlexrayLpdu_table *AutomotiveBus_Stream_Pdu_FlexrayLpdu_mutable_table_t;
+typedef const flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_FlexrayLpdu_vec_t;
+typedef flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_FlexrayLpdu_mutable_vec_t;
+typedef const struct AutomotiveBus_Stream_Pdu_FlexrayMetadata_table *AutomotiveBus_Stream_Pdu_FlexrayMetadata_table_t;
+typedef struct AutomotiveBus_Stream_Pdu_FlexrayMetadata_table *AutomotiveBus_Stream_Pdu_FlexrayMetadata_mutable_table_t;
+typedef const flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_FlexrayMetadata_vec_t;
+typedef flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_FlexrayMetadata_mutable_vec_t;
 typedef const struct AutomotiveBus_Stream_Pdu_Pdu_table *AutomotiveBus_Stream_Pdu_Pdu_table_t;
 typedef struct AutomotiveBus_Stream_Pdu_Pdu_table *AutomotiveBus_Stream_Pdu_Pdu_mutable_table_t;
 typedef const flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_Pdu_vec_t;
@@ -99,6 +120,31 @@ typedef flatbuffers_uoffset_t *AutomotiveBus_Stream_Pdu_Stream_mutable_vec_t;
 #endif
 #define AutomotiveBus_Stream_Pdu_StructMetadata_type_hash ((flatbuffers_thash_t)0xfb3efb95)
 #define AutomotiveBus_Stream_Pdu_StructMetadata_type_identifier "\x95\xfb\x3e\xfb"
+#ifndef AutomotiveBus_Stream_Pdu_FlexrayConfig_identifier
+#define AutomotiveBus_Stream_Pdu_FlexrayConfig_identifier flatbuffers_identifier
+#endif
+#define AutomotiveBus_Stream_Pdu_FlexrayConfig_type_hash ((flatbuffers_thash_t)0xbdea918)
+#define AutomotiveBus_Stream_Pdu_FlexrayConfig_type_identifier "\x18\xa9\xde\x0b"
+#ifndef AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_identifier
+#define AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_identifier flatbuffers_identifier
+#endif
+#define AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_type_hash ((flatbuffers_thash_t)0xcf168e5b)
+#define AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_type_identifier "\x5b\x8e\x16\xcf"
+#ifndef AutomotiveBus_Stream_Pdu_FlexrayStatus_identifier
+#define AutomotiveBus_Stream_Pdu_FlexrayStatus_identifier flatbuffers_identifier
+#endif
+#define AutomotiveBus_Stream_Pdu_FlexrayStatus_type_hash ((flatbuffers_thash_t)0xa4e2cdf0)
+#define AutomotiveBus_Stream_Pdu_FlexrayStatus_type_identifier "\xf0\xcd\xe2\xa4"
+#ifndef AutomotiveBus_Stream_Pdu_FlexrayLpdu_identifier
+#define AutomotiveBus_Stream_Pdu_FlexrayLpdu_identifier flatbuffers_identifier
+#endif
+#define AutomotiveBus_Stream_Pdu_FlexrayLpdu_type_hash ((flatbuffers_thash_t)0x6f822405)
+#define AutomotiveBus_Stream_Pdu_FlexrayLpdu_type_identifier "\x05\x24\x82\x6f"
+#ifndef AutomotiveBus_Stream_Pdu_FlexrayMetadata_identifier
+#define AutomotiveBus_Stream_Pdu_FlexrayMetadata_identifier flatbuffers_identifier
+#endif
+#define AutomotiveBus_Stream_Pdu_FlexrayMetadata_type_hash ((flatbuffers_thash_t)0xbfb974db)
+#define AutomotiveBus_Stream_Pdu_FlexrayMetadata_type_identifier "\xdb\x74\xb9\xbf"
 #ifndef AutomotiveBus_Stream_Pdu_Pdu_identifier
 #define AutomotiveBus_Stream_Pdu_Pdu_identifier flatbuffers_identifier
 #endif
@@ -199,6 +245,280 @@ static inline int AutomotiveBus_Stream_Pdu_IpProtocol_is_known_value(AutomotiveB
     }
 }
 
+/** 
+ *     FlexRay Tables
+ *     -------------- */
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayBitrate, AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR10Mbps ((AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR8Mbps ((AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t)INT8_C(1))
+#define AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR5Mbps ((AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t)INT8_C(2))
+#define AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR2_5 ((AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t)INT8_C(3))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayBitrate_name(AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR10Mbps: return "BR10Mbps";
+    case AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR8Mbps: return "BR8Mbps";
+    case AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR5Mbps: return "BR5Mbps";
+    case AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR2_5: return "BR2_5";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayBitrate_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR10Mbps: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR8Mbps: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR5Mbps: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayBitrate_BR2_5: return 1;
+    default: return 0;
+    }
+}
+
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayTransmitMode, AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_None ((AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_Continuous ((AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t)INT8_C(1))
+#define AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_SingleShot ((AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t)INT8_C(2))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_name(AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_None: return "None";
+    case AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_Continuous: return "Continuous";
+    case AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_SingleShot: return "SingleShot";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_None: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_Continuous: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_SingleShot: return 1;
+    default: return 0;
+    }
+}
+
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayChannel, AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayChannel_None ((AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayChannel_A ((AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t)INT8_C(1))
+#define AutomotiveBus_Stream_Pdu_FlexrayChannel_B ((AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t)INT8_C(2))
+#define AutomotiveBus_Stream_Pdu_FlexrayChannel_AB ((AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t)INT8_C(3))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayChannel_name(AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayChannel_None: return "None";
+    case AutomotiveBus_Stream_Pdu_FlexrayChannel_A: return "A";
+    case AutomotiveBus_Stream_Pdu_FlexrayChannel_B: return "B";
+    case AutomotiveBus_Stream_Pdu_FlexrayChannel_AB: return "AB";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayChannel_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayChannel_None: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayChannel_A: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayChannel_B: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayChannel_AB: return 1;
+    default: return 0;
+    }
+}
+
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayLpduStatus, AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_Transmitted ((AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_TransmittedConflict ((AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t)INT8_C(1))
+#define AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_NotTransmitted ((AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t)INT8_C(2))
+#define AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_Received ((AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t)INT8_C(3))
+#define AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_NotReceived ((AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t)INT8_C(4))
+#define AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_ReceivedMoreDataAvailable ((AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t)INT8_C(5))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_name(AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_Transmitted: return "Transmitted";
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_TransmittedConflict: return "TransmittedConflict";
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_NotTransmitted: return "NotTransmitted";
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_Received: return "Received";
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_NotReceived: return "NotReceived";
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_ReceivedMoreDataAvailable: return "ReceivedMoreDataAvailable";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_Transmitted: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_TransmittedConflict: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_NotTransmitted: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_Received: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_NotReceived: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_ReceivedMoreDataAvailable: return 1;
+    default: return 0;
+    }
+}
+
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayTransceiverState, AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoState ((AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoConnection ((AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t)INT8_C(1))
+#define AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoSignal ((AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t)INT8_C(2))
+#define AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_CAS ((AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t)INT8_C(3))
+#define AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_WUP ((AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t)INT8_C(4))
+#define AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_FrameSync ((AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t)INT8_C(5))
+#define AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_FrameError ((AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t)INT8_C(6))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_name(AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoState: return "NoState";
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoConnection: return "NoConnection";
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoSignal: return "NoSignal";
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_CAS: return "CAS";
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_WUP: return "WUP";
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_FrameSync: return "FrameSync";
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_FrameError: return "FrameError";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoState: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoConnection: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_NoSignal: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_CAS: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_WUP: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_FrameSync: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_FrameError: return 1;
+    default: return 0;
+    }
+}
+
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayPocState, AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_DefaultConfig ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_Config ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(1))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_Ready ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(2))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_Wakeup ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(3))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_Startup ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(4))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_NormalActive ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(5))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_NormalPassive ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(6))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_StateHalt ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(7))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_Freeze ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(8))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocState_Undefined ((AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)INT8_C(9))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayPocState_name(AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_DefaultConfig: return "DefaultConfig";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Config: return "Config";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Ready: return "Ready";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Wakeup: return "Wakeup";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Startup: return "Startup";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_NormalActive: return "NormalActive";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_NormalPassive: return "NormalPassive";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_StateHalt: return "StateHalt";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Freeze: return "Freeze";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Undefined: return "Undefined";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayPocState_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_DefaultConfig: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Config: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Ready: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Wakeup: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Startup: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_NormalActive: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_NormalPassive: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_StateHalt: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Freeze: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocState_Undefined: return 1;
+    default: return 0;
+    }
+}
+
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayPocCommand, AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_None ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Config ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(1))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Ready ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(2))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Wakeup ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(3))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Run ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(4))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_AllSlots ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(5))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Halt ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(6))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Freeze ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(7))
+#define AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Coldstart ((AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)INT8_C(8))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayPocCommand_name(AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_None: return "None";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Config: return "Config";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Ready: return "Ready";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Wakeup: return "Wakeup";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Run: return "Run";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_AllSlots: return "AllSlots";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Halt: return "Halt";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Freeze: return "Freeze";
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Coldstart: return "Coldstart";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayPocCommand_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_None: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Config: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Ready: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Wakeup: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Run: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_AllSlots: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Halt: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Freeze: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayPocCommand_Coldstart: return 1;
+    default: return 0;
+    }
+}
+
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayDirection_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayDirection, AutomotiveBus_Stream_Pdu_FlexrayDirection_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayDirection_Rx ((AutomotiveBus_Stream_Pdu_FlexrayDirection_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayDirection_Tx ((AutomotiveBus_Stream_Pdu_FlexrayDirection_enum_t)INT8_C(1))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayDirection_name(AutomotiveBus_Stream_Pdu_FlexrayDirection_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayDirection_Rx: return "Rx";
+    case AutomotiveBus_Stream_Pdu_FlexrayDirection_Tx: return "Tx";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayDirection_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayDirection_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayDirection_Rx: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayDirection_Tx: return 1;
+    default: return 0;
+    }
+}
+
 
 struct AutomotiveBus_Stream_Pdu_IpAddressV6 {
     alignas(2) uint16_t v0;
@@ -229,6 +549,32 @@ __flatbuffers_define_struct_scalar_field(AutomotiveBus_Stream_Pdu_IpAddressV6, v
 __flatbuffers_define_struct_scalar_field(AutomotiveBus_Stream_Pdu_IpAddressV6, v5, flatbuffers_uint16, uint16_t)
 __flatbuffers_define_struct_scalar_field(AutomotiveBus_Stream_Pdu_IpAddressV6, v6, flatbuffers_uint16, uint16_t)
 __flatbuffers_define_struct_scalar_field(AutomotiveBus_Stream_Pdu_IpAddressV6, v7, flatbuffers_uint16, uint16_t)
+
+/** 
+ *     FlexRay Status Metadata
+ *     ----------------------- */
+struct AutomotiveBus_Stream_Pdu_FlexrayChannelStatus {
+    /**  Status: The observed "signal state" of the FlexRay bus via the Transceiver. */
+    alignas(1) AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t state;
+    /**  Status: State of the FlexRay POC as observed by a FlexRay Controller/Interface. */
+    alignas(1) AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t poc_state;
+    /**  Status: A POC command (request) from a FlexRay Controller/Interface. */
+    alignas(1) AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t command;
+};
+static_assert(sizeof(AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t) == 3, "struct size mismatch");
+
+static inline const AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t *AutomotiveBus_Stream_Pdu_FlexrayChannelStatus__const_ptr_add(const AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t *p, size_t i) { return p + i; }
+static inline AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t *AutomotiveBus_Stream_Pdu_FlexrayChannelStatus__ptr_add(AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_t *p, size_t i) { return p + i; }
+static inline AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_struct_t AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_vec_at(AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_vec_t vec, size_t i)
+__flatbuffers_struct_vec_at(vec, i)
+static inline size_t AutomotiveBus_Stream_Pdu_FlexrayChannelStatus__size(void) { return 3; }
+static inline size_t AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_vec_len(AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_vec_t vec)
+__flatbuffers_vec_len(vec)
+__flatbuffers_struct_as_root(AutomotiveBus_Stream_Pdu_FlexrayChannelStatus)
+
+__flatbuffers_define_struct_scalar_field(AutomotiveBus_Stream_Pdu_FlexrayChannelStatus, state, AutomotiveBus_Stream_Pdu_FlexrayTransceiverState, AutomotiveBus_Stream_Pdu_FlexrayTransceiverState_enum_t)
+__flatbuffers_define_struct_scalar_field(AutomotiveBus_Stream_Pdu_FlexrayChannelStatus, poc_state, AutomotiveBus_Stream_Pdu_FlexrayPocState, AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t)
+__flatbuffers_define_struct_scalar_field(AutomotiveBus_Stream_Pdu_FlexrayChannelStatus, command, AutomotiveBus_Stream_Pdu_FlexrayPocCommand, AutomotiveBus_Stream_Pdu_FlexrayPocCommand_enum_t)
 
 
 struct AutomotiveBus_Stream_Pdu_CanMessageMetadata_table { uint8_t unused__; };
@@ -433,6 +779,195 @@ __flatbuffers_define_scalar_field(4, AutomotiveBus_Stream_Pdu_StructMetadata, at
 __flatbuffers_define_string_field(5, AutomotiveBus_Stream_Pdu_StructMetadata, platform_arch, 0)
 __flatbuffers_define_string_field(6, AutomotiveBus_Stream_Pdu_StructMetadata, platform_os, 0)
 __flatbuffers_define_string_field(7, AutomotiveBus_Stream_Pdu_StructMetadata, platform_abi, 0)
+
+/** 
+ *     FlexRay Config Metadata
+ *     ----------------------- */
+struct AutomotiveBus_Stream_Pdu_FlexrayConfig_table { uint8_t unused__; };
+
+static inline size_t AutomotiveBus_Stream_Pdu_FlexrayConfig_vec_len(AutomotiveBus_Stream_Pdu_FlexrayConfig_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline AutomotiveBus_Stream_Pdu_FlexrayConfig_table_t AutomotiveBus_Stream_Pdu_FlexrayConfig_vec_at(AutomotiveBus_Stream_Pdu_FlexrayConfig_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(AutomotiveBus_Stream_Pdu_FlexrayConfig_table_t, vec, i, 0)
+__flatbuffers_table_as_root(AutomotiveBus_Stream_Pdu_FlexrayConfig)
+
+/** 
+ *         Communication Cycle Config
+ *         --------------------------
+ *         10 MBit/s
+ *             sample clock period = 12.5 ns = 1 * 10 MHz
+ *             sample per microtick = 2 (1uT = 25 ns)
+ *         5 MBit/s
+ *             sample clock period = 25 ns = 2 * 10 MHz
+ *             sample per microtick = 1 (1uT = 25 ns)
+ *         2.5 MBit/s
+ *             sample clock period = 50 ns = 4 * 10 MHz
+ *             sample per microtick = 1 (1uT = 50 ns)
+ *     
+ *  Config: The FlexRay bitrate. */
+__flatbuffers_define_scalar_field(0, AutomotiveBus_Stream_Pdu_FlexrayConfig, bit_rate, AutomotiveBus_Stream_Pdu_FlexrayBitrate, AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t, INT8_C(0))
+/**  Config: Macroticks per communication cycle (10..16000 MT). */
+__flatbuffers_define_scalar_field(1, AutomotiveBus_Stream_Pdu_FlexrayConfig, macrotick_per_cycle, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Micorticks per communication cycle (640..640000 uT). */
+__flatbuffers_define_scalar_field(2, AutomotiveBus_Stream_Pdu_FlexrayConfig, microtick_per_cycle, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Start of network idle, marks start-of-end of communication cycle (7..15997 MT). */
+__flatbuffers_define_scalar_field(3, AutomotiveBus_Stream_Pdu_FlexrayConfig, network_idle_start, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Length of a static slot (4..659 MT). */
+__flatbuffers_define_scalar_field(4, AutomotiveBus_Stream_Pdu_FlexrayConfig, static_slot_length, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Number of static slots (2..1023). */
+__flatbuffers_define_scalar_field(5, AutomotiveBus_Stream_Pdu_FlexrayConfig, static_slot_count, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Length of a mimi slot (2..63 MT). */
+__flatbuffers_define_scalar_field(6, AutomotiveBus_Stream_Pdu_FlexrayConfig, minislot_length, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Config: Number of mini slots (0..7986). */
+__flatbuffers_define_scalar_field(7, AutomotiveBus_Stream_Pdu_FlexrayConfig, minislot_count, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Static segment payload length (0..254 bytes). */
+__flatbuffers_define_scalar_field(8, AutomotiveBus_Stream_Pdu_FlexrayConfig, static_slot_payload_length, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Config: Default frame transmit mode. */
+__flatbuffers_define_scalar_field(9, AutomotiveBus_Stream_Pdu_FlexrayConfig, transmit_mode, AutomotiveBus_Stream_Pdu_FlexrayTransmitMode, AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t, INT8_C(0))
+/**  Config: Channels enabled. */
+__flatbuffers_define_scalar_field(10, AutomotiveBus_Stream_Pdu_FlexrayConfig, channels_enabled, AutomotiveBus_Stream_Pdu_FlexrayChannel, AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t, INT8_C(0))
+/** 
+ *         Coldstart & Sync Config Properties
+ *         ----------------------------------
+ *     
+ *  Config: Coldstart node (1=yes, 0=no). */
+__flatbuffers_define_scalar_field(11, AutomotiveBus_Stream_Pdu_FlexrayConfig, coldstart_node, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+/**  Config: Sync node (1=yes, 0=no). */
+__flatbuffers_define_scalar_field(12, AutomotiveBus_Stream_Pdu_FlexrayConfig, sync_node, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+/**  Config: Coldstart attempts (2..31). */
+__flatbuffers_define_scalar_field(13, AutomotiveBus_Stream_Pdu_FlexrayConfig, coldstart_attempts, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Config: Wakeup channel selector (0=A, 1=B). */
+__flatbuffers_define_scalar_field(14, AutomotiveBus_Stream_Pdu_FlexrayConfig, wakeup_channel_select, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Config: Startup in single slot mode. */
+__flatbuffers_define_scalar_field(15, AutomotiveBus_Stream_Pdu_FlexrayConfig, single_slot_enabled, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+/**  Config: Key slot id (for simplified startup). */
+__flatbuffers_define_scalar_field(16, AutomotiveBus_Stream_Pdu_FlexrayConfig, key_slot_id, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Key slot LPDU (for startup with payload). */
+__flatbuffers_define_table_field(17, AutomotiveBus_Stream_Pdu_FlexrayConfig, key_slot_lpdu, AutomotiveBus_Stream_Pdu_FlexrayLpdu_table_t, 0)
+/**  Config: Key slot Payload (related to LPDU). */
+__flatbuffers_define_vector_field(18, AutomotiveBus_Stream_Pdu_FlexrayConfig, key_slot_payload, flatbuffers_uint8_vec_t, 0)
+/** 
+ *         Frame Config Table
+ *         ------------------
+ *     
+ *  Config: Frame/LPDU static config table. */
+__flatbuffers_define_vector_field(19, AutomotiveBus_Stream_Pdu_FlexrayConfig, frame_table, AutomotiveBus_Stream_Pdu_FlexrayLpdu_vec_t, 0)
+
+struct AutomotiveBus_Stream_Pdu_FlexrayStatus_table { uint8_t unused__; };
+
+static inline size_t AutomotiveBus_Stream_Pdu_FlexrayStatus_vec_len(AutomotiveBus_Stream_Pdu_FlexrayStatus_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline AutomotiveBus_Stream_Pdu_FlexrayStatus_table_t AutomotiveBus_Stream_Pdu_FlexrayStatus_vec_at(AutomotiveBus_Stream_Pdu_FlexrayStatus_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(AutomotiveBus_Stream_Pdu_FlexrayStatus_table_t, vec, i, 0)
+__flatbuffers_table_as_root(AutomotiveBus_Stream_Pdu_FlexrayStatus)
+
+/**  Status: The macrotick (MT) associated with the containing PDU Stream Object. */
+__flatbuffers_define_scalar_field(0, AutomotiveBus_Stream_Pdu_FlexrayStatus, macrotick, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Status: The cycle count associated with the containing PDU Stream Object. */
+__flatbuffers_define_scalar_field(1, AutomotiveBus_Stream_Pdu_FlexrayStatus, cycle, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Status: Status of FlexRay Channel A. */
+__flatbuffers_define_struct_field(2, AutomotiveBus_Stream_Pdu_FlexrayStatus, channel_a, AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_struct_t, 0)
+/**  Status: Status of FlexRay Channel B. */
+__flatbuffers_define_struct_field(3, AutomotiveBus_Stream_Pdu_FlexrayStatus, channel_b, AutomotiveBus_Stream_Pdu_FlexrayChannelStatus_struct_t, 0)
+
+/** 
+ *     FlexRay LPDU Metadata
+ *     --------------------- */
+struct AutomotiveBus_Stream_Pdu_FlexrayLpdu_table { uint8_t unused__; };
+
+static inline size_t AutomotiveBus_Stream_Pdu_FlexrayLpdu_vec_len(AutomotiveBus_Stream_Pdu_FlexrayLpdu_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline AutomotiveBus_Stream_Pdu_FlexrayLpdu_table_t AutomotiveBus_Stream_Pdu_FlexrayLpdu_vec_at(AutomotiveBus_Stream_Pdu_FlexrayLpdu_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(AutomotiveBus_Stream_Pdu_FlexrayLpdu_table_t, vec, i, 0)
+__flatbuffers_table_as_root(AutomotiveBus_Stream_Pdu_FlexrayLpdu)
+
+/** 
+ *         Transmission Properties
+ *         -----------------------
+ *         These fields represent the properties of Tx/Rx frames. The
+ *         frame_table_index field should be set to the FlexrayConfig.frame_table
+ *         so that config fields can be referenced. Config fields will (may) not
+ *         be included the table when representing a transmission (of a frame).
+ *     
+ *  Frame: Cycle the frame was received on. */
+__flatbuffers_define_scalar_field(0, AutomotiveBus_Stream_Pdu_FlexrayLpdu, cycle, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Frame: The frame header has the 'Null Frame' indicator set. */
+__flatbuffers_define_scalar_field(1, AutomotiveBus_Stream_Pdu_FlexrayLpdu, null_frame, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+/**  Frame: The frame header has the 'Null Frame' indicator set. */
+__flatbuffers_define_scalar_field(2, AutomotiveBus_Stream_Pdu_FlexrayLpdu, sync_frame, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+/**  Frame: The frame header has the 'Null Frame' indicator set. */
+__flatbuffers_define_scalar_field(3, AutomotiveBus_Stream_Pdu_FlexrayLpdu, startup_frame, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+/**  Frame: The frame header has the 'Null Frame' indicator set. */
+__flatbuffers_define_scalar_field(4, AutomotiveBus_Stream_Pdu_FlexrayLpdu, payload_preamble, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+/**  Frame: Status of this frame (actual/observed status). */
+__flatbuffers_define_scalar_field(5, AutomotiveBus_Stream_Pdu_FlexrayLpdu, status, AutomotiveBus_Stream_Pdu_FlexrayLpduStatus, AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t, INT8_C(0))
+/** 
+ *         Config Properties
+ *         -----------------
+ *         These fields represent the static config properties of an LPDU Frame.
+ *     
+ *  Config: Slot ID of the frame. */
+__flatbuffers_define_scalar_field(6, AutomotiveBus_Stream_Pdu_FlexrayLpdu, slot_id, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Payload length. */
+__flatbuffers_define_scalar_field(7, AutomotiveBus_Stream_Pdu_FlexrayLpdu, payload_length, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Config: Number of cycles between frame transmission. */
+__flatbuffers_define_scalar_field(8, AutomotiveBus_Stream_Pdu_FlexrayLpdu, cycle_repetition, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Config: Cycle when frame is first sent. */
+__flatbuffers_define_scalar_field(9, AutomotiveBus_Stream_Pdu_FlexrayLpdu, base_cycle, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Config: Index into the FlexrayConfig.frame_table (self reference). */
+__flatbuffers_define_scalar_field(10, AutomotiveBus_Stream_Pdu_FlexrayLpdu, frame_table_index, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: FlexRay controller/interface internal reference. */
+__flatbuffers_define_scalar_field(11, AutomotiveBus_Stream_Pdu_FlexrayLpdu, lpdu_table_index, flatbuffers_uint16, uint16_t, UINT16_C(0))
+/**  Config: Frame direction. */
+__flatbuffers_define_scalar_field(12, AutomotiveBus_Stream_Pdu_FlexrayLpdu, direction, AutomotiveBus_Stream_Pdu_FlexrayDirection, AutomotiveBus_Stream_Pdu_FlexrayDirection_enum_t, INT8_C(0))
+/**  Config: Channels the frame will be sent over. */
+__flatbuffers_define_scalar_field(13, AutomotiveBus_Stream_Pdu_FlexrayLpdu, channel, AutomotiveBus_Stream_Pdu_FlexrayChannel, AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t, INT8_C(0))
+/**  Config: Transmit mode of the frame. */
+__flatbuffers_define_scalar_field(14, AutomotiveBus_Stream_Pdu_FlexrayLpdu, transmit_mode, AutomotiveBus_Stream_Pdu_FlexrayTransmitMode, AutomotiveBus_Stream_Pdu_FlexrayTransmitMode_enum_t, INT8_C(0))
+/** 
+ *     FlexRay Metadata
+ *     ---------------- */
+typedef uint8_t AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_type_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayMetadataType, AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_type_t, 8)
+__flatbuffers_define_union(flatbuffers_, AutomotiveBus_Stream_Pdu_FlexrayMetadataType)
+#define AutomotiveBus_Stream_Pdu_FlexrayMetadataType_NONE ((AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_type_t)UINT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Config ((AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_type_t)UINT8_C(1))
+#define AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Status ((AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_type_t)UINT8_C(2))
+#define AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Lpdu ((AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_type_t)UINT8_C(3))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayMetadataType_type_name(AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_type_t type)
+{
+    switch (type) {
+    case AutomotiveBus_Stream_Pdu_FlexrayMetadataType_NONE: return "NONE";
+    case AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Config: return "Config";
+    case AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Status: return "Status";
+    case AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Lpdu: return "Lpdu";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayMetadataType_is_known_type(AutomotiveBus_Stream_Pdu_FlexrayMetadataType_union_type_t type)
+{
+    switch (type) {
+    case AutomotiveBus_Stream_Pdu_FlexrayMetadataType_NONE: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Config: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Status: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayMetadataType_Lpdu: return 1;
+    default: return 0;
+    }
+}
+
+
+struct AutomotiveBus_Stream_Pdu_FlexrayMetadata_table { uint8_t unused__; };
+
+static inline size_t AutomotiveBus_Stream_Pdu_FlexrayMetadata_vec_len(AutomotiveBus_Stream_Pdu_FlexrayMetadata_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline AutomotiveBus_Stream_Pdu_FlexrayMetadata_table_t AutomotiveBus_Stream_Pdu_FlexrayMetadata_vec_at(AutomotiveBus_Stream_Pdu_FlexrayMetadata_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(AutomotiveBus_Stream_Pdu_FlexrayMetadata_table_t, vec, i, 0)
+__flatbuffers_table_as_root(AutomotiveBus_Stream_Pdu_FlexrayMetadata)
+
+/**  FlexRay Metadata can be one of several Tables. */
+__flatbuffers_define_union_field(flatbuffers_, 1, AutomotiveBus_Stream_Pdu_FlexrayMetadata, metadata, AutomotiveBus_Stream_Pdu_FlexrayMetadataType, 0)
 /** 
  *     PDU Object / Stream
  *     ------------------- */
@@ -443,6 +978,7 @@ __flatbuffers_define_union(flatbuffers_, AutomotiveBus_Stream_Pdu_TransportMetad
 #define AutomotiveBus_Stream_Pdu_TransportMetadata_Can ((AutomotiveBus_Stream_Pdu_TransportMetadata_union_type_t)UINT8_C(1))
 #define AutomotiveBus_Stream_Pdu_TransportMetadata_Ip ((AutomotiveBus_Stream_Pdu_TransportMetadata_union_type_t)UINT8_C(2))
 #define AutomotiveBus_Stream_Pdu_TransportMetadata_Struct ((AutomotiveBus_Stream_Pdu_TransportMetadata_union_type_t)UINT8_C(3))
+#define AutomotiveBus_Stream_Pdu_TransportMetadata_Flexray ((AutomotiveBus_Stream_Pdu_TransportMetadata_union_type_t)UINT8_C(4))
 
 static inline const char *AutomotiveBus_Stream_Pdu_TransportMetadata_type_name(AutomotiveBus_Stream_Pdu_TransportMetadata_union_type_t type)
 {
@@ -451,6 +987,7 @@ static inline const char *AutomotiveBus_Stream_Pdu_TransportMetadata_type_name(A
     case AutomotiveBus_Stream_Pdu_TransportMetadata_Can: return "Can";
     case AutomotiveBus_Stream_Pdu_TransportMetadata_Ip: return "Ip";
     case AutomotiveBus_Stream_Pdu_TransportMetadata_Struct: return "Struct";
+    case AutomotiveBus_Stream_Pdu_TransportMetadata_Flexray: return "Flexray";
     default: return "";
     }
 }
@@ -462,6 +999,7 @@ static inline int AutomotiveBus_Stream_Pdu_TransportMetadata_is_known_type(Autom
     case AutomotiveBus_Stream_Pdu_TransportMetadata_Can: return 1;
     case AutomotiveBus_Stream_Pdu_TransportMetadata_Ip: return 1;
     case AutomotiveBus_Stream_Pdu_TransportMetadata_Struct: return 1;
+    case AutomotiveBus_Stream_Pdu_TransportMetadata_Flexray: return 1;
     default: return 0;
     }
 }
@@ -487,10 +1025,12 @@ __flatbuffers_define_union_field(flatbuffers_, 3, AutomotiveBus_Stream_Pdu_Pdu, 
  *         These fields are (typically) encoded as a part of the MIMEtype which
  *         configures the source of a PDU stream.
  *     
- *  Identifier: SWC ID of _originating_ this PDU. */
+ *  Identifier: SWC ID of SWC _originating_ this PDU. */
 __flatbuffers_define_scalar_field(4, AutomotiveBus_Stream_Pdu_Pdu, swc_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
 /**  Identifier: ECU ID of ECU _originating_ this PDU. */
 __flatbuffers_define_scalar_field(5, AutomotiveBus_Stream_Pdu_Pdu, ecu_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Identifier: FlexRay CC (Communication Controller) ID of ECU/CC _originating_ this PDU. */
+__flatbuffers_define_scalar_field(6, AutomotiveBus_Stream_Pdu_Pdu, cc_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
 
 struct AutomotiveBus_Stream_Pdu_Stream_table { uint8_t unused__; };
 
@@ -503,10 +1043,12 @@ __flatbuffers_table_as_root(AutomotiveBus_Stream_Pdu_Stream)
 /**  STREAM: PDU Vector. */
 __flatbuffers_define_vector_field(0, AutomotiveBus_Stream_Pdu_Stream, pdus, AutomotiveBus_Stream_Pdu_Pdu_vec_t, 0)
 /**  Metadata: Node UID of the Simulation (or System) node which is sending
- *   this stream object. Used by a Node to detect incomming stream objects
+ *   this stream object. Used by a Node to detect incoming stream objects
  *   which the Node had previously sent (i.e. an echo from the underlying
  *   implementation of the stream transport). */
 __flatbuffers_define_scalar_field(1, AutomotiveBus_Stream_Pdu_Stream, node_uid, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Metadata: Simulation Time when this stream was produced. */
+__flatbuffers_define_scalar_field(2, AutomotiveBus_Stream_Pdu_Stream, simulation_time, flatbuffers_double, double, 0.000000)
 
 
 #include "flatcc/flatcc_epilogue.h"
