@@ -18,6 +18,9 @@ add_library(ab-codec OBJECT
         codec.c
         frame_fbs.c
         pdu_fbs.c
+        flexray/engine.c
+        flexray/fbs.c
+        flexray/state.c
         ${DSE_NCODEC_SOURCE_DIR}/codec.c
         ${FLATCC_SOURCE_DIR}/builder.c
         ${FLATCC_SOURCE_DIR}/emitter.c
@@ -25,6 +28,8 @@ add_library(ab-codec OBJECT
 )
 target_include_directories(ab-codec
     PRIVATE
-        ${DSE_NCODEC_INCLUDE_DIR}
         ${FLATCC_INCLUDE_DIR}
+        ${DSE_NCODEC_INCLUDE_DIR}
+        ${DSE_CLIB_INCLUDE_DIR}
+
 )

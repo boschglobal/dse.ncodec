@@ -76,11 +76,12 @@ dse
     └── codec/ab
     │   ├── codec.c         <-- Automotive-Bus (AB) Codec implementation.
     │   ├── codec.h         <-- Automotive-Bus (AB) Codec headers.
-    │   ├── frame_fbs.c     <-- Frame stream (CAN etc w. Flatbuffers encoding).
-    │   └── pdu_fbs.c       <-- PDU stream (CAN/IP/SOMEIP etc w. Flatbuffers encoding).
+    │   ├── frame_fbs.c     <-- Frame stream (CAN w. Flatbuffers encoding).
+    │   └── pdu_fbs.c       <-- PDU stream (CAN/FlexRay/IP/SOMEIP w. Flatbuffers encoding).
     ├── examples
     │   └── codec/          <-- Codec example (generic API implementation).
     │   └── ab-codec-fmi/   <-- AB Codec basis integration for FMI (esp. FMI 2).
+    │   └── flexray/        <-- AB Codec FlexRay interface and virtual bus.
     ├── schema
     │   └── abs/            <-- Automotive-Bus-Schema generated code.
     ├── stream

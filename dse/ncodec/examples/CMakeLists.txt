@@ -6,6 +6,7 @@
 # Example Models.
 add_subdirectory(codec)
 add_subdirectory(ab-codec-fmi)
+add_subdirectory(flexray)
 
 # Code examples for documentation.
 #if(UNIX)

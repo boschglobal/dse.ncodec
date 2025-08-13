@@ -3,10 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
+#include <dse/ncodec/codec/ab/flexray/flexray.h>
 #include <dse/ncodec/interface/pdu.h>
 #include <dse/ncodec/schema/abs/stream/pdu_builder.h>
 
@@ -221,6 +223,7 @@ int32_t pdu_write(NCODEC* nc, NCodecPdu* pdu)
     ns(CanMessageMetadata_ref_t) can_message_metadata = 0;
     ns(IpMessageMetadata_ref_t) ip_message_metadata = 0;
     ns(StructMetadata_ref_t) struct_metadata = 0;
+    ns(FlexrayMetadata_ref_t) flexray_metadata = 0;
 
     /* Encode the PDU. */
     // Transport Table
@@ -233,6 +236,9 @@ int32_t pdu_write(NCODEC* nc, NCodecPdu* pdu)
     } break;
     case NCodecPduTransportTypeStruct: {
         struct_metadata = _emit_struct_metadata(B, _pdu);
+    } break;
+    case NCodecPduTransportTypeFlexray: {
+        flexray_metadata = emit_flexray_metadata(B, _pdu);
     } break;
     default:
         break;
@@ -251,6 +257,8 @@ int32_t pdu_write(NCODEC* nc, NCodecPdu* pdu)
         ns(Pdu_transport_Ip_add(B, ip_message_metadata));
     } else if (struct_metadata) {
         ns(Pdu_transport_Struct_add(B, struct_metadata));
+    } else if (flexray_metadata) {
+        ns(Pdu_transport_Flexray_add(B, flexray_metadata));
     }
     ns(Stream_pdus_push_end(B));
 
@@ -349,8 +357,6 @@ static void _decode_ip_message_metadata(ns(Pdu_table_t) pdu, NCodecPdu* _pdu)
         ns(IpMessageMetadata_ip_addr_type(ip_msg));
     if (ip_addr_type == ns(IpAddr_v4)) {
         _decode_ip_addr_v4(ip_msg, _pdu);
-
-
     } else if (ip_addr_type == ns(IpAddr_v6)) {
         _decode_ip_addr_v6(ip_msg, _pdu);
     }
@@ -362,8 +368,6 @@ static void _decode_ip_message_metadata(ns(Pdu_table_t) pdu, NCodecPdu* _pdu)
         ns(IpMessageMetadata_adapter_type(ip_msg));
     if (adapter_type == ns(SocketAdapter_do_ip)) {
         _decode_do_ip(ip_msg, _pdu);
-
-
     } else if (adapter_type == ns(SocketAdapter_some_ip)) {
         _decode_some_ip(ip_msg, _pdu);
     }
@@ -484,6 +488,8 @@ int32_t pdu_read(NCODEC* nc, NCodecPdu* pdu)
                     _decode_ip_message_metadata(pdu, _pdu);
                 } else if (transport_type == ns(TransportMetadata_Struct)) {
                     _decode_struct_metadata(pdu, _pdu);
+                } else if (transport_type == ns(TransportMetadata_Flexray)) {
+                    decode_flexray_metadata(pdu, _pdu);
                 }
             }
 
