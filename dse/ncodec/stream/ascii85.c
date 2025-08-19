@@ -67,7 +67,8 @@ char* ascii85_encode(const char* source, size_t source_len)
 /**
  *  ascii85_decode
  *
- *  Decode an ASCII85 encoded string into a binary string (may contain null characters).
+ *  Decode an ASCII85 encoded string into a binary string (may contain null
+ * characters).
  *
  *  Parameters
  *  ----------

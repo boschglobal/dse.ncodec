@@ -28,6 +28,8 @@ build:
 
 run:
 	cd build/_out; $(GDB_CMD) bin/test_codec_ab
+	cd build/_out; $(GDB_CMD) bin/test_codec_ab_frame
+	cd build/_out; $(GDB_CMD) bin/test_codec_ab_pdu
 
 clean:
 	rm -rf build
