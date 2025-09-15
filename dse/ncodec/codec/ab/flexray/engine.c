@@ -16,7 +16,7 @@
 
 typedef struct VectorSlotMapItem {
     uint32_t slot_id;
-    Vector   lpdus;  /* FlexrayLpdu */
+    Vector   lpdus; /* FlexrayLpdu */
 } VectorSlotMapItem;
 
 int VectorSlotMapItemCompar(const void* left, const void* right)
@@ -228,33 +228,6 @@ static void process_slot(FlexrayEngine* engine)
                     lpdu_item->lpdu_config.status);
                 tx_lpdu = lpdu_item;
             }
-        } else if (lpdu_item->lpdu_config.direction ==
-                   NCodecPduFlexrayDirectionRx) {
-            /* RX LPDU, only for the NCodec object representing this node. */
-            if (lpdu_item->node_ident.node_id == engine->node_ident.node_id) {
-                if (engine->pos_mt < engine->offset_dynamic_mt) {
-                    /* Static Part. */
-                    if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
-                    if (engine->pos_cycle %
-                            lpdu_item->lpdu_config.cycle_repetition ==
-                        lpdu_item->lpdu_config.base_cycle) {
-                        rx_lpdu = lpdu_item;
-                        log_debug("FlexRay:   Rx LPDU Identified (static): "
-                                  "index=%u, base=%u, repeat=%u, status=%u",
-                            lpdu_item->lpdu_config.index.frame_table,
-                            lpdu_item->lpdu_config.base_cycle,
-                            lpdu_item->lpdu_config.cycle_repetition,
-                            lpdu_item->lpdu_config.status);
-                    }
-                } else if (engine->pos_mt < engine->offset_network_mt) {
-                    /* Dynamic Part. */
-                    log_debug("FlexRay:   Rx LPDU Identified (dynamic): "
-                              "index=%u, status=%u",
-                        lpdu_item->lpdu_config.index.frame_table,
-                        lpdu_item->lpdu_config.status);
-                    rx_lpdu = lpdu_item;
-                }
-            }
         }
     }
     if (tx_lpdu == NULL) return;
@@ -273,29 +246,74 @@ static void process_slot(FlexrayEngine* engine)
                 tx_lpdu->lpdu_config.payload_length);
         }
         tx_lpdu->cycle = engine->pos_cycle;
+        tx_lpdu->macrotick = engine->pos_mt;
         if (tx_lpdu->node_ident.node_id == engine->node_ident.node_id) {
             vector_push(&engine->txrx_list, &tx_lpdu);
         }
         /* And the associated RX, if identified. */
-        if (rx_lpdu != NULL) {
-            rx_lpdu->lpdu_config.status = NCodecPduFlexrayLpduStatusReceived;
-            if (rx_lpdu->payload == NULL) {
-                rx_lpdu->payload = calloc(
-                    rx_lpdu->lpdu_config.payload_length, sizeof(uint8_t));
-            }
-            if (tx_lpdu->payload) {
-                size_t len = rx_lpdu->lpdu_config.payload_length;
-                if (len > tx_lpdu->lpdu_config.payload_length) {
-                    len = tx_lpdu->lpdu_config.payload_length;
+        for (size_t i = 0; i < vector_len(&slot_map_item->lpdus); i++) {
+            FlexrayLpdu* rx_lpdu = NULL;
+            FlexrayLpdu* lpdu_item = vector_at(&slot_map_item->lpdus, i, NULL);
+            if (lpdu_item->lpdu_config.direction ==
+                NCodecPduFlexrayDirectionRx) {
+                if (lpdu_item->lpdu_config.status !=
+                        NCodecPduFlexrayLpduStatusNotReceived &&
+                    lpdu_item->lpdu_config.status !=
+                        NCodecPduFlexrayLpduStatusReceived) {
+                    continue;
                 }
-                log_debug("FlexRay:   LPDU %04x: Rx <- Tx: payload_length=%u",
-                    tx_lpdu->lpdu_config.slot_id, len);
-                memset(rx_lpdu->payload + len, 0,
-                    rx_lpdu->lpdu_config.payload_length - len);
-                memcpy(rx_lpdu->payload, tx_lpdu->payload, len);
+                /* RX LPDU, only for the NCodec object representing this node.
+                 */
+                if (lpdu_item->node_ident.node_id ==
+                    engine->node_ident.node_id) {
+                    if (engine->pos_mt < engine->offset_dynamic_mt) {
+                        /* Static Part. */
+                        if (lpdu_item->lpdu_config.cycle_repetition == 0)
+                            continue;
+                        if (engine->pos_cycle %
+                                lpdu_item->lpdu_config.cycle_repetition ==
+                            lpdu_item->lpdu_config.base_cycle) {
+                            rx_lpdu = lpdu_item;
+                            log_debug("FlexRay:   Rx LPDU Identified (static): "
+                                      "index=%u, base=%u, repeat=%u, status=%u",
+                                lpdu_item->lpdu_config.index.frame_table,
+                                lpdu_item->lpdu_config.base_cycle,
+                                lpdu_item->lpdu_config.cycle_repetition,
+                                lpdu_item->lpdu_config.status);
+                        }
+                    } else if (engine->pos_mt < engine->offset_network_mt) {
+                        /* Dynamic Part. */
+                        log_debug("FlexRay:   Rx LPDU Identified (dynamic): "
+                                  "index=%u, status=%u",
+                            lpdu_item->lpdu_config.index.frame_table,
+                            lpdu_item->lpdu_config.status);
+                        rx_lpdu = lpdu_item;
+                    }
+                }
             }
-            rx_lpdu->cycle = engine->pos_cycle;
-            vector_push(&engine->txrx_list, &rx_lpdu);
+            if (rx_lpdu != NULL) {
+                rx_lpdu->lpdu_config.status =
+                    NCodecPduFlexrayLpduStatusReceived;
+                if (rx_lpdu->payload == NULL) {
+                    rx_lpdu->payload = calloc(
+                        rx_lpdu->lpdu_config.payload_length, sizeof(uint8_t));
+                }
+                if (tx_lpdu->payload) {
+                    size_t len = rx_lpdu->lpdu_config.payload_length;
+                    if (len > tx_lpdu->lpdu_config.payload_length) {
+                        len = tx_lpdu->lpdu_config.payload_length;
+                    }
+                    log_debug(
+                        "FlexRay:   LPDU %04x: Rx <- Tx: payload_length=%u",
+                        tx_lpdu->lpdu_config.slot_id, len);
+                    memset(rx_lpdu->payload + len, 0,
+                        rx_lpdu->lpdu_config.payload_length - len);
+                    memcpy(rx_lpdu->payload, tx_lpdu->payload, len);
+                }
+                rx_lpdu->cycle = engine->pos_cycle;
+                rx_lpdu->macrotick = engine->pos_mt;
+                vector_push(&engine->txrx_list, &rx_lpdu);
+            }
         }
     }
 }
@@ -342,6 +360,12 @@ int consume_slot(FlexrayEngine* engine)
                 }
             }
         }
+        if (need_mt + engine->pos_mt > engine->macrotick_per_cycle) {
+            log_info("FlexRay engine configuration exceeds cycle length: "
+                     "need_mt=%u, pos_mt=%u, cycle_mt=%u",
+                need_mt, engine->pos_mt, engine->macrotick_per_cycle);
+            need_mt = engine->macrotick_per_cycle - engine->pos_mt;
+        }
         uint32_t need_ut = need_mt * engine->macro2micro;
         if (need_ut > engine->step_budget_ut) {
             /* Not enough budget. */
@@ -358,15 +382,23 @@ int consume_slot(FlexrayEngine* engine)
             return 0;
         }
     } else {
-        /* At the end of the cycle. */
-        uint32_t need_ut = engine->microtick_per_cycle -
+        /* At the end of the cycle.*/
+        uint32_t remaining_ut = 0;
+        if ((engine->pos_mt * engine->macro2micro) <
+            engine->microtick_per_cycle) {
+            remaining_ut = engine->microtick_per_cycle -
                            (engine->pos_mt * engine->macro2micro);
-        if (need_ut > engine->step_budget_ut) {
+        } else {
+            log_info("FlexRay engine configuration exceeds cycle length: "
+                     "pos_mt=%u, cycle_mt=%u",
+                engine->pos_mt, engine->macrotick_per_cycle);
+        }
+        if (remaining_ut > engine->step_budget_ut) {
             /* Not enough budget. */
             return 1;
         } else {
-            /* Consume the slot. */
-            engine->step_budget_ut -= need_ut;
+            /* Consume the slot remainder. */
+            engine->step_budget_ut -= remaining_ut;
             /* Cycle complete, reset the pos markers. */
             engine->pos_slot = 1;
             engine->pos_mt = 0;

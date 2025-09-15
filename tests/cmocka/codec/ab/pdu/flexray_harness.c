@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <dse/testing.h>
+#include <dse/logger.h>
+#include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/stream/stream.h>
-
 #include <flexray_harness.h>
 
 
@@ -17,6 +18,7 @@ int test_setup(void** state)
 {
     Mock* mock = calloc(1, sizeof(Mock));
     assert_non_null(mock);
+    mock->loglevel_save = __log_level__;
 
     *state = mock;
     return 0;
@@ -42,6 +44,7 @@ int test_teardown(void** state)
     vector_clear(&mock->test.run.pdu_list, __pdu_payload_destory, NULL);
     vector_reset(&mock->test.run.pdu_list);
 
+    __log_level__ = mock->loglevel_save;
     free(mock);
     return 0;
 }
@@ -111,11 +114,11 @@ static void _push_frames(TestTxRx* test)
     NCodecPduFlexrayConfig config = test->config.node[0].config;
 
     for (size_t i = 0; i < TEST_FRAMES; i++) {
-        if (test->run.pdu[i].slot_id == 0) {
+        if (test->run.pdu[i].lpdu_status == 0) {
             break;
         }
         rc = ncodec_write(
-            nc, &(NCodecPdu){ .id = 7, /* Slot ID */
+            nc, &(NCodecPdu){ .id = test->run.pdu[i].slot_id,
                     .payload = (const uint8_t*)test->run.pdu[i].payload,
                     .payload_len = test->run.pdu[i].payload_len,
                     .transport_type = NCodecPduTransportTypeFlexray,
@@ -131,7 +134,6 @@ static void _push_frames(TestTxRx* test)
 
     ncodec_flush(nc);
 }
-#include <dse/ncodec/codec/ab/codec.h>
 
 static void _run_network(TestTxRx* test)
 {
@@ -139,10 +141,15 @@ static void _run_network(TestTxRx* test)
     NCODEC*   nc = test->config.node[0].nc;
     NCodecPdu pdu;
     uint8_t   cycle = 0;
+    uint8_t   cycle_loop = 0;
 
 
-    for (size_t i = 0; test->run.steps && i < test->run.steps; i++) {
-        if (cycle == (test->run.cycles + 1)) {
+    for (size_t i = 0; (test->run.steps == 0) || (i < test->run.steps); i++) {
+        if (test->run.push_at_cycle && test->run.push_at_cycle == cycle) {
+            _push_frames(test);
+            test->run.push_at_cycle = 0; /* Disable futher pushes. */
+        }
+        if ((cycle_loop * 64u + cycle) == (test->run.cycles + 1)) {
             break;
         }
 
@@ -159,6 +166,9 @@ static void _run_network(TestTxRx* test)
         assert_int_equal(NCodecPduFlexrayMetadataTypeStatus,
             pdu.transport.flexray.metadata_type);
         test->run.status_pdu[0] = pdu;
+        if (pdu.transport.flexray.metadata.status.cycle < cycle) {
+            cycle_loop++;
+        }
         cycle = pdu.transport.flexray.metadata.status.cycle;
 
         /* Read remaining PDUs. */
@@ -167,7 +177,6 @@ static void _run_network(TestTxRx* test)
             if (pdu.transport.flexray.metadata_type !=
                 NCodecPduFlexrayMetadataTypeLpdu)
                 continue;
-
             if (pdu.payload_len) {
                 uint8_t* payload = malloc(pdu.payload_len);
                 memcpy(payload, pdu.payload, pdu.payload_len);
@@ -213,6 +222,12 @@ static void _expect_pdu_check(TestTxRx* test)
             pdu.transport.flexray.metadata_type);
         assert_int_equal(test->expect.pdu[i].lpdu_status,
             pdu.transport.flexray.metadata.lpdu.status);
+        assert_int_equal(test->expect.pdu[i].cycle,
+            pdu.transport.flexray.metadata.lpdu.cycle);
+        if (test->expect.pdu[i].macrotick) {
+            assert_int_equal(test->expect.pdu[i].macrotick,
+                pdu.transport.flexray.metadata.lpdu.macrotick);
+        }
         assert_memory_equal(test->expect.pdu[i].payload, pdu.payload,
             test->expect.pdu[i].payload_len);
     }
@@ -223,7 +238,9 @@ void flexray_harness_run_test(TestTxRx* test)
 {
     _setup_nodes(test);
     _push_nodes(test);
-    _push_frames(test);
+    if (test->run.push_at_cycle == 0) {
+        _push_frames(test);
+    }
     _run_network(test);
     _expect_status_check(test);
     _expect_pdu_check(test);

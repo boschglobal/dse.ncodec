@@ -81,6 +81,11 @@ static void _decode_flexray_config(
             lc->channel = ns(FlexrayLpduConfig_channel(lc_table));
             lc->transmit_mode = ns(FlexrayLpduConfig_transmit_mode(lc_table));
             lc->status = ns(FlexrayLpduConfig_status(lc_table));
+
+            /* Correct base_cycle if repetition is 1. */
+            if (lc->cycle_repetition == 1) {
+                lc->base_cycle = 0;
+            }
         }
     }
 }
@@ -116,6 +121,7 @@ static void _decode_flexray_lpdu(
         (ns(FlexrayLpdu_table_t))ns(FlexrayMetadata_metadata(fr));
 
     l->cycle = ns(FlexrayLpdu_cycle(fl_msg));
+    l->macrotick = ns(FlexrayLpdu_macrotick(fl_msg));
     l->frame_config_index = ns(FlexrayLpdu_frame_config_index(fl_msg));
     l->null_frame = ns(FlexrayLpdu_null_frame(fl_msg));
     l->sync_frame = ns(FlexrayLpdu_sync_frame(fl_msg));
@@ -236,6 +242,7 @@ static uint32_t _emit_flexray_lpdu(flatcc_builder_t* B, NCodecPdu* _pdu)
     ns(FlexrayLpdu_start(B));
 
     ns(FlexrayLpdu_cycle_add(B, l->cycle));
+    ns(FlexrayLpdu_macrotick_add(B, l->macrotick));
     ns(FlexrayLpdu_frame_config_index_add(B, l->frame_config_index));
     ns(FlexrayLpdu_null_frame_add(B, l->null_frame));
     ns(FlexrayLpdu_sync_frame_add(B, l->sync_frame));

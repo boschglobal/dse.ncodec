@@ -278,6 +278,9 @@ typedef struct NCodecPduFlexrayLpdu {
 
     /* Status update (to/from NCodecPduFlexrayLpduConfig). */
     NCodecPduFlexrayLpduStatus status;
+
+    /* Testing support. */
+    uint16_t macrotick;
 } NCodecPduFlexrayLpdu;
 
 typedef struct NCodecPduFlexrayLpduConfig {

@@ -413,6 +413,7 @@ static int AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table(flatcc_table_verifi
     if ((ret = flatcc_verify_field(td, 4, 1, 1) /* startup_frame */)) return ret;
     if ((ret = flatcc_verify_field(td, 5, 1, 1) /* payload_preamble */)) return ret;
     if ((ret = flatcc_verify_field(td, 6, 1, 1) /* status */)) return ret;
+    if ((ret = flatcc_verify_field(td, 7, 2, 2) /* macrotick */)) return ret;
     return flatcc_verify_ok;
 }
 

@@ -30,6 +30,8 @@ typedef struct {
     uint8_t     lpdu_status;
     const char* payload;
     uint8_t     payload_len;
+    uint8_t     cycle;
+    uint16_t    macrotick;
 } TestPdu;
 
 typedef struct {
@@ -42,6 +44,7 @@ typedef struct {
     /* Run Condition */
     struct {
         bool    push_active;
+        uint8_t push_at_cycle;
         TestPdu pdu[TEST_FRAMES];
 
         NCodecPdu status_pdu[TEST_NODES];
@@ -68,6 +71,7 @@ typedef struct Mock {
     NCODEC* nc;
 
     TestTxRx test;
+    uint8_t  loglevel_save;
 } Mock;
 
 

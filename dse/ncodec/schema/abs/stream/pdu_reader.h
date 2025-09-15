@@ -965,6 +965,8 @@ __flatbuffers_define_scalar_field(4, AutomotiveBus_Stream_Pdu_FlexrayLpdu, start
 __flatbuffers_define_scalar_field(5, AutomotiveBus_Stream_Pdu_FlexrayLpdu, payload_preamble, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 /**  Frame: Status of this frame (actual/observed status). */
 __flatbuffers_define_scalar_field(6, AutomotiveBus_Stream_Pdu_FlexrayLpdu, status, AutomotiveBus_Stream_Pdu_FlexrayLpduStatus, AutomotiveBus_Stream_Pdu_FlexrayLpduStatus_enum_t, INT8_C(0))
+/**  Frame: Macrotick the frame was received on (testing/internal use only). */
+__flatbuffers_define_scalar_field(7, AutomotiveBus_Stream_Pdu_FlexrayLpdu, macrotick, flatbuffers_uint16, uint16_t, UINT16_C(0))
 
 struct AutomotiveBus_Stream_Pdu_FlexrayLpduConfig_table { uint8_t unused__; };
 

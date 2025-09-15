@@ -154,7 +154,7 @@ void* ncodec_buffer_stream_create(size_t buffer_size)
     if (buffer_size) {
         stream->buffer = calloc(buffer_size, sizeof(uint8_t));
         stream->buffer_len = buffer_size;
-        stream->resizable = false;
+        stream->resizable = true;
     } else {
         stream->buffer_len = 0;
         stream->resizable = true;

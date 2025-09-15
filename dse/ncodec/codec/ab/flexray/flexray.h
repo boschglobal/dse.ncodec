@@ -73,7 +73,8 @@ typedef struct FlexrayLpdu {
     uint8_t* payload;
 
     /* Cycle of the last Tx/Rx for this LPDU. */
-    uint8_t cycle;
+    uint8_t  cycle;
+    uint16_t macrotick;
 } FlexrayLpdu;
 
 

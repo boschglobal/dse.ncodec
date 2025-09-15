@@ -78,22 +78,20 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
     NCodecPduFlexrayNodeIdentifier node_ident = m->node_ident;
 
     calculate_bus_condition(&m->state);
-    log_debug("FlexRay: Progress: Bus Condition=%s",
+    log_trace("FlexRay: Progress: Bus Condition=%s",
         tcvr_state_string(m->state.bus_condition));
 
     if (m->state.bus_condition == NCodecPduFlexrayTransceiverStateFrameSync) {
 // TODO: use simulation time from pdu.simulation_time
 #define SIM_STEP_SIZE 0.0005
         int rc = calculate_budget(&m->engine, SIM_STEP_SIZE);
-        log_debug("FlexRay: Progress: Calculate Budget: MT=%u, UT=%u",
-            m->engine.step_budget_mt, m->engine.step_budget_ut);
         if (rc == 0) {
-            log_debug("FlexRay: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
+            log_trace("FlexRay: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
                       "Budget (mt=%u, ut=%u)",
                 m->engine.pos_cycle, m->engine.pos_slot, m->engine.pos_mt,
                 m->engine.step_budget_mt, m->engine.step_budget_ut);
             for (; consume_slot(&m->engine) == 0;) {
-                log_debug("FlexRay: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
+                log_trace("FlexRay: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
                           "Budget (mt=%u, ut=%u)",
                     m->engine.pos_cycle, m->engine.pos_slot, m->engine.pos_mt,
                     m->engine.step_budget_mt, m->engine.step_budget_ut);
@@ -104,7 +102,13 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
     }
 
     FlexrayNodeState ns = get_node_state(&m->state, node_ident);
-    log_debug("FlexRay: Progress: Status (%u:%u:%u): poc_state=%s(%u), "
+    log_debug("FlexRay: Progress (%u:%u:%u): poc=%u, tcvr=%u, cycle=%u, "
+              "slot=%u, mt=%u (MT=%u, UT=%u, LPDU=%u)",
+        node_ident.node.ecu_id, node_ident.node.cc_id, node_ident.node.swc_id,
+        ns.poc_state, ns.tcvr_state, m->engine.pos_cycle, m->engine.pos_slot,
+        m->engine.pos_mt, m->engine.step_budget_mt, m->engine.step_budget_ut,
+        vector_len(&m->engine.txrx_list));
+    log_trace("FlexRay: Progress (%u:%u:%u): Status : poc_state=%s(%u), "
               "tcvr_state=%s(%u)",
         node_ident.node.ecu_id, node_ident.node.cc_id, node_ident.node.swc_id,
         poc_state_string(ns.poc_state), ns.poc_state,
@@ -122,9 +126,6 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
                     .channel[0].tcvr_state = ns.tcvr_state,
                 } } });
 
-    log_debug("FlexRay: Progress: LPDU (%u:%u:%u): count=%u",
-        node_ident.node.ecu_id, node_ident.node.cc_id, node_ident.node.swc_id,
-        vector_len(&m->engine.txrx_list));
     for (size_t i = 0; i < vector_len(&m->engine.txrx_list); i++) {
         FlexrayLpdu* lpdu = NULL;
         vector_at(&m->engine.txrx_list, i, &lpdu);
@@ -134,10 +135,23 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
             payload = lpdu->payload;
             payload_len = lpdu->lpdu_config.payload_length;
         }
+        NCodecPduFlexrayLpduStatus status = NCodecPduFlexrayLpduStatusNone;
+        switch (lpdu->lpdu_config.status) {
+        case NCodecPduFlexrayLpduStatusTransmitted:
+        case NCodecPduFlexrayLpduStatusNotTransmitted:
+            status = NCodecPduFlexrayLpduStatusTransmitted;
+            break;
+        case NCodecPduFlexrayLpduStatusReceived:
+        case NCodecPduFlexrayLpduStatusNotReceived:
+            status = NCodecPduFlexrayLpduStatusReceived;
+            break;
+        default:
+            continue;
+        }
         log_debug(
             "FlexRay: Progress: LPDU %04x (len=%u) frame_index=%u status=%u",
             lpdu->lpdu_config.slot_id, payload_len,
-            lpdu->lpdu_config.index.frame_table, lpdu->lpdu_config.status);
+            lpdu->lpdu_config.index.frame_table, status);
         ncodec_write((NCODEC*)bm->nc,
             &(NCodecPdu){ .ecu_id = m->node_ident.node.ecu_id,
                 .swc_id = m->node_ident.node.swc_id,
@@ -149,9 +163,10 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
                     .metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
                     .metadata.lpdu = {
                         .cycle = lpdu->cycle,
+                        .macrotick = lpdu->macrotick,
                         .frame_config_index =
                             lpdu->lpdu_config.index.frame_table,
-                        .status = lpdu->lpdu_config.status,
+                        .status = status,
                     } } });
     }
 }
