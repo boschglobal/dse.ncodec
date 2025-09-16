@@ -12,8 +12,8 @@
 
 
 #define TEST_NODES  10
-#define TEST_FRAMES 10
-#define TEST_PDUS   50
+#define TEST_FRAMES 50
+#define TEST_PDUS   100
 
 
 typedef struct {
@@ -32,6 +32,7 @@ typedef struct {
     uint8_t     payload_len;
     uint8_t     cycle;
     uint16_t    macrotick;
+    bool        null_frame;
 } TestPdu;
 
 typedef struct {

@@ -327,26 +327,27 @@ static int AutomotiveBus_Stream_Pdu_FlexrayConfig_verify_table(flatcc_table_veri
     if ((ret = flatcc_verify_vector_field(td, 0, 0, 8, 4, INT64_C(536870911)) /* vcn */)) return ret;
     if ((ret = flatcc_verify_field(td, 1, 1, 1) /* initial_poc_state_cha */)) return ret;
     if ((ret = flatcc_verify_field(td, 2, 1, 1) /* initial_poc_state_chb */)) return ret;
-    if ((ret = flatcc_verify_field(td, 3, 2, 2) /* macrotick_per_cycle */)) return ret;
-    if ((ret = flatcc_verify_field(td, 4, 4, 4) /* microtick_per_cycle */)) return ret;
-    if ((ret = flatcc_verify_field(td, 5, 2, 2) /* network_idle_start */)) return ret;
-    if ((ret = flatcc_verify_field(td, 6, 2, 2) /* static_slot_length */)) return ret;
-    if ((ret = flatcc_verify_field(td, 7, 2, 2) /* static_slot_count */)) return ret;
-    if ((ret = flatcc_verify_field(td, 8, 1, 1) /* minislot_length */)) return ret;
-    if ((ret = flatcc_verify_field(td, 9, 2, 2) /* minislot_count */)) return ret;
-    if ((ret = flatcc_verify_field(td, 10, 4, 4) /* static_slot_payload_length */)) return ret;
-    if ((ret = flatcc_verify_field(td, 11, 1, 1) /* bit_rate */)) return ret;
-    if ((ret = flatcc_verify_field(td, 12, 1, 1) /* channel_enable */)) return ret;
-    if ((ret = flatcc_verify_field(td, 13, 1, 1) /* coldstart_node */)) return ret;
-    if ((ret = flatcc_verify_field(td, 14, 1, 1) /* sync_node */)) return ret;
-    if ((ret = flatcc_verify_field(td, 15, 1, 1) /* coldstart_attempts */)) return ret;
-    if ((ret = flatcc_verify_field(td, 16, 1, 1) /* wakeup_channel_select */)) return ret;
-    if ((ret = flatcc_verify_field(td, 17, 1, 1) /* single_slot_enabled */)) return ret;
-    if ((ret = flatcc_verify_field(td, 18, 2, 2) /* key_slot_id */)) return ret;
-    if ((ret = flatcc_verify_vector_field(td, 19, 0, 1, 1, INT64_C(4294967295)) /* key_slot_payload */)) return ret;
-    if ((ret = flatcc_verify_table_field(td, 20, 0, &AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table) /* key_slot_lpdu */)) return ret;
-    if ((ret = flatcc_verify_table_vector_field(td, 21, 0, &AutomotiveBus_Stream_Pdu_FlexrayLpduConfig_verify_table) /* frame_table */)) return ret;
-    if ((ret = flatcc_verify_field(td, 22, 1, 1) /* config_op */)) return ret;
+    if ((ret = flatcc_verify_field(td, 3, 1, 1) /* inhibit_null_frames */)) return ret;
+    if ((ret = flatcc_verify_field(td, 4, 2, 2) /* macrotick_per_cycle */)) return ret;
+    if ((ret = flatcc_verify_field(td, 5, 4, 4) /* microtick_per_cycle */)) return ret;
+    if ((ret = flatcc_verify_field(td, 6, 2, 2) /* network_idle_start */)) return ret;
+    if ((ret = flatcc_verify_field(td, 7, 2, 2) /* static_slot_length */)) return ret;
+    if ((ret = flatcc_verify_field(td, 8, 2, 2) /* static_slot_count */)) return ret;
+    if ((ret = flatcc_verify_field(td, 9, 1, 1) /* minislot_length */)) return ret;
+    if ((ret = flatcc_verify_field(td, 10, 2, 2) /* minislot_count */)) return ret;
+    if ((ret = flatcc_verify_field(td, 11, 4, 4) /* static_slot_payload_length */)) return ret;
+    if ((ret = flatcc_verify_field(td, 12, 1, 1) /* bit_rate */)) return ret;
+    if ((ret = flatcc_verify_field(td, 13, 1, 1) /* channel_enable */)) return ret;
+    if ((ret = flatcc_verify_field(td, 14, 1, 1) /* coldstart_node */)) return ret;
+    if ((ret = flatcc_verify_field(td, 15, 1, 1) /* sync_node */)) return ret;
+    if ((ret = flatcc_verify_field(td, 16, 1, 1) /* coldstart_attempts */)) return ret;
+    if ((ret = flatcc_verify_field(td, 17, 1, 1) /* wakeup_channel_select */)) return ret;
+    if ((ret = flatcc_verify_field(td, 18, 1, 1) /* single_slot_enabled */)) return ret;
+    if ((ret = flatcc_verify_field(td, 19, 2, 2) /* key_slot_id */)) return ret;
+    if ((ret = flatcc_verify_vector_field(td, 20, 0, 1, 1, INT64_C(4294967295)) /* key_slot_payload */)) return ret;
+    if ((ret = flatcc_verify_table_field(td, 21, 0, &AutomotiveBus_Stream_Pdu_FlexrayLpdu_verify_table) /* key_slot_lpdu */)) return ret;
+    if ((ret = flatcc_verify_table_vector_field(td, 22, 0, &AutomotiveBus_Stream_Pdu_FlexrayLpduConfig_verify_table) /* frame_table */)) return ret;
+    if ((ret = flatcc_verify_field(td, 23, 1, 1) /* config_op */)) return ret;
     return flatcc_verify_ok;
 }
 
@@ -452,6 +453,7 @@ static int AutomotiveBus_Stream_Pdu_FlexrayLpduConfig_verify_table(flatcc_table_
     if ((ret = flatcc_verify_field(td, 7, 1, 1) /* channel */)) return ret;
     if ((ret = flatcc_verify_field(td, 8, 1, 1) /* transmit_mode */)) return ret;
     if ((ret = flatcc_verify_field(td, 9, 1, 1) /* status */)) return ret;
+    if ((ret = flatcc_verify_field(td, 10, 1, 1) /* inhibit_null */)) return ret;
     return flatcc_verify_ok;
 }
 

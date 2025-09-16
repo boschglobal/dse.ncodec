@@ -35,6 +35,7 @@ static void _decode_flexray_config(
     c->vcn[1].node.swc_id = 2;
     c->initial_poc_state_cha = ns(FlexrayConfig_initial_poc_state_cha(fc_msg));
     c->initial_poc_state_chb = ns(FlexrayConfig_initial_poc_state_chb(fc_msg));
+    c->inhibit_null_frames = ns(FlexrayConfig_inhibit_null_frames(fc_msg));
     c->macrotick_per_cycle = ns(FlexrayConfig_macrotick_per_cycle(fc_msg));
     c->microtick_per_cycle = ns(FlexrayConfig_microtick_per_cycle(fc_msg));
     c->network_idle_start = ns(FlexrayConfig_network_idle_start(fc_msg));
@@ -83,6 +84,7 @@ static void _decode_flexray_config(
             lc->channel = ns(FlexrayLpduConfig_channel(lc_table));
             lc->transmit_mode = ns(FlexrayLpduConfig_transmit_mode(lc_table));
             lc->status = ns(FlexrayLpduConfig_status(lc_table));
+            lc->inhibit_null = ns(FlexrayLpduConfig_inhibit_null(lc_table));
 
             /* Correct base_cycle if repetition is 1. */
             if (lc->cycle_repetition == 1) {
@@ -175,6 +177,7 @@ static uint32_t _emit_flexray_config(flatcc_builder_t* B, NCodecPdu* _pdu)
     }
     ns(FlexrayConfig_initial_poc_state_cha_add(B, c->initial_poc_state_cha));
     ns(FlexrayConfig_initial_poc_state_chb_add(B, c->initial_poc_state_chb));
+    ns(FlexrayConfig_inhibit_null_frames_add(B, c->inhibit_null_frames));
     ns(FlexrayConfig_macrotick_per_cycle_add(B, c->macrotick_per_cycle));
     ns(FlexrayConfig_microtick_per_cycle_add(B, c->microtick_per_cycle));
     ns(FlexrayConfig_network_idle_start_add(B, c->network_idle_start));
@@ -212,6 +215,7 @@ static uint32_t _emit_flexray_config(flatcc_builder_t* B, NCodecPdu* _pdu)
             ns(FlexrayLpduConfig_channel_add(B, lc->channel));
             ns(FlexrayLpduConfig_transmit_mode_add(B, lc->transmit_mode));
             ns(FlexrayLpduConfig_status_add(B, lc->status));
+            ns(FlexrayLpduConfig_inhibit_null_add(B, lc->inhibit_null));
             ns(FlexrayConfig_frame_table_push_end(B));
         }
         ns(FlexrayConfig_frame_table_end(B));

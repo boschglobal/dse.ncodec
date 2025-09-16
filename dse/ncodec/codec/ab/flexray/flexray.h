@@ -32,6 +32,7 @@ typedef struct FlexrayState {
 
 typedef struct FlexrayEngine {
     NCodecPduFlexrayNodeIdentifier node_ident;
+    bool                           inhibit_null_frames;
 
     double sim_step_size;
 
@@ -75,6 +76,9 @@ typedef struct FlexrayLpdu {
     /* Cycle of the last Tx/Rx for this LPDU. */
     uint8_t  cycle;
     uint16_t macrotick;
+
+    /* Indicate if this LPDU represents a NULL frame. */
+    bool null_frame;
 } FlexrayLpdu;
 
 

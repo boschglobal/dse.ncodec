@@ -301,6 +301,7 @@ typedef struct NCodecPduFlexrayLpduConfig {
     NCodecPduFlexrayChannel      channel;
     NCodecPduFlexrayTransmitMode transmit_mode;
     NCodecPduFlexrayLpduStatus   status;
+    bool                         inhibit_null;
 } NCodecPduFlexrayLpduConfig;
 
 
@@ -311,6 +312,7 @@ typedef struct NCodecPduFlexrayConfig {
     size_t                         vcn_count;
     NCodecPduFlexrayPocState       initial_poc_state_cha;
     NCodecPduFlexrayPocState       initial_poc_state_chb;
+    bool                           inhibit_null_frames;
 
     /* Config update operation. */
     NCodecPduFlexrayConfigOp operation;

@@ -28,27 +28,6 @@ void some_test(void** state)
 */
 
 
-static NCodecPduFlexrayConfig cc_config = {
-    .bit_rate = NCodecPduFlexrayBitrate10,
-    .channel_enable = NCodecPduFlexrayChannelA,
-    .macrotick_per_cycle = 3361u,
-    .microtick_per_cycle = 200000u,
-    .network_idle_start = (3361u - 5u - 1u),
-    .static_slot_length = 55u,
-    .static_slot_count = 38u,
-    .minislot_length = 6u,
-    .minislot_count = 211u,
-    .static_slot_payload_length = (32u * 2), /* Word to Byte */
-
-    .coldstart_node = false,
-    .sync_node = false,
-    .coldstart_attempts = 8u,
-    .wakeup_channel_select = 0, /* Channel A */
-    .single_slot_enabled = false,
-    .key_slot_id = 0u,
-};
-
-
 static TestNode testnode_A = (TestNode){
     .mimetype = "application/x-automotive-bus; "                               \
         "interface=stream;type=pdu;schema=fbs;"                                \
@@ -70,6 +49,7 @@ static TestNode testnode_A = (TestNode){
         .wakeup_channel_select = 0, /* Channel A */
         .single_slot_enabled = false,
         .key_slot_id = 0u,
+        .inhibit_null_frames = true,
     },
 };
 

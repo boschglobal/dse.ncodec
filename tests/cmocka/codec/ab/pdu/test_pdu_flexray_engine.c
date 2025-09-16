@@ -26,6 +26,7 @@ extern int32_t stream_read(NCODEC* nc, uint8_t** data, size_t* len, int pos_op);
 typedef struct Mock {
     NCODEC*       nc;
     FlexrayEngine engine;
+    uint8_t       loglevel_save;
 } Mock;
 
 
@@ -53,6 +54,8 @@ static NCodecPduFlexrayConfig cc_config = {
     .wakeup_channel_select = 0, /* Channel A */
     .single_slot_enabled = false,
     .key_slot_id = 0u,
+
+    .inhibit_null_frames = true,
 };
 
 static NCodecPduFlexrayLpduConfig frame_config__empty[0] = {};
@@ -67,6 +70,7 @@ static int test_setup(void** state)
     mock->nc = (void*)ncodec_open(MIMETYPE, stream);
     assert_non_null(mock->nc);
     mock->engine = (FlexrayEngine){ 0 };
+    mock->loglevel_save = __log_level__;
 
     *state = mock;
     return 0;
@@ -78,8 +82,9 @@ static int test_teardown(void** state)
     Mock* mock = *state;
     if (mock && mock->nc) ncodec_close((void*)mock->nc);
     release_config(&mock->engine);
-    if (mock) free(mock);
 
+    __log_level__ = mock->loglevel_save;
+    free(mock);
     return 0;
 }
 

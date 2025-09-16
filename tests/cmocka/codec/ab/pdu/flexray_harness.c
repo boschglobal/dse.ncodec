@@ -117,7 +117,7 @@ static void _push_frames(TestTxRx* test)
     NCodecPduFlexrayConfig config = test->config.node[0].config;
 
     for (size_t i = 0; i < TEST_FRAMES; i++) {
-        if (test->run.pdu[i].lpdu_status == 0) {
+        if (test->run.pdu[i].slot_id == 0) {
             break;
         }
         rc = ncodec_write(
@@ -217,6 +217,8 @@ static void _expect_pdu_check(TestTxRx* test)
         if (test->expect.pdu[i].slot_id == 0) {
             break;
         }
+        log_info("Check PDU at index %u (slot_id=%u)", i,
+            test->expect.pdu[i].slot_id);
 
         NCodecPdu pdu;
         vector_at(&test->run.pdu_list, i, &pdu);
@@ -231,8 +233,15 @@ static void _expect_pdu_check(TestTxRx* test)
             assert_int_equal(test->expect.pdu[i].macrotick,
                 pdu.transport.flexray.metadata.lpdu.macrotick);
         }
-        assert_memory_equal(test->expect.pdu[i].payload, pdu.payload,
-            test->expect.pdu[i].payload_len);
+        if (test->expect.pdu[i].null_frame) {
+            assert_int_equal(0, pdu.payload_len);
+            assert_null(pdu.payload);
+            assert_true(pdu.transport.flexray.metadata.lpdu.null_frame);
+        } else {
+            assert_memory_equal(test->expect.pdu[i].payload, pdu.payload,
+                test->expect.pdu[i].payload_len);
+            assert_false(pdu.transport.flexray.metadata.lpdu.null_frame);
+        }
     }
 }
 
