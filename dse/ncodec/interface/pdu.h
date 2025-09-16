@@ -309,6 +309,8 @@ typedef struct NCodecPduFlexrayConfig {
     NCodecPduFlexrayNodeIdentifier node_ident;
     NCodecPduFlexrayNodeIdentifier vcn[MAX_VCN];
     size_t                         vcn_count;
+    NCodecPduFlexrayPocState       initial_poc_state_cha;
+    NCodecPduFlexrayPocState       initial_poc_state_chb;
 
     /* Config update operation. */
     NCodecPduFlexrayConfigOp operation;

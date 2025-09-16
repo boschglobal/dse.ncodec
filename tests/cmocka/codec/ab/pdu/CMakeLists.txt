@@ -18,6 +18,7 @@ add_executable(test_codec_ab_pdu
     test_pdu_flexray__startup.c
     test_pdu_flexray__single_node.c
     test_pdu_flexray__multi_node.c
+    test_pdu_flexray__null_frame.c
     flexray_harness.c
     ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
     ${DSE_NCODEC_SOURCE_DIR}/codec/ab/codec.c

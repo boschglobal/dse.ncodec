@@ -210,6 +210,16 @@ void test_codec_config(void** state)
             .int_value = 12,
             .offset_value = offsetof(ABCodecInstance, vcn_count_str),
             .offset_int_value = offsetof(ABCodecInstance, vcn_count) },
+        { .name = "poca",
+            .value = "4",
+            .int_value = 4,
+            .offset_value = offsetof(ABCodecInstance, poc_state_cha_str),
+            .offset_int_value = offsetof(ABCodecInstance, poc_state_cha) },
+        { .name = "pocb",
+            .value = "2",
+            .int_value = 2,
+            .offset_value = offsetof(ABCodecInstance, poc_state_chb_str),
+            .offset_int_value = offsetof(ABCodecInstance, poc_state_chb) },
         /* Bad integer values. */
         { .name = "bus_id",
             .value = "seven",
@@ -284,6 +294,8 @@ void test_codec_stat(void** state)
         { .index = 10, .name = "model", .value = "flexray" },
         { .index = 11, .name = "pwr", .value = "on" },
         { .index = 12, .name = "vcn", .value = "7" },
+        { .index = 13, .name = "poca", .value = "4" },
+        { .index = 14, .name = "pocb", .value = "2" },
         { .index = -1, .name = "foo", .value = "bar" },
     };
 

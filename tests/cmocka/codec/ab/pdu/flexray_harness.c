@@ -82,6 +82,9 @@ static void _push_nodes(TestTxRx* test)
                     .metadata_type = NCodecPduFlexrayMetadataTypeConfig,
                     .metadata.config = config,
                 } });
+
+    if (test->run.push_active == false) return;
+
     rc = ncodec_write(
         nc, &(NCodecPdu){ .transport_type = NCodecPduTransportTypeFlexray,
                 .transport.flexray = {

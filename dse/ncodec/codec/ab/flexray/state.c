@@ -275,6 +275,19 @@ void register_node_state(FlexrayState* state,
     }
 }
 
+void set_poc_state(FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid,
+    NCodecPduFlexrayPocState poc_state)
+{
+    /* Node states are consolidated per Node by zeroing out the `swc_id`. */
+    nid.node.swc_id = 0;
+    FlexrayNodeState* node_state = vector_find(
+        &state->node_state, &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
+    if (node_state) {
+        node_state->poc_state = poc_state;
+        __set_transceiver_state(node_state);
+    }
+}
+
 void register_vcn_node_state(
     FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid)
 {

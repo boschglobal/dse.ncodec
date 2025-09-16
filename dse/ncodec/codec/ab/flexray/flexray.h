@@ -112,6 +112,8 @@ FlexrayNodeState get_node_state(
     FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid);
 void set_node_power(
     FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid, bool power_on);
+void set_poc_state(FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid,
+    NCodecPduFlexrayPocState poc_state);
 
 const char* tcvr_state_string(unsigned int state);
 const char* poc_state_string(unsigned int state);

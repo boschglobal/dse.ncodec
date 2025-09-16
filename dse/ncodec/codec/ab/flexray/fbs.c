@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <dse/logger.h>
 #include <dse/clib/collections/vector.h>
 #include <dse/ncodec/interface/pdu.h>
 #include <dse/ncodec/schema/abs/stream/pdu_builder.h>
@@ -32,7 +33,8 @@ static void _decode_flexray_config(
     c->vcn[1] = _pdu->transport.flexray.node_ident;
     c->vcn[0].node.swc_id = 1;
     c->vcn[1].node.swc_id = 2;
-
+    c->initial_poc_state_cha = ns(FlexrayConfig_initial_poc_state_cha(fc_msg));
+    c->initial_poc_state_chb = ns(FlexrayConfig_initial_poc_state_chb(fc_msg));
     c->macrotick_per_cycle = ns(FlexrayConfig_macrotick_per_cycle(fc_msg));
     c->microtick_per_cycle = ns(FlexrayConfig_microtick_per_cycle(fc_msg));
     c->network_idle_start = ns(FlexrayConfig_network_idle_start(fc_msg));
@@ -171,7 +173,8 @@ static uint32_t _emit_flexray_config(flatcc_builder_t* B, NCodecPdu* _pdu)
         }
         ns(FlexrayConfig_vcn_end(B));
     }
-
+    ns(FlexrayConfig_initial_poc_state_cha_add(B, c->initial_poc_state_cha));
+    ns(FlexrayConfig_initial_poc_state_chb_add(B, c->initial_poc_state_chb));
     ns(FlexrayConfig_macrotick_per_cycle_add(B, c->macrotick_per_cycle));
     ns(FlexrayConfig_microtick_per_cycle_add(B, c->microtick_per_cycle));
     ns(FlexrayConfig_network_idle_start_add(B, c->network_idle_start));

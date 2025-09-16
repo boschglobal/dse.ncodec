@@ -77,10 +77,12 @@ typedef struct ABCodecInstance {
     char*   interface_id_str;
     char*   swc_id_str;
     char*   ecu_id_str;
-    char*   cc_id_str;     /* Communication Controller. */
-    char*   model;         /* Bus Model. */
-    char*   pwr;           /* Initial power state (on|off or not set). */
-    char*   vcn_count_str; /* Count of VCNs. */
+    char*   cc_id_str;         /* Communication Controller. */
+    char*   model;             /* Bus Model. */
+    char*   pwr;               /* Initial power state (on|off or not set). */
+    char*   vcn_count_str;     /* Count of VCNs. */
+    char*   poc_state_cha_str; /* Initial POC state (Channel A). */
+    char*   poc_state_chb_str; /* Initial POC state (Channel B). */
     /* Internal representation. */
     uint8_t bus_id;
     uint8_t node_id;
@@ -89,6 +91,8 @@ typedef struct ABCodecInstance {
     uint8_t ecu_id;
     uint8_t cc_id;
     uint8_t vcn_count;
+    uint8_t poc_state_cha;
+    uint8_t poc_state_chb;
 
     /* Flatbuffer resources. */
     flatcc_builder_t fbs_builder;

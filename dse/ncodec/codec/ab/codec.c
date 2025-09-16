@@ -72,6 +72,8 @@ void free_codec(ABCodecInstance* _nc)
     if (_nc->model) free(_nc->model);
     if (_nc->pwr) free(_nc->pwr);
     if (_nc->vcn_count_str) free(_nc->vcn_count_str);
+    if (_nc->poc_state_cha_str) free(_nc->poc_state_cha_str);
+    if (_nc->poc_state_chb_str) free(_nc->poc_state_chb_str);
 
     if (_nc->fbs_builder_initalized) flatcc_builder_clear(&_nc->fbs_builder);
 
@@ -186,6 +188,18 @@ int32_t codec_config(NCODEC* nc, NCodecConfigItem item)
         _nc->vcn_count = strtoul(item.value, NULL, 10);
         return 0;
     }
+    if (strcmp(item.name, "poca") == 0) {
+        if (_nc->poc_state_cha_str) free(_nc->poc_state_cha_str);
+        _nc->poc_state_cha_str = strdup(item.value);
+        _nc->poc_state_cha = strtoul(item.value, NULL, 10);
+        return 0;
+    }
+    if (strcmp(item.name, "pocb") == 0) {
+        if (_nc->poc_state_chb_str) free(_nc->poc_state_chb_str);
+        _nc->poc_state_chb_str = strdup(item.value);
+        _nc->poc_state_chb = strtoul(item.value, NULL, 10);
+        return 0;
+    }
 
     return -EINVAL;
 }
@@ -252,6 +266,14 @@ NCodecConfigItem codec_stat(NCODEC* nc, int32_t* index)
     case 12:
         name = "vcn";
         value = _nc->vcn_count_str;
+        break;
+    case 13:
+        name = "poca";
+        value = _nc->poc_state_cha_str;
+        break;
+    case 14:
+        name = "pocb";
+        value = _nc->poc_state_chb_str;
         break;
     default:
         *index = -1;

@@ -38,8 +38,10 @@ bool flexray_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
             register_vcn_node_state(
                 &m->state, pdu->transport.flexray.metadata.config.vcn[i]);
         }
-        register_node_state(&m->state, node_ident, true,
-            false);  // TODO: map correct power state.
+        register_node_state(&m->state, node_ident, true, false);
+        // TODO: map correct power state.
+        set_poc_state(&m->state, node_ident,
+            pdu->transport.flexray.metadata.config.initial_poc_state_cha);
         break;
     case (NCodecPduFlexrayMetadataTypeStatus):
         log_debug("FlexRay: Consume: (%u:%u:%u) Status", node_ident.node.ecu_id,

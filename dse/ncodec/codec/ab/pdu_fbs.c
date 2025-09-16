@@ -254,6 +254,10 @@ int32_t pdu_write(NCODEC* nc, NCodecPdu* pdu)
                 _pdu->transport.flexray.node_ident;
             _pdu->transport.flexray.metadata.config.vcn[1] =
                 _pdu->transport.flexray.node_ident;
+            _pdu->transport.flexray.metadata.config.initial_poc_state_cha =
+                _nc->poc_state_cha;
+            _pdu->transport.flexray.metadata.config.initial_poc_state_chb =
+                _nc->poc_state_chb;
             // TODO: refine this, probably need to change the mimetype
             // TODO: to something like vcn1=42 vcn2=24
             _pdu->transport.flexray.metadata.config.vcn[0].node.swc_id = 1;
