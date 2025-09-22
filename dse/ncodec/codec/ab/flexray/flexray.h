@@ -94,7 +94,7 @@ typedef struct FlexrayBusModel {
     FlexrayEngine engine;
     FlexrayState  state;  // FIXME: array for chA chB
 
-    const char log_id[FLEXRAY_LOG_ID_LEN];
+    char log_id[FLEXRAY_LOG_ID_LEN];
 } FlexrayBusModel;
 
 

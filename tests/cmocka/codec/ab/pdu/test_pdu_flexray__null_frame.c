@@ -264,84 +264,86 @@ void null_frames(void** state)
             .macrotick = 0,
             .poc_state = NCodecPduFlexrayPocStateNormalActive,
             .tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync,
-            .pdu_count = 11,
             .pdu = {
-                /* Cycle 0. */
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 0,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
-                },
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 1,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
-                    .payload = PAYLOAD_1,
-                    .payload_len = strlen(PAYLOAD_1),
-                },
-                {
-                    .slot_id = 11,
-                    .frame_config_index = 2,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
-                    .cycle = 0,
-                },
-                {
-                    .slot_id = 11,
-                    .frame_config_index = 3,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
-                    .payload = PAYLOAD_1,
-                    .payload_len = strlen(PAYLOAD_1),
-                    .cycle = 0,
-                },
-                {
-                    .slot_id = 18,
-                    .frame_config_index = 9,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
-                    .cycle = 0,
-                    .null_frame = true,
-                },
-                {
-                    .slot_id = 39,
-                    .frame_config_index = 4,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
-                    .macrotick = 2090,
-                },
-                {
-                    .slot_id = 39,
-                    .frame_config_index = 5,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
-                    .payload = PAYLOAD_1,
-                    .payload_len = strlen(PAYLOAD_1),
-                    .macrotick = 2090,
-                },
-                /* Cycle 1. */
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 1,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
-                    .cycle = 1,
-                    .null_frame = true,
-                },
-                {
-                    .slot_id = 11,
-                    .frame_config_index = 2,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
-                    .cycle = 1,
-                },
-                {
-                    .slot_id = 11,
-                    .frame_config_index = 3,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
-                    .payload = PAYLOAD_1,
-                    .payload_len = strlen(PAYLOAD_1),
-                    .cycle = 1,
-                },
-                {
-                    .slot_id = 18,
-                    .frame_config_index = 9,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
-                    .cycle = 1,
-                    .null_frame = true,
+                .count = 11,
+                .list = {
+                    /* Cycle 0. */
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 0,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
+                    },
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 1,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
+                        .payload = PAYLOAD_1,
+                        .payload_len = strlen(PAYLOAD_1),
+                    },
+                    {
+                        .slot_id = 11,
+                        .frame_config_index = 2,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
+                        .cycle = 0,
+                    },
+                    {
+                        .slot_id = 11,
+                        .frame_config_index = 3,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
+                        .payload = PAYLOAD_1,
+                        .payload_len = strlen(PAYLOAD_1),
+                        .cycle = 0,
+                    },
+                    {
+                        .slot_id = 18,
+                        .frame_config_index = 9,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
+                        .cycle = 0,
+                        .null_frame = true,
+                    },
+                    {
+                        .slot_id = 39,
+                        .frame_config_index = 4,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
+                        .macrotick = 2090,
+                    },
+                    {
+                        .slot_id = 39,
+                        .frame_config_index = 5,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
+                        .payload = PAYLOAD_1,
+                        .payload_len = strlen(PAYLOAD_1),
+                        .macrotick = 2090,
+                    },
+                    /* Cycle 1. */
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 1,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
+                        .cycle = 1,
+                        .null_frame = true,
+                    },
+                    {
+                        .slot_id = 11,
+                        .frame_config_index = 2,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
+                        .cycle = 1,
+                    },
+                    {
+                        .slot_id = 11,
+                        .frame_config_index = 3,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
+                        .payload = PAYLOAD_1,
+                        .payload_len = strlen(PAYLOAD_1),
+                        .cycle = 1,
+                    },
+                    {
+                        .slot_id = 18,
+                        .frame_config_index = 9,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
+                        .cycle = 1,
+                        .null_frame = true,
+                    },
                 },
             },
         }
@@ -408,22 +410,24 @@ void null_frame_inhibit(void** state)
             .macrotick = 0,
             .poc_state = NCodecPduFlexrayPocStateNormalActive,
             .tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync,
-            .pdu_count = 2,
             .pdu = {
-                /* Cycle 0. */
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 0,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
+                .count = 2,
+                .list = {
+                    /* Cycle 0. */
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 0,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
+                    },
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 1,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
+                        .payload = PAYLOAD_1,
+                        .payload_len = strlen(PAYLOAD_1),
+                    },
+                    /* Cycle 1. */
                 },
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 1,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
-                    .payload = PAYLOAD_1,
-                    .payload_len = strlen(PAYLOAD_1),
-                },
-                /* Cycle 1. */
             },
         }
     };
@@ -488,22 +492,24 @@ void null_config_inhibit(void** state)
             .macrotick = 0,
             .poc_state = NCodecPduFlexrayPocStateNormalActive,
             .tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync,
-            .pdu_count = 2,
             .pdu = {
-                /* Cycle 0. */
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 0,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
+                .count = 2,
+                .list = {
+                    /* Cycle 0. */
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 0,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
+                    },
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 1,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
+                        .payload = PAYLOAD_1,
+                        .payload_len = strlen(PAYLOAD_1),
+                    },
+                    /* Cycle 1. */
                 },
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 1,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
-                    .payload = PAYLOAD_1,
-                    .payload_len = strlen(PAYLOAD_1),
-                },
-                /* Cycle 1. */
             },
         },
     };

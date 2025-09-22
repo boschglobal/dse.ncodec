@@ -316,38 +316,38 @@ static void _expect_status_check(TestTxRx* test)
 
 static void _expect_pdu_check(TestTxRx* test)
 {
-    assert_int_equal(test->expect.pdu_count, vector_len(&test->run.pdu_list));
+    assert_int_equal(test->expect.pdu.count, vector_len(&test->run.pdu_list));
     for (size_t i = 0; i < TEST_PDUS; i++) {
-        if (test->expect.pdu[i].slot_id == 0) {
+        if (test->expect.pdu.list[i].slot_id == 0) {
             break;
         }
         log_info("Check PDU at index %u (slot_id=%u)", i,
-            test->expect.pdu[i].slot_id);
+            test->expect.pdu.list[i].slot_id);
 
         NCodecPdu pdu;
         vector_at(&test->run.pdu_list, i, &pdu);
         assert_int_equal(NCodecPduTransportTypeFlexray, pdu.transport_type);
         assert_int_equal(NCodecPduFlexrayMetadataTypeLpdu,
             pdu.transport.flexray.metadata_type);
-        assert_int_equal(test->expect.pdu[i].lpdu_status,
+        assert_int_equal(test->expect.pdu.list[i].lpdu_status,
             pdu.transport.flexray.metadata.lpdu.status);
-        assert_int_equal(test->expect.pdu[i].cycle,
+        assert_int_equal(test->expect.pdu.list[i].cycle,
             pdu.transport.flexray.metadata.lpdu.cycle);
-        if (test->expect.pdu[i].macrotick) {
-            assert_int_equal(test->expect.pdu[i].macrotick,
+        if (test->expect.pdu.list[i].macrotick) {
+            assert_int_equal(test->expect.pdu.list[i].macrotick,
                 pdu.transport.flexray.metadata.lpdu.macrotick);
         }
-        if (test->expect.pdu[i].null_frame) {
+        if (test->expect.pdu.list[i].null_frame) {
             assert_int_equal(0, pdu.payload_len);
             assert_null(pdu.payload);
             assert_true(pdu.transport.flexray.metadata.lpdu.null_frame);
         } else {
-            assert_memory_equal(test->expect.pdu[i].payload, pdu.payload,
-                test->expect.pdu[i].payload_len);
+            assert_memory_equal(test->expect.pdu.list[i].payload, pdu.payload,
+                test->expect.pdu.list[i].payload_len);
             assert_false(pdu.transport.flexray.metadata.lpdu.null_frame);
         }
-        if (test->expect.pdu[i].node_ident.node_id) {
-            assert_int_equal(test->expect.pdu[i].node_ident.node_id,
+        if (test->expect.pdu.list[i].node_ident.node_id) {
+            assert_int_equal(test->expect.pdu.list[i].node_ident.node_id,
                 pdu.transport.flexray.node_ident.node_id);
         }
     }

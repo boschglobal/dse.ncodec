@@ -43,6 +43,10 @@ typedef struct TestPduMap {
 typedef struct TestFrameMap {
     NCodecPduFlexrayLpduConfig map[TEST_NODES][TEST_FRAMES];
 } TestFrameMap;
+typedef struct TestPduList {
+    size_t  count;
+    TestPdu list[TEST_PDUS];
+} TestPduList;
 
 typedef struct {
     /* Config */
@@ -72,8 +76,7 @@ typedef struct {
         NCodecPduFlexrayPocState         poc_state;
         NCodecPduFlexrayTransceiverState tcvr_state;
 
-        TestPdu pdu[TEST_PDUS];
-        size_t  pdu_count;
+        TestPduList pdu;
     } expect;
 } TestTxRx;
 
