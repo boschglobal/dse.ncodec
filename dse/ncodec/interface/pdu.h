@@ -268,7 +268,7 @@ typedef struct NCodecPduFlexrayLpdu {
     uint8_t cycle; /* 0..63 */
 
     /* Config index. */
-    uint16_t frame_config_index;  // TODO: test coverage on this.
+    uint16_t frame_config_index;
 
     /* Header Indicators. */
     bool null_frame;
@@ -403,7 +403,6 @@ typedef struct NCodecPdu {
     uint32_t swc_id;
 
     /* Transport Metadata. */
-    // TODO: Update types here for consistency (i.e. ...Transport).
     NCodecPduTransportType transport_type;
     union {
         struct {
@@ -411,8 +410,7 @@ typedef struct NCodecPdu {
         NCodecPduCanMessageMetadata can_message;
         NCodecPduIpMessageMetadata  ip_message;
         NCodecPduStructMetadata     struct_object;
-        NCodecPduFlexrayTransport
-            flexray;  // TODO: should the schema table names change ?
+        NCodecPduFlexrayTransport   flexray;
     } transport;
 
     /* Simulation Metadata. */
