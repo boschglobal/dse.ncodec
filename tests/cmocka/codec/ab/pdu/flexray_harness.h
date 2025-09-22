@@ -77,7 +77,6 @@ typedef struct {
         NCodecPduFlexrayTransceiverState tcvr_state;
 
         TestPduList pdu;
-        TestPduList pdu;
     } expect;
 } TestTxRx;
 

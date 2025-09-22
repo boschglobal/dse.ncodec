@@ -51,5 +51,5 @@ set(DSE_CLIB_INCLUDE_DIR "${DSE_CLIB_SOURCE_DIR}/..")
 
 # Targets
 # =======
-
+add_subdirectory(../../dse/ncodec/codec/ab ab-codec)
 add_subdirectory(codec/ab)

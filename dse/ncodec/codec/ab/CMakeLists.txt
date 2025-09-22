@@ -23,6 +23,8 @@ add_library(ab-codec OBJECT
         flexray/state.c
         flexray/flexray.c
         ${DSE_NCODEC_SOURCE_DIR}/codec.c
+        ${DSE_NCODEC_SOURCE_DIR}/stream/ascii85.c
+        ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
         ${FLATCC_SOURCE_DIR}/builder.c
         ${FLATCC_SOURCE_DIR}/emitter.c
         ${FLATCC_SOURCE_DIR}/refmap.c
@@ -32,5 +34,4 @@ target_include_directories(ab-codec
         ${FLATCC_INCLUDE_DIR}
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}
-
 )

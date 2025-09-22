@@ -5,8 +5,6 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(AB_Codec_FMI_Example)
-set(FLATCC_SOURCE_DIR  ${DSE_NCODEC_SOURCE_DIR}/schema/abs/flatcc/src)
-set(FLATCC_INCLUDE_DIR ${DSE_NCODEC_SOURCE_DIR}/schema/abs/flatcc/include)
 set(EXAMPLE_PATH "examples/ab-codec-fmi")
 
 set(BRIDGE_TARGET_NAME "bridge")
@@ -14,25 +12,15 @@ add_executable(${BRIDGE_TARGET_NAME}
     bridge.c
     ncodec.c
     flexray_anycpu.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/ascii85.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/codec.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/frame_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/pdu_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/engine.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/state.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/flexray.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec.c
-    ${FLATCC_SOURCE_DIR}/builder.c
-    ${FLATCC_SOURCE_DIR}/emitter.c
-    ${FLATCC_SOURCE_DIR}/refmap.c
+)
+target_link_libraries(${BRIDGE_TARGET_NAME}
+    PUBLIC
+        ab-codec
 )
 target_include_directories(${BRIDGE_TARGET_NAME}
     PRIVATE
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}
-        ${FLATCC_INCLUDE_DIR}
         .
 )
 install(TARGETS ${BRIDGE_TARGET_NAME}
@@ -49,25 +37,15 @@ add_executable(${WUP_TARGET_NAME}
     board_stub.c
     ecu_stub.c
     flexray_anycpu.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/ascii85.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/codec.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/frame_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/pdu_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/engine.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/state.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/flexray.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec.c
-    ${FLATCC_SOURCE_DIR}/builder.c
-    ${FLATCC_SOURCE_DIR}/emitter.c
-    ${FLATCC_SOURCE_DIR}/refmap.c
+)
+target_link_libraries(${WUP_TARGET_NAME}
+    PUBLIC
+        ab-codec
 )
 target_include_directories(${WUP_TARGET_NAME}
     PRIVATE
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}
-        ${FLATCC_INCLUDE_DIR}
         .
 )
 install(TARGETS ${WUP_TARGET_NAME}
@@ -83,25 +61,15 @@ add_executable(${STARTUP_TARGET_NAME}
     ncodec.c
     ecu_stub.c
     flexray_anycpu.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/ascii85.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/codec.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/frame_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/pdu_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/engine.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/state.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/flexray.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec.c
-    ${FLATCC_SOURCE_DIR}/builder.c
-    ${FLATCC_SOURCE_DIR}/emitter.c
-    ${FLATCC_SOURCE_DIR}/refmap.c
+)
+target_link_libraries(${STARTUP_TARGET_NAME}
+    PUBLIC
+        ab-codec
 )
 target_include_directories(${STARTUP_TARGET_NAME}
     PRIVATE
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}
-        ${FLATCC_INCLUDE_DIR}
         .
 )
 install(TARGETS ${STARTUP_TARGET_NAME}
@@ -117,25 +85,15 @@ add_executable(${TXTR_TARGET_NAME}
     ncodec.c
     ecu_stub.c
     flexray_anycpu.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/ascii85.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/codec.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/frame_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/pdu_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/engine.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/state.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/flexray.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec.c
-    ${FLATCC_SOURCE_DIR}/builder.c
-    ${FLATCC_SOURCE_DIR}/emitter.c
-    ${FLATCC_SOURCE_DIR}/refmap.c
+)
+target_link_libraries(${TXTR_TARGET_NAME}
+    PUBLIC
+        ab-codec
 )
 target_include_directories(${TXTR_TARGET_NAME}
     PRIVATE
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}
-        ${FLATCC_INCLUDE_DIR}
         .
 )
 install(TARGETS ${TXTR_TARGET_NAME}

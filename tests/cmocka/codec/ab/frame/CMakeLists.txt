@@ -10,18 +10,10 @@ set(FLATCC_INCLUDE_DIR ${DSE_NCODEC_SOURCE_DIR}/schema/abs/flatcc/include)
 add_executable(test_codec_ab_frame
     __test__.c
     test_can_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/codec.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/frame_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/pdu_fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/engine.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/fbs.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/state.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec/ab/flexray/flexray.c
-    ${DSE_NCODEC_SOURCE_DIR}/codec.c
-    ${FLATCC_SOURCE_DIR}/builder.c
-    ${FLATCC_SOURCE_DIR}/emitter.c
-    ${FLATCC_SOURCE_DIR}/refmap.c
+)
+target_link_libraries(test_codec_ab_frame
+    PUBLIC
+        ab-codec
 )
 target_include_directories(test_codec_ab_frame
     PRIVATE
