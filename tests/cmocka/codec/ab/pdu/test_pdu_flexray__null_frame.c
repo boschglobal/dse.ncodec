@@ -256,7 +256,8 @@ void null_frames(void** state)
                     .frame_config_index = 9,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 1,
         },
         .expect = {
@@ -402,7 +403,8 @@ void null_frame_inhibit(void** state)
                     .frame_config_index = 1,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 1,
         },
         .expect = {
@@ -471,20 +473,22 @@ void null_config_inhibit(void** state)
         },
         .run = {
             .push_active = true,
-            .pdu_map = { .map = {{
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 0,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusNotTransmitted,
-                    .payload = PAYLOAD_1,
-                    .payload_len = strlen(PAYLOAD_1),
-                },
-                {
-                    .slot_id = 7,
-                    .frame_config_index = 1,
-                    .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
-                },
-            },},},
+            .pdu_map = {
+                .map = {{
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 0,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusNotTransmitted,
+                        .payload = PAYLOAD_1,
+                        .payload_len = strlen(PAYLOAD_1),
+                    },
+                    {
+                        .slot_id = 7,
+                        .frame_config_index = 1,
+                        .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
+                    },
+                }, },
+            },
             .cycles = 1,
         },
         .expect = {

@@ -277,7 +277,7 @@ static TestPduMap pdu_map = { .map = {
 };
 
 
-static TestPduList pdu_multi_check = { 
+static TestPduList pdu_multi_check = {
     .count = 18,
     .list = {
         /* Cycle 0 */

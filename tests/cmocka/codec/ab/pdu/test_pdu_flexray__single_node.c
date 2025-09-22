@@ -65,7 +65,7 @@ void single_node__static__single_frame__tx_rx(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 7,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -75,7 +75,7 @@ void single_node__static__single_frame__tx_rx(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 7,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -93,20 +93,20 @@ void single_node__static__single_frame__tx_rx(void** state)
             .push_active = true,
             .pdu_map = { .map = {
                 {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 7,
                         .lpdu_status = NCodecPduFlexrayLpduStatusNotTransmitted,
                         .payload = PAYLOAD_1,
                         .payload_len = strlen(PAYLOAD_1),
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 7,
                         .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                     },
-                },
-            },},
+                }, },
+            },
             .cycles = 1,
             .steps = 2,
         },
@@ -118,12 +118,12 @@ void single_node__static__single_frame__tx_rx(void** state)
             .pdu = {
                 .count = 2,
                 .list = {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 7,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 7,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -147,7 +147,7 @@ void single_node__static__single_frame__tx_multi_rx(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -157,7 +157,7 @@ void single_node__static__single_frame__tx_multi_rx(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -167,7 +167,7 @@ void single_node__static__single_frame__tx_multi_rx(void** state)
                             .frame_table = 1,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -177,7 +177,7 @@ void single_node__static__single_frame__tx_multi_rx(void** state)
                             .frame_table = 2,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -216,7 +216,8 @@ void single_node__static__single_frame__tx_multi_rx(void** state)
                     .frame_config_index = 3,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 1,
             .steps = 2,
         },
@@ -228,26 +229,26 @@ void single_node__static__single_frame__tx_multi_rx(void** state)
             .pdu = {
                 .count = 4,
                 .list = {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
                         .payload = PAYLOAD_1,
                         .payload_len = strlen(PAYLOAD_1),
                     },
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
                         .payload = PAYLOAD_1,
                         .payload_len = strlen(PAYLOAD_1),
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -271,7 +272,7 @@ void single_node__static__base_cycle(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 3,
@@ -281,7 +282,7 @@ void single_node__static__base_cycle(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 12,
                         .payload_length = 64,
                         .base_cycle = 6,
@@ -291,7 +292,7 @@ void single_node__static__base_cycle(void** state)
                             .frame_table = 1,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 13,
                         .payload_length = 64,
                         .base_cycle = 14,
@@ -301,7 +302,7 @@ void single_node__static__base_cycle(void** state)
                             .frame_table = 2,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 3,
@@ -311,7 +312,7 @@ void single_node__static__base_cycle(void** state)
                             .frame_table = 3,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 12,
                         .payload_length = 64,
                         .base_cycle = 6,
@@ -321,7 +322,7 @@ void single_node__static__base_cycle(void** state)
                             .frame_table = 4,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 13,
                         .payload_length = 64,
                         .base_cycle = 14,
@@ -374,7 +375,8 @@ void single_node__static__base_cycle(void** state)
                     .frame_config_index = 5,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 16,
         },
         .expect = {
@@ -385,13 +387,13 @@ void single_node__static__base_cycle(void** state)
             .pdu = {
                 .count = 6,
                 .list = {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 3,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -399,13 +401,13 @@ void single_node__static__base_cycle(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 3,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 6,
                     },
-                    {
+                   {
                         .frame_config_index = 4,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -413,13 +415,13 @@ void single_node__static__base_cycle(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 6,
                     },
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 13,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 14,
                     },
-                    {
+                   {
                         .frame_config_index = 5,
                         .slot_id = 13,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -444,7 +446,7 @@ void single_node__static__cycle_repetition__short(void** state)
             },
             .frame_table = { .map ={
                 { // Node 0
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -455,7 +457,7 @@ void single_node__static__cycle_repetition__short(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 12,
                         .payload_length = 64,
                         .base_cycle = 1,
@@ -466,7 +468,7 @@ void single_node__static__cycle_repetition__short(void** state)
                             .frame_table = 1,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 13,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -477,7 +479,7 @@ void single_node__static__cycle_repetition__short(void** state)
                             .frame_table = 2,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -487,7 +489,7 @@ void single_node__static__cycle_repetition__short(void** state)
                             .frame_table = 3,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 12,
                         .payload_length = 64,
                         .base_cycle = 1,
@@ -497,7 +499,7 @@ void single_node__static__cycle_repetition__short(void** state)
                             .frame_table = 4,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 13,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -507,7 +509,7 @@ void single_node__static__cycle_repetition__short(void** state)
                             .frame_table = 5,  /* Self index. */
                         },
                     },
-                    {
+                   {
                     /* This one should never be received as 
                       NCodecPduFlexrayLpduStatusReceived is not set. */
                         .slot_id = 11,
@@ -562,7 +564,8 @@ void single_node__static__cycle_repetition__short(void** state)
                     .frame_config_index = 5,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 2,
         },
         .expect = {
@@ -574,13 +577,13 @@ void single_node__static__cycle_repetition__short(void** state)
                 .count = 16,
                 .list = {
                     /* Cycle 0. */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -588,13 +591,13 @@ void single_node__static__cycle_repetition__short(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 4,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -602,13 +605,13 @@ void single_node__static__cycle_repetition__short(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 13,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 5,
                         .slot_id = 13,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -617,13 +620,13 @@ void single_node__static__cycle_repetition__short(void** state)
                         .cycle = 0,
                     },
                     /* Cycle 1. */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 1,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -631,13 +634,13 @@ void single_node__static__cycle_repetition__short(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 1,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 1,
                     },
-                    {
+                   {
                         .frame_config_index = 4,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -646,13 +649,13 @@ void single_node__static__cycle_repetition__short(void** state)
                         .cycle = 1,
                     },
                     /* Cycle 2. */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 2,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -660,13 +663,13 @@ void single_node__static__cycle_repetition__short(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 2,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 2,
                     },
-                    {
+                   {
                         .frame_config_index = 4,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -674,13 +677,13 @@ void single_node__static__cycle_repetition__short(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 2,
                     },
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 13,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 2,
                     },
-                    {
+                   {
                         .frame_config_index = 5,
                         .slot_id = 13,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -705,7 +708,7 @@ void single_node__static__cycle_repetition__long(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -716,7 +719,7 @@ void single_node__static__cycle_repetition__long(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -726,7 +729,7 @@ void single_node__static__cycle_repetition__long(void** state)
                             .frame_table = 1,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 12,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -737,7 +740,7 @@ void single_node__static__cycle_repetition__long(void** state)
                             .frame_table = 2,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 12,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -747,7 +750,7 @@ void single_node__static__cycle_repetition__long(void** state)
                             .frame_table = 3,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 13,
                         .payload_length = 64,
                         .base_cycle = 63,
@@ -758,7 +761,7 @@ void single_node__static__cycle_repetition__long(void** state)
                             .frame_table = 4,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 13,
                         .payload_length = 64,
                         .base_cycle = 63,
@@ -782,7 +785,7 @@ void single_node__static__cycle_repetition__long(void** state)
                     .payload = PAYLOAD_1,
                     .payload_len = strlen(PAYLOAD_1),
                 },
-                 {
+                {
                     .slot_id = 11,
                     .frame_config_index = 1,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
@@ -794,7 +797,7 @@ void single_node__static__cycle_repetition__long(void** state)
                     .payload = PAYLOAD_1,
                     .payload_len = strlen(PAYLOAD_1),
                 },
-                 {
+                {
                     .slot_id = 12,
                     .frame_config_index = 3,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
@@ -806,12 +809,13 @@ void single_node__static__cycle_repetition__long(void** state)
                     .payload = PAYLOAD_1,
                     .payload_len = strlen(PAYLOAD_1),
                 },
-                 {
+                {
                     .slot_id = 13,
                     .frame_config_index = 5,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 64,
         },
         .expect = {
@@ -823,13 +827,13 @@ void single_node__static__cycle_repetition__long(void** state)
                 .count = 16,
                 .list =  {
                     /* Cycle 0. */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -837,13 +841,13 @@ void single_node__static__cycle_repetition__long(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -852,13 +856,13 @@ void single_node__static__cycle_repetition__long(void** state)
                         .cycle = 0,
                     },
                     /* Cycle 16. */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 16,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -867,13 +871,13 @@ void single_node__static__cycle_repetition__long(void** state)
                         .cycle = 16,
                     },
                     /* Cycle 32. */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 32,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -882,13 +886,13 @@ void single_node__static__cycle_repetition__long(void** state)
                         .cycle = 32,
                     },
                     /* Cycle 48. */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 48,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -897,13 +901,13 @@ void single_node__static__cycle_repetition__long(void** state)
                         .cycle = 48,
                     },
                     /* Cycle 63. */
-                    {
+                   {
                         .frame_config_index = 4,
                         .slot_id = 13,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 63,
                     },
-                    {
+                   {
                         .frame_config_index = 5,
                         .slot_id = 13,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -912,13 +916,13 @@ void single_node__static__cycle_repetition__long(void** state)
                         .cycle = 63,
                     },
                     /* Cycle 64 (0). */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -926,13 +930,13 @@ void single_node__static__cycle_repetition__long(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -957,7 +961,7 @@ void single_node__static__transmit_mode(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -967,7 +971,7 @@ void single_node__static__transmit_mode(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 11,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -977,7 +981,7 @@ void single_node__static__transmit_mode(void** state)
                             .frame_table = 1,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 12,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -988,7 +992,7 @@ void single_node__static__transmit_mode(void** state)
                             .frame_table = 2,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 12,
                         .payload_length = 64,
                         .base_cycle = 0,
@@ -1012,7 +1016,7 @@ void single_node__static__transmit_mode(void** state)
                     .payload = PAYLOAD_1,
                     .payload_len = strlen(PAYLOAD_1),
                 },
-                 {
+                {
                     .slot_id = 11,
                     .frame_config_index = 1,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
@@ -1024,12 +1028,13 @@ void single_node__static__transmit_mode(void** state)
                     .payload = PAYLOAD_1,
                     .payload_len = strlen(PAYLOAD_1),
                 },
-                 {
+                {
                     .slot_id = 12,
                     .frame_config_index = 3,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 2,
         },
         .expect = {
@@ -1041,13 +1046,13 @@ void single_node__static__transmit_mode(void** state)
                 .count = 8,
                 .list = {
                     /* Cycle 0. */
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 11,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1055,13 +1060,13 @@ void single_node__static__transmit_mode(void** state)
                         .payload_len = strlen(PAYLOAD_1),
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1070,13 +1075,13 @@ void single_node__static__transmit_mode(void** state)
                         .cycle = 0,
                     },
                     /* Cycle 1. */
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 1,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1085,13 +1090,13 @@ void single_node__static__transmit_mode(void** state)
                         .cycle = 1,
                     },
                     /* Cycle 2. */
-                    {
+                   {
                         .frame_config_index = 2,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 2,
                     },
-                    {
+                   {
                         .frame_config_index = 3,
                         .slot_id = 12,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1116,7 +1121,7 @@ void single_node__dynamic__single_frame__tx_rx(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 39,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionTx,
@@ -1124,7 +1129,7 @@ void single_node__dynamic__single_frame__tx_rx(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 39,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionRx,
@@ -1151,7 +1156,8 @@ void single_node__dynamic__single_frame__tx_rx(void** state)
                     .slot_id = 39,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 0,
         },
         .expect = {
@@ -1162,13 +1168,13 @@ void single_node__dynamic__single_frame__tx_rx(void** state)
             .pdu = {
                 .count = 2,
                 .list = {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1193,7 +1199,7 @@ void single_node__dynamic__single_frame__mid_cycle(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 39,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionTx,
@@ -1201,7 +1207,7 @@ void single_node__dynamic__single_frame__mid_cycle(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 39,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionRx,
@@ -1229,7 +1235,8 @@ void single_node__dynamic__single_frame__mid_cycle(void** state)
                     .slot_id = 39,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 63,
         },
         .expect = {
@@ -1240,14 +1247,14 @@ void single_node__dynamic__single_frame__mid_cycle(void** state)
             .pdu = {
                 .count = 2,
                 .list = {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 7,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1273,7 +1280,7 @@ void single_node__dynamic__single_frame__end_cycle(void** state)
             },
             .frame_table = { .map ={
                 { // Node 0
-                    {
+                   {
                         .slot_id = 38+211,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionTx,
@@ -1281,7 +1288,7 @@ void single_node__dynamic__single_frame__end_cycle(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 38+211,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionRx,
@@ -1309,7 +1316,8 @@ void single_node__dynamic__single_frame__end_cycle(void** state)
                     .slot_id = 38+211,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 63,
         },
         .expect = {
@@ -1320,14 +1328,14 @@ void single_node__dynamic__single_frame__end_cycle(void** state)
             .pdu = {
                 .count = 2,
                 .list = {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 38+211,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 63,
                         .macrotick = 3350,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 38+211,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1353,7 +1361,7 @@ void single_node__dynamic__multi_frame__tx_rx(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 39,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionTx,
@@ -1361,7 +1369,7 @@ void single_node__dynamic__multi_frame__tx_rx(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 39,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionRx,
@@ -1369,7 +1377,7 @@ void single_node__dynamic__multi_frame__tx_rx(void** state)
                             .frame_table = 1,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 42,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionTx,
@@ -1377,7 +1385,7 @@ void single_node__dynamic__multi_frame__tx_rx(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 42,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionRx,
@@ -1416,7 +1424,8 @@ void single_node__dynamic__multi_frame__tx_rx(void** state)
                     .slot_id = 42,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 0,
         },
         .expect = {
@@ -1427,14 +1436,14 @@ void single_node__dynamic__multi_frame__tx_rx(void** state)
             .pdu = {
                 .count = 4,
                 .list = {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1443,14 +1452,14 @@ void single_node__dynamic__multi_frame__tx_rx(void** state)
                         .cycle = 0,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 42,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                         .macrotick = 2144,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 42,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1476,7 +1485,7 @@ void single_node__dynamic__transmit_mode(void** state)
             },
             .frame_table = { .map = {
                 { // Node 0
-                    {
+                   {
                         .slot_id = 39,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionTx,
@@ -1485,7 +1494,7 @@ void single_node__dynamic__transmit_mode(void** state)
                             .frame_table = 0,  /* Self index. */
                         },
                     },
-                    {
+                   {
                         .slot_id = 39,
                         .payload_length = 64,
                         .direction = NCodecPduFlexrayDirectionRx,
@@ -1512,7 +1521,8 @@ void single_node__dynamic__transmit_mode(void** state)
                     .slot_id = 39,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            },},},
+            }, },
+            },
             .cycles = 2,
         },
         .expect = {
@@ -1523,14 +1533,14 @@ void single_node__dynamic__transmit_mode(void** state)
             .pdu = {
                 .count = 6,
                 .list = {
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 0,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1539,14 +1549,14 @@ void single_node__dynamic__transmit_mode(void** state)
                         .cycle = 0,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 1,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
@@ -1555,14 +1565,14 @@ void single_node__dynamic__transmit_mode(void** state)
                         .cycle = 1,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 0,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusTransmitted,
                         .cycle = 2,
                         .macrotick = 2090,
                     },
-                    {
+                   {
                         .frame_config_index = 1,
                         .slot_id = 39,
                         .lpdu_status = NCodecPduFlexrayLpduStatusReceived,
