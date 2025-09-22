@@ -11,7 +11,7 @@
 #include <dse/ncodec/codec/ab/flexray/flexray.h>
 
 
-#define TEST_NODES  10
+#define TEST_NODES  4
 #define TEST_FRAMES 50
 #define TEST_PDUS   100
 
@@ -33,20 +33,29 @@ typedef struct {
     uint8_t     cycle;
     uint16_t    macrotick;
     bool        null_frame;
+
+    NCodecPduFlexrayNodeIdentifier node_ident;
 } TestPdu;
+
+typedef struct TestPduMap {
+    TestPdu map[TEST_NODES][TEST_FRAMES];
+} TestPduMap;
+typedef struct TestFrameMap {
+    NCodecPduFlexrayLpduConfig map[TEST_NODES][TEST_FRAMES];
+} TestFrameMap;
 
 typedef struct {
     /* Config */
     struct {
-        TestNode                   node[TEST_NODES];
-        NCodecPduFlexrayLpduConfig frame_table[TEST_NODES][TEST_FRAMES];
+        TestNode     node[TEST_NODES];
+        TestFrameMap frame_table;
     } config;
 
     /* Run Condition */
     struct {
-        bool    push_active;
-        uint8_t push_at_cycle;
-        TestPdu pdu[TEST_FRAMES];
+        bool       push_active;
+        uint8_t    push_at_cycle;
+        TestPduMap pdu_map;
 
         NCodecPdu status_pdu[TEST_NODES];
         Vector    pdu_list;

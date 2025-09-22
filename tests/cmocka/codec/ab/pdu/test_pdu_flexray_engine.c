@@ -100,8 +100,14 @@ void test_flexray__communication_parameters(void** state)
     FlexrayEngine* engine = &mock->engine;
     *engine = (FlexrayEngine){ .sim_step_size = SIM_STEP_SIZE };
 
+    NCodecPdu pdu = {
+        .transport_type = NCodecPduTransportTypeFlexray,
+        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
+    };
+
     // Check calculated parameters.
-    assert_int_equal(0, process_config(&config, engine));
+    pdu.transport.flexray.metadata.config = config;
+    assert_int_equal(0, process_config(&pdu, engine));
 
     assert_int_equal(200000, engine->microtick_per_cycle);
     assert_int_equal(3361, engine->macrotick_per_cycle);
@@ -139,13 +145,15 @@ void test_flexray__communication_parameters(void** state)
 
 
     // TMerge Config.
+    __log_level__ = LOG_FATAL;
     config.static_slot_length = 4;
-    assert_int_equal(-EBADE, process_config(&config, engine));
+    pdu.transport.flexray.metadata.config = config;
+    assert_int_equal(-EBADE, process_config(&pdu, engine));
     assert_int_equal(55, engine->static_slot_length_mt);
 
-
     config.bit_rate = 0; /* Null config / No config. */
-    assert_int_equal(0, process_config(&config, engine));
+    pdu.transport.flexray.metadata.config = config;
+    assert_int_equal(-EINVAL, process_config(&pdu, engine));
     assert_int_equal(55, engine->static_slot_length_mt);
 }
 
@@ -161,10 +169,15 @@ void test_flexray__engine_cycle__empty_frame_config(void** state)
     NCodecPduFlexrayLpduConfig* frame_table = frame_config__empty;
     config.frame_config.table = frame_table;
     config.frame_config.count = ARRAY_SIZE(frame_config__empty);
+    NCodecPdu pdu = {
+        .transport_type = NCodecPduTransportTypeFlexray,
+        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
+        .transport.flexray.metadata.config = config,
+    };
 
     FlexrayEngine* engine = &mock->engine;
     *engine = (FlexrayEngine){ 0 };
-    assert_int_equal(0, process_config(&config, engine));
+    assert_int_equal(0, process_config(&pdu, engine));
 
     CycleCheck checks[] = {
         { .slot = 1, .mt = 0 },
@@ -215,9 +228,14 @@ void test_flexray__engine_cycle__with_frame_config(void** state)
     };
     config.frame_config.table = frame_table;
     config.frame_config.count = ARRAY_SIZE(frame_table);
+    NCodecPdu pdu = {
+        .transport_type = NCodecPduTransportTypeFlexray,
+        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
+        .transport.flexray.metadata.config = config,
+    };
     FlexrayEngine* engine = &mock->engine;
     *engine = (FlexrayEngine){ 0 };
-    assert_int_equal(0, process_config(&config, engine));
+    assert_int_equal(0, process_config(&pdu, engine));
 
     CycleCheck checks[] = {
         { .slot = 1, .mt = 0 },
@@ -259,9 +277,14 @@ void test_flexray__engine_cycle__wrap(void** state)
     NCodecPduFlexrayLpduConfig* frame_table = frame_config__empty;
     config.frame_config.table = frame_table;
     config.frame_config.count = ARRAY_SIZE(frame_config__empty);
+    NCodecPdu pdu = {
+        .transport_type = NCodecPduTransportTypeFlexray,
+        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
+        .transport.flexray.metadata.config = config,
+    };
     FlexrayEngine* engine = &mock->engine;
     *engine = (FlexrayEngine){ 0 };
-    assert_int_equal(0, process_config(&config, engine));
+    assert_int_equal(0, process_config(&pdu, engine));
 
     CycleCheck checks[] = {
         { .slot = 1, .mt = 0 },
@@ -306,9 +329,14 @@ void test_flexray__engine_cycle__shift(void** state)
     NCodecPduFlexrayLpduConfig* frame_table = frame_config__empty;
     config.frame_config.table = frame_table;
     config.frame_config.count = ARRAY_SIZE(frame_config__empty);
+    NCodecPdu pdu = {
+        .transport_type = NCodecPduTransportTypeFlexray,
+        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
+        .transport.flexray.metadata.config = config,
+    };
     FlexrayEngine* engine = &mock->engine;
     *engine = (FlexrayEngine){ 0 };
-    assert_int_equal(0, process_config(&config, engine));
+    assert_int_equal(0, process_config(&pdu, engine));
 
     /* Shift into dynamic part should fail. */
     assert_int_equal(1, shift_cycle(engine, 55 * 38, 4, false));
@@ -795,8 +823,15 @@ void test_flexray__engine_txrx__frames(void** state)
         frame_table_1[0].base_cycle = checks[step].lpdu_rx.base;
         frame_table_1[0].cycle_repetition = checks[step].lpdu_rx.repeat;
         frame_table_1[0].status = checks[step].lpdu_rx.status;
-        assert_int_equal(0, process_config(&config_0, engine));
-        assert_int_equal(0, process_config(&config_1, engine));
+        NCodecPdu pdu = {
+            .transport_type = NCodecPduTransportTypeFlexray,
+            .transport.flexray.metadata_type =
+                NCodecPduFlexrayMetadataTypeConfig,
+        };
+        pdu.transport.flexray.metadata.config = config_0,
+        assert_int_equal(0, process_config(&pdu, engine));
+        pdu.transport.flexray.metadata.config = config_1,
+        assert_int_equal(0, process_config(&pdu, engine));
         assert_int_equal(0, shift_cycle(engine, checks[step].condition.mt,
                                 checks[step].condition.cycle, true));
 

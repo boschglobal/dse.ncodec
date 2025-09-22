@@ -32,6 +32,7 @@ int VectorSlotMapItemCompar(const void* left, const void* right)
 static inline int __merge_uint32(uint32_t* param, uint32_t v)
 {
     if (*param != 0 && *param != v) {
+        log_error("FlexRay config mismatch");
         return -EBADE;
     } else {
         *param = v;
@@ -39,11 +40,22 @@ static inline int __merge_uint32(uint32_t* param, uint32_t v)
     }
 }
 
-int process_config(NCodecPduFlexrayConfig* config, FlexrayEngine* engine)
+int process_config(NCodecPdu* pdu, FlexrayEngine* engine)
 {
-    if (config == NULL || engine == NULL) return -EINVAL;
-    if (config->bit_rate == NCodecPduFlexrayBitrateNone) return 0;
-    if (config->bit_rate > NCodecPduFlexrayBitrate2_5) return -EINVAL;
+    if (pdu == NULL || engine == NULL) return -EINVAL;
+    assert(pdu->transport_type == NCodecPduTransportTypeFlexray);
+    assert(pdu->transport.flexray.metadata_type ==
+           NCodecPduFlexrayMetadataTypeConfig);
+    NCodecPduFlexrayConfig* config = &pdu->transport.flexray.metadata.config;
+    if (config->bit_rate == NCodecPduFlexrayBitrateNone) {
+        log_error("FlexRay%s: Config: no bitrate", engine->log_id);
+        return -EINVAL;
+    }
+    if (config->bit_rate > NCodecPduFlexrayBitrate2_5) {
+        log_error("FlexRay%s: Config: bitrate not supported: %u",
+            engine->log_id, config->bit_rate);
+        return -EINVAL;
+    }
 
     int rc = 0;
     rc |= __merge_uint32(
@@ -132,41 +144,50 @@ int process_config(NCodecPduFlexrayConfig* config, FlexrayEngine* engine)
     engine->inhibit_null_frames = config->inhibit_null_frames;
 
     /* Configuration complete. */
-    log_info("FlexRay: Engine Config: sim_step_size=%f", engine->sim_step_size);
+    NCodecPduFlexrayNodeIdentifier node_ident = engine->node_ident;
+    NCodecPduFlexrayNodeIdentifier cnode_ident = config->node_ident;
+    log_info("FlexRay%s: Engine: ==== Configuration for Node:(%d:%d:%d) ====",
+        engine->log_id, cnode_ident.node.ecu_id, cnode_ident.node.cc_id,
+        cnode_ident.node.swc_id);
+    log_info("FlexRay%s: Engine: sim_step_size=%f", engine->log_id,
+        engine->sim_step_size);
 
-    log_info("FlexRay: Engine Config: microtick_per_cycle=%u",
+    log_info("FlexRay%s: Engine: microtick_per_cycle=%u", engine->log_id,
         engine->microtick_per_cycle);
-    log_info("FlexRay: Engine Config: macrotick_per_cycle=%u",
+    log_info("FlexRay%s: Engine: macrotick_per_cycle=%u", engine->log_id,
         engine->macrotick_per_cycle);
 
-    log_info("FlexRay: Engine Config: static_slot_length_mt=%u",
+    log_info("FlexRay%s: Engine: static_slot_length_mt=%u", engine->log_id,
         engine->static_slot_length_mt);
-    log_info("FlexRay: Engine Config: static_slot_count=%u",
+    log_info("FlexRay%s: Engine: static_slot_count=%u", engine->log_id,
         engine->static_slot_count);
-    log_info("FlexRay: Engine Config: minislot_length_mt=%u",
+    log_info("FlexRay%s: Engine: minislot_length_mt=%u", engine->log_id,
         engine->minislot_length_mt);
-    log_info(
-        "FlexRay: Engine Config: minislot_count=%u", engine->minislot_count);
-    log_info("FlexRay: Engine Config: static_slot_payload_length=%u",
+    log_info("FlexRay%s: Engine: minislot_count=%u", engine->log_id,
+        engine->minislot_count);
+    log_info("FlexRay%s: Engine: static_slot_payload_length=%u", engine->log_id,
         engine->static_slot_payload_length);
 
-    log_info("FlexRay: Engine Config: macro2micro=%u", engine->macro2micro);
-    log_info("FlexRay: Engine Config: microtick_ns=%u", engine->microtick_ns);
-    log_info("FlexRay: Engine Config: macrotick_ns=%u", engine->macrotick_ns);
-    log_info("FlexRay: Engine Config: offset_static_mt=%u",
+    log_info("FlexRay%s: Engine: macro2micro=%u", engine->log_id,
+        engine->macro2micro);
+    log_info("FlexRay%s: Engine: microtick_ns=%u", engine->log_id,
+        engine->microtick_ns);
+    log_info("FlexRay%s: Engine: macrotick_ns=%u", engine->log_id,
+        engine->macrotick_ns);
+    log_info("FlexRay%s: Engine: offset_static_mt=%u", engine->log_id,
         engine->offset_static_mt);
-    log_info("FlexRay: Engine Config: offset_dynamic_mt=%u",
+    log_info("FlexRay%s: Engine: offset_dynamic_mt=%u", engine->log_id,
         engine->offset_dynamic_mt);
-    log_info("FlexRay: Engine Config: offset_network_mt=%u",
+    log_info("FlexRay%s: Engine: offset_network_mt=%u", engine->log_id,
         engine->offset_network_mt);
-    log_info("FlexRay: Engine Config: inhibit_null_frames=%u",
+    log_info("FlexRay%s: Engine: inhibit_null_frames=%u", engine->log_id,
         engine->inhibit_null_frames);
-    log_info("FlexRay: Engine Config: Frame Table: count=%u",
+    log_info("FlexRay%s: Engine: Frame Table: count=%u", engine->log_id,
         config->frame_config.count);
     for (size_t i = 0; i < config->frame_config.count; i++) {
-        log_info("FlexRay: Engine Config: Frame Table: [%u] LPDU %04x "
+        log_info("FlexRay%s: Engine: Frame Table: [%u] LPDU %04x "
                  "base=%u, rep=%u, dir=%u, tx_mode=%u, inhibit_null=%d",
-            i, config->frame_config.table[i].slot_id,
+            engine->log_id, i, config->frame_config.table[i].slot_id,
             config->frame_config.table[i].base_cycle,
             config->frame_config.table[i].cycle_repetition,
             config->frame_config.table[i].direction,
@@ -181,11 +202,11 @@ int calculate_budget(FlexrayEngine* engine, double step_size)
 {
     if (engine == NULL) return -EINVAL;
     if (engine->macrotick_ns == 0) {
-        log_error("engine->macrotick_ns not configured");
+        log_error("engine->macrotick_ns not configured", engine->log_id);
         return -EINVAL;
     }
     if (engine->macro2micro == 0) {
-        log_error("engine->macro2micro not configured");
+        log_error("engine->macro2micro not configured", engine->log_id);
         return -EINVAL;
     }
 
@@ -212,8 +233,8 @@ static void process_slot(FlexrayEngine* engine)
         return;
     }
 
-    log_debug("FlexRay: Process slot: %u (cycle=%u, mt=%u) len=%u",
-        engine->pos_slot, engine->pos_cycle, engine->pos_mt,
+    log_debug("FlexRay%s: Process slot: %u (cycle=%u, mt=%u) len=%u",
+        engine->log_id, engine->pos_slot, engine->pos_cycle, engine->pos_mt,
         vector_len(&slot_map_item->lpdus));
 
     /* Search for Tx and Rx LPDUs in this slot. */
@@ -231,8 +252,9 @@ static void process_slot(FlexrayEngine* engine)
                         lpdu_item->lpdu_config.cycle_repetition ==
                     lpdu_item->lpdu_config.base_cycle) {
                     tx_lpdu = lpdu_item;
-                    log_debug("FlexRay:   Tx LPDU Identified (static): "
+                    log_debug("FlexRay%s:   Tx LPDU Identified (static): "
                               "index=%u, base=%u, repeat=%u, status=%u",
+                        engine->log_id,
                         lpdu_item->lpdu_config.index.frame_table,
                         lpdu_item->lpdu_config.base_cycle,
                         lpdu_item->lpdu_config.cycle_repetition,
@@ -247,9 +269,10 @@ static void process_slot(FlexrayEngine* engine)
                 }
             } else if (engine->pos_mt < engine->offset_network_mt) {
                 /* Dynamic Part. */
-                log_debug("FlexRay:   Tx LPDU Identified (dynamic): index=%u, "
-                          "status=%u",
-                    lpdu_item->lpdu_config.index.frame_table,
+                log_debug(
+                    "FlexRay%s:   Tx LPDU Identified (dynamic): index=%u, "
+                    "status=%u",
+                    engine->log_id, lpdu_item->lpdu_config.index.frame_table,
                     lpdu_item->lpdu_config.status);
                 tx_lpdu = lpdu_item;
             }
@@ -267,8 +290,8 @@ static void process_slot(FlexrayEngine* engine)
             tx_lpdu->lpdu_config.status = NCodecPduFlexrayLpduStatusTransmitted;
         }
         if (tx_lpdu->payload == NULL) {
-            log_debug("FlexRay:   LPDU %04x (len=%u) no payload available",
-                tx_lpdu->lpdu_config.slot_id,
+            log_debug("FlexRay%s:   LPDU %04x (len=%u) no payload available",
+                engine->log_id, tx_lpdu->lpdu_config.slot_id,
                 tx_lpdu->lpdu_config.payload_length);
         }
         tx_lpdu->cycle = engine->pos_cycle;
@@ -300,8 +323,9 @@ static void process_slot(FlexrayEngine* engine)
                             lpdu_item->lpdu_config.cycle_repetition ==
                         lpdu_item->lpdu_config.base_cycle) {
                         rx_lpdu = lpdu_item;
-                        log_debug("FlexRay:   Rx LPDU Identified (static): "
+                        log_debug("FlexRay%s:   Rx LPDU Identified (static): "
                                   "index=%u, base=%u, repeat=%u, status=%u",
+                            engine->log_id,
                             lpdu_item->lpdu_config.index.frame_table,
                             lpdu_item->lpdu_config.base_cycle,
                             lpdu_item->lpdu_config.cycle_repetition,
@@ -309,8 +333,9 @@ static void process_slot(FlexrayEngine* engine)
                     }
                 } else if (engine->pos_mt < engine->offset_network_mt) {
                     /* Dynamic Part. */
-                    log_debug("FlexRay:   Rx LPDU Identified (dynamic): "
+                    log_debug("FlexRay%s:   Rx LPDU Identified (dynamic): "
                               "index=%u, status=%u",
+                        engine->log_id,
                         lpdu_item->lpdu_config.index.frame_table,
                         lpdu_item->lpdu_config.status);
                     rx_lpdu = lpdu_item;
@@ -325,8 +350,8 @@ static void process_slot(FlexrayEngine* engine)
                     rx_lpdu->cycle = engine->pos_cycle;
                     rx_lpdu->macrotick = engine->pos_mt;
                     rx_lpdu->null_frame = true;
-                    log_debug("FlexRay:   LPDU %04x: Rx <- NULL",
-                        rx_lpdu->lpdu_config.slot_id);
+                    log_debug("FlexRay%s:   LPDU %04x: Rx <- NULL",
+                        engine->log_id, rx_lpdu->lpdu_config.slot_id);
                     vector_push(&engine->txrx_list, &rx_lpdu);
                 }
             } else {
@@ -342,8 +367,8 @@ static void process_slot(FlexrayEngine* engine)
                         len = tx_lpdu->lpdu_config.payload_length;
                     }
                     log_debug(
-                        "FlexRay:   LPDU %04x: Rx <- Tx: payload_length=%u",
-                        tx_lpdu->lpdu_config.slot_id, len);
+                        "FlexRay%s:   LPDU %04x: Rx <- Tx: payload_length=%u",
+                        engine->log_id, tx_lpdu->lpdu_config.slot_id, len);
                     memset(rx_lpdu->payload + len, 0,
                         rx_lpdu->lpdu_config.payload_length - len);
                     memcpy(rx_lpdu->payload, tx_lpdu->payload, len);

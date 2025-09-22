@@ -24,6 +24,7 @@ static void _decode_flexray_config(
     ns(FlexrayConfig_table_t) fc_msg =
         (ns(FlexrayConfig_table_t))ns(FlexrayMetadata_metadata(fr));
 
+    /* Force the config node_ident. */
     c->node_ident = _pdu->transport.flexray.node_ident;
 
     c->vcn_count =

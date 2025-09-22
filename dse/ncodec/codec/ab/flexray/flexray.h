@@ -12,6 +12,8 @@
 #include <dse/ncodec/interface/pdu.h>
 #include <dse/ncodec/schema/abs/stream/pdu_builder.h>
 
+#define FLEXRAY_LOG_ID_LEN 20
+
 typedef struct FlexrayNodeState {
     NCodecPduFlexrayNodeIdentifier node_ident;
 
@@ -62,6 +64,8 @@ typedef struct FlexrayEngine {
     Vector slot_map;
     Vector txrx_list;
     Vector config_list; /* Storage for NCodecPduFlexrayLpduConfig tables. */
+
+    const char* log_id;
 } FlexrayEngine;
 
 
@@ -89,10 +93,12 @@ typedef struct FlexrayBusModel {
 
     FlexrayEngine engine;
     FlexrayState  state;  // FIXME: array for chA chB
+
+    const char log_id[FLEXRAY_LOG_ID_LEN];
 } FlexrayBusModel;
 
 
-int  process_config(NCodecPduFlexrayConfig* config, FlexrayEngine* engine);
+int  process_config(NCodecPdu* pdu, FlexrayEngine* engine);
 int  calculate_budget(FlexrayEngine* engine, double step_size);
 int  consume_slot(FlexrayEngine* engine);
 void release_config(FlexrayEngine* engine);
