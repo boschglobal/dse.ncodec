@@ -7,9 +7,9 @@ cmake_minimum_required(VERSION 3.21)
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 set(VERSION "$ENV{PACKAGE_VERSION}")
 
-project(Fmi
+project(NCodec
     VERSION ${VERSION}
-    DESCRIPTION "Dynamic Simulation Environment - FMI Library"
+    DESCRIPTION "Dynamic Simulation Environment - Network Codec Library"
     HOMEPAGE_URL "$ENV{PROJECT_URL}"
 )
 
@@ -35,9 +35,9 @@ add_compile_options(${C_CXX_WARNING_FLAGS})
 add_compile_definitions(DLL_BUILD)
 
 
-set(REPO_DIR $ENV{REPO_DIR})
-set(DSE_NCODEC_SOURCE_DIR $ENV{REPO_DIR}/$ENV{SRC_DIR})
-set(DSE_NCODEC_INCLUDE_DIR ${REPO_DIR})
+set(REPO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(DSE_NCODEC_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(DSE_NCODEC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 
 # External Project - DSE C Lib
@@ -49,7 +49,7 @@ FetchContent_Declare(dse_clib
     SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/dse.clib"
 )
 FetchContent_MakeAvailable(dse_clib)
-set(DSE_CLIB_SOURCE_DIR ${dse_clib_SOURCE_DIR}/dse)
+set(DSE_CLIB_SOURCE_DIR "${dse_clib_SOURCE_DIR}/dse")
 set(DSE_CLIB_INCLUDE_DIR "${DSE_CLIB_SOURCE_DIR}/..")
 
 

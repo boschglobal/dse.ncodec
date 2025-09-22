@@ -40,6 +40,7 @@ extern NCodecPduFlexrayStatus get_status(NCODEC* nc);
 
 void do_step(double simulation_time)
 {
+    NCodecPduFlexrayStatus fr_status = {};
     /* Power up the FlexRay transceiver of Communication Controller 0. */
     if (board_get_power_state(PIN_FR_CC0_TRCV) != PowerOff) {
         /* The transceiver will enter its default "power on" state and listen
@@ -50,7 +51,7 @@ void do_step(double simulation_time)
     }
 
     /* Get the Flexray Bus status from NCodec. */
-    NCodecPduFlexrayStatus fr_status = get_status(nc);
+    fr_status = get_status(nc);
     if (fr_status.channel[NCodecPduFlexrayChannelStatusA].tcvr_state ==
         NCodecPduFlexrayTransceiverStateNoSignal) {
         /* The ncodec_read() did not return a status metadata block. */

@@ -7,9 +7,9 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <dse/clib/collections/vector.h>
 #include <dse/ncodec/schema/abs/stream/flatbuffers_common_reader.h>
 #include <dse/ncodec/schema/abs/stream/flatbuffers_common_builder.h>
+#include <dse/ncodec/codec/ab/vector.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/interface/pdu.h>
 

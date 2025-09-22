@@ -6,7 +6,7 @@
 #include <dse/logger.h>
 #include <errno.h>
 #include <stdio.h>
-#include <dse/clib/collections/vector.h>
+#include <dse/ncodec/codec/ab/vector.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/stream/stream.h>
