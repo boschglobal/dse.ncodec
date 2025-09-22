@@ -7,6 +7,7 @@
 #include <string.h>
 #include <errno.h>
 #include <dse/ncodec/codec.h>
+#include <dse/ncodec/interface/frame.h>
 #include <dse/ncodec/stream/stream.h>
 
 

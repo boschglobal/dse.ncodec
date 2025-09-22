@@ -7,6 +7,8 @@
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/stream/stream.h>
+#include <dse/ncodec/interface/frame.h>
+#include <dse/ncodec/interface/pdu.h>
 
 
 #define UNUSED(x)     ((void)x)
@@ -190,6 +192,34 @@ void test_codec_config(void** state)
             .int_value = 8,
             .offset_value = offsetof(ABCodecInstance, ecu_id_str),
             .offset_int_value = offsetof(ABCodecInstance, ecu_id) },
+        { .name = "cc_id",
+            .value = "9",
+            .int_value = 9,
+            .offset_value = offsetof(ABCodecInstance, cc_id_str),
+            .offset_int_value = offsetof(ABCodecInstance, cc_id) },
+        { .name = "model",
+            .value = "flexray",
+            .offset_value = offsetof(ABCodecInstance, model),
+            .offset_int_value = 0 },
+        { .name = "pwr",
+            .value = "on",
+            .offset_value = offsetof(ABCodecInstance, pwr),
+            .offset_int_value = 0 },
+        { .name = "vcn",
+            .value = "12",
+            .int_value = 12,
+            .offset_value = offsetof(ABCodecInstance, vcn_count_str),
+            .offset_int_value = offsetof(ABCodecInstance, vcn_count) },
+        { .name = "poca",
+            .value = "4",
+            .int_value = 4,
+            .offset_value = offsetof(ABCodecInstance, poc_state_cha_str),
+            .offset_int_value = offsetof(ABCodecInstance, poc_state_cha) },
+        { .name = "pocb",
+            .value = "2",
+            .int_value = 2,
+            .offset_value = offsetof(ABCodecInstance, poc_state_chb_str),
+            .offset_int_value = offsetof(ABCodecInstance, poc_state_chb) },
         /* Bad integer values. */
         { .name = "bus_id",
             .value = "seven",
@@ -260,6 +290,12 @@ void test_codec_stat(void** state)
         { .index = 6, .name = "interface_id", .value = "3" },
         { .index = 7, .name = "swc_id", .value = "4" },
         { .index = 8, .name = "ecu_id", .value = "5" },
+        { .index = 9, .name = "cc_id", .value = "6" },
+        { .index = 10, .name = "model", .value = "flexray" },
+        { .index = 11, .name = "pwr", .value = "on" },
+        { .index = 12, .name = "vcn", .value = "7" },
+        { .index = 13, .name = "poca", .value = "4" },
+        { .index = 14, .name = "pocb", .value = "2" },
         { .index = -1, .name = "foo", .value = "bar" },
     };
 

@@ -26,6 +26,8 @@ extern int32_t pdu_read(NCODEC* nc, NCodecMessage* msg);
 extern int32_t pdu_flush(NCODEC* nc);
 extern int32_t pdu_truncate(NCODEC* nc);
 
+extern void flexray_bus_model_create(ABCodecInstance* nc);
+
 
 char* trim(char* s)
 {
@@ -38,6 +40,18 @@ char* trim(char* s)
         e--;
     *e = '\0';
     return s;
+}
+
+static void __free_item(void* item, void* data)
+{
+    UNUSED(data);
+    void** _item = item;
+    free(*_item);
+}
+
+void clear_free_list(ABCodecInstance* _nc)
+{
+    vector_clear(&_nc->free_list, __free_item, NULL);
 }
 
 
@@ -54,7 +68,43 @@ void free_codec(ABCodecInstance* _nc)
     if (_nc->interface_id_str) free(_nc->interface_id_str);
     if (_nc->swc_id_str) free(_nc->swc_id_str);
     if (_nc->ecu_id_str) free(_nc->ecu_id_str);
+    if (_nc->cc_id_str) free(_nc->cc_id_str);
+    if (_nc->model) free(_nc->model);
+    if (_nc->pwr) free(_nc->pwr);
+    if (_nc->vcn_count_str) free(_nc->vcn_count_str);
+    if (_nc->poc_state_cha_str) free(_nc->poc_state_cha_str);
+    if (_nc->poc_state_chb_str) free(_nc->poc_state_chb_str);
+
     if (_nc->fbs_builder_initalized) flatcc_builder_clear(&_nc->fbs_builder);
+
+    /* The Bus Model NCodec object is a shallow copy, only free the
+    specifically allocated resources. */
+    if (_nc->reader.bus_model.nc != NULL) {
+        if (_nc->reader.bus_model.nc->fbs_builder_initalized) {
+            flatcc_builder_clear(&_nc->reader.bus_model.nc->fbs_builder);
+        }
+        _nc->reader.bus_model.nc->c.stream->close(
+            (NCODEC*)_nc->reader.bus_model.nc);
+        free(_nc->reader.bus_model.nc);
+    }
+    if (_nc->reader.bus_model.model != NULL) {
+        if (_nc->reader.bus_model.vtable.close) {
+            _nc->reader.bus_model.vtable.close(&_nc->reader.bus_model);
+        }
+        free(_nc->reader.bus_model.model);
+    }
+
+    clear_free_list(_nc);
+    vector_reset(&_nc->free_list);
+}
+
+void create_bus_model(ABCodecInstance* nc)
+{
+    if (strcmp(nc->type, "pdu") == 0) {
+        if (nc->model && strcmp(nc->model, "flexray") == 0) {
+            flexray_bus_model_create(nc);
+        }
+    }
 }
 
 
@@ -116,6 +166,40 @@ int32_t codec_config(NCODEC* nc, NCodecConfigItem item)
         _nc->ecu_id = strtoul(item.value, NULL, 10);
         return 0;
     }
+    if (strcmp(item.name, "cc_id") == 0) {
+        if (_nc->cc_id_str) free(_nc->cc_id_str);
+        _nc->cc_id_str = strdup(item.value);
+        _nc->cc_id = strtoul(item.value, NULL, 10);
+        return 0;
+    }
+    if (strcmp(item.name, "model") == 0) {
+        if (_nc->model) free(_nc->model);
+        _nc->model = strdup(item.value);
+        return 0;
+    }
+    if (strcmp(item.name, "pwr") == 0) {
+        if (_nc->pwr) free(_nc->pwr);
+        _nc->pwr = strdup(item.value);
+        return 0;
+    }
+    if (strcmp(item.name, "vcn") == 0) {
+        if (_nc->vcn_count_str) free(_nc->vcn_count_str);
+        _nc->vcn_count_str = strdup(item.value);
+        _nc->vcn_count = strtoul(item.value, NULL, 10);
+        return 0;
+    }
+    if (strcmp(item.name, "poca") == 0) {
+        if (_nc->poc_state_cha_str) free(_nc->poc_state_cha_str);
+        _nc->poc_state_cha_str = strdup(item.value);
+        _nc->poc_state_cha = strtoul(item.value, NULL, 10);
+        return 0;
+    }
+    if (strcmp(item.name, "pocb") == 0) {
+        if (_nc->poc_state_chb_str) free(_nc->poc_state_chb_str);
+        _nc->poc_state_chb_str = strdup(item.value);
+        _nc->poc_state_chb = strtoul(item.value, NULL, 10);
+        return 0;
+    }
 
     return -EINVAL;
 }
@@ -166,6 +250,30 @@ NCodecConfigItem codec_stat(NCODEC* nc, int32_t* index)
     case 8:
         name = "ecu_id";
         value = _nc->ecu_id_str;
+        break;
+    case 9:
+        name = "cc_id";
+        value = _nc->cc_id_str;
+        break;
+    case 10:
+        name = "model";
+        value = _nc->model;
+        break;
+    case 11:
+        name = "pwr";
+        value = _nc->pwr;
+        break;
+    case 12:
+        name = "vcn";
+        value = _nc->vcn_count_str;
+        break;
+    case 13:
+        name = "poca";
+        value = _nc->poc_state_cha_str;
+        break;
+    case 14:
+        name = "pocb";
+        value = _nc->poc_state_chb_str;
         break;
     default:
         *index = -1;
@@ -270,6 +378,9 @@ NCODEC* ncodec_create(const char* mime_type)
     _nc->fbs_builder.buffer_flags |= flatcc_builder_with_size;
     _nc->fbs_stream_initalized = false;
     _nc->fbs_builder_initalized = true;
+
+    /* Create any Bus Model. */
+    create_bus_model(_nc);
 
     return (void*)_nc;
 

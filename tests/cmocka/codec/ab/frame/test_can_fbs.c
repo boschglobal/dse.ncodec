@@ -8,7 +8,7 @@
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/stream/stream.h>
-
+#include <dse/ncodec/interface/frame.h>
 
 #define UNUSED(x)     ((void)x)
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
@@ -18,6 +18,15 @@
 extern NCODEC* ncodec_create(const char* mime_type);
 extern int32_t stream_read(NCODEC* nc, uint8_t** data, size_t* len, int pos_op);
 
+NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream)
+{
+    NCODEC* nc = ncodec_create(mime_type);
+    if (nc) {
+        NCodecInstance* _nc = (NCodecInstance*)nc;
+        _nc->stream = stream;
+    }
+    return nc;
+}
 
 typedef struct Mock {
     NCODEC* nc;

@@ -5,16 +5,17 @@
 ###############
 ## Docker Images.
 GCC_BUILDER_IMAGE ?= ghcr.io/boschglobal/dse-gcc-builder:main
+DSE_CLANG_FORMAT_IMAGE ?= ghcr.io/boschglobal/dse-clang-format:main
 
 
 ###############
 ## External Projects.
 ABS_REPO ?= https://github.com/boschglobal/automotive-bus-schema
-ABS_VERSION ?= 1.0.6
+ABS_VERSION ?= 1.0.14
 export ABS_URL ?= $(ABS_REPO)/releases/download/v$(ABS_VERSION)/automotive-bus-schema.tar.gz
 
 DSE_CLIB_REPO ?= https://github.com/boschglobal/dse.clib
-DSE_CLIB_VERSION ?= 1.0.31
+DSE_CLIB_VERSION ?= 1.0.35
 export DSE_CLIB_URL ?= $(DSE_CLIB_REPO)/archive/refs/tags/v$(DSE_CLIB_VERSION).zip
 
 
@@ -43,6 +44,7 @@ PACKAGE_NAME = dse.ncodec
 PACKAGE_NAME_LC = dse.ncodec
 PACKAGE_PATH = $(NAMESPACE)/dist
 
+#		--user $$(id -u):$$(id -g) \
 
 ifneq ($(CI), true)
 	DOCKER_BUILDER_CMD := docker run -it --rm \
@@ -57,6 +59,11 @@ ifneq ($(CI), true)
 		$(GCC_BUILDER_IMAGE)
 endif
 
+DSE_CLANG_FORMAT_CMD := docker run -it --rm \
+	--user $$(id -u):$$(id -g) \
+	--volume $$(pwd):/tmp/code \
+	${DSE_CLANG_FORMAT_IMAGE}
+
 
 default: build
 
@@ -67,6 +74,13 @@ test: test_cmocka
 
 update:
 	@${DOCKER_BUILDER_CMD} $(MAKE) do-update
+
+.PHONY: format
+format:
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/ab
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/interface
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/stream
+	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
 
 clean:
 	@${DOCKER_BUILDER_CMD} $(MAKE) do-clean

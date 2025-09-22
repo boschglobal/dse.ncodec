@@ -89,11 +89,11 @@ static void get_msg_from_stream(NCODEC* nc)
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
 
     /* Reset the message (and frame) parsing state. */
-    _nc->msg_ptr = NULL;
-    _nc->msg_len = 0;
-    _nc->vector = NULL;
-    _nc->vector_idx = 0;
-    _nc->vector_len = 0;
+    _nc->reader.state.msg_ptr = NULL;
+    _nc->reader.state.msg_len = 0;
+    _nc->reader.state.vector = NULL;
+    _nc->reader.state.vector_idx = 0;
+    _nc->reader.state.vector_len = 0;
 
     /* Next message? */
     uint8_t* buffer;
@@ -111,8 +111,8 @@ static void get_msg_from_stream(NCODEC* nc)
         _nc->c.stream->seek(nc, msg_len + 4, NCODEC_SEEK_CUR);
         /* Set the parsing state. */
         if (flatbuffers_has_identifier(msg_ptr, flatbuffers_identifier)) {
-            _nc->msg_ptr = msg_ptr;
-            _nc->msg_len = msg_len;
+            _nc->reader.state.msg_ptr = msg_ptr;
+            _nc->reader.state.msg_len = msg_len;
             return;
         }
         /* Next message in the stream. */
@@ -128,17 +128,17 @@ static void get_vector_from_message(NCODEC* nc)
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
 
     /* Reset the frame parsing state. */
-    _nc->vector = NULL;
-    _nc->vector_idx = 0;
-    _nc->vector_len = 0;
+    _nc->reader.state.vector = NULL;
+    _nc->reader.state.vector_idx = 0;
+    _nc->reader.state.vector_len = 0;
 
     /* Guard conditions. */
-    if (_nc->msg_ptr == NULL) return;
+    if (_nc->reader.state.msg_ptr == NULL) return;
 
     /* Decode the vector of frames. */
-    ns(Stream_table_t) stream = ns(Stream_as_root(_nc->msg_ptr));
-    _nc->vector = ns(Stream_frames(stream));
-    _nc->vector_len = ns(Frame_vec_len(_nc->vector));
+    ns(Stream_table_t) stream = ns(Stream_as_root(_nc->reader.state.msg_ptr));
+    _nc->reader.state.vector = ns(Stream_frames(stream));
+    _nc->reader.state.vector_len = ns(Frame_vec_len(_nc->reader.state.vector));
 }
 
 
@@ -156,11 +156,13 @@ int32_t can_read(NCODEC* nc, NCodecMessage* msg)
     _msg->buffer = NULL;
 
     /* Process the stream/frames. */
-    if (_nc->msg_ptr == NULL) get_msg_from_stream(nc);
-    if (_nc->vector == NULL) get_vector_from_message(nc);
-    while (_nc->msg_ptr && _nc->vector) {
-        for (uint32_t _vi = _nc->vector_idx; _vi < _nc->vector_len; _vi++) {
-            ns(Frame_table_t) frame = ns(Frame_vec_at(_nc->vector, _vi));
+    if (_nc->reader.state.msg_ptr == NULL) get_msg_from_stream(nc);
+    if (_nc->reader.state.vector == NULL) get_vector_from_message(nc);
+    while (_nc->reader.state.msg_ptr && _nc->reader.state.vector) {
+        for (uint32_t _vi = _nc->reader.state.vector_idx;
+             _vi < _nc->reader.state.vector_len; _vi++) {
+            ns(Frame_table_t) frame =
+                ns(Frame_vec_at(_nc->reader.state.vector, _vi));
             if (!ns(Frame_f_is_present(frame))) continue;
             ns(FrameTypes_union_type_t) frame_type = ns(Frame_f_type(frame));
             if (frame_type != ns(FrameTypes_CanFrame)) continue;
@@ -185,13 +187,13 @@ int32_t can_read(NCODEC* nc, NCodecMessage* msg)
             _msg->sender.interface_id = ns(CanFrame_interface_id(can_frame));
 
             /* ... but don't forget to save the vector index either. */
-            _nc->vector_idx = _vi + 1;
+            _nc->reader.state.vector_idx = _vi + 1;
             return _msg->len;
         }
 
         /* Next msg/vector? */
         get_msg_from_stream(nc);
-        if (_nc->msg_ptr) get_vector_from_message(nc);
+        if (_nc->reader.state.msg_ptr) get_vector_from_message(nc);
     }
     /* No messages in stream. */
     _nc->c.stream->seek(nc, 0, NCODEC_SEEK_END);

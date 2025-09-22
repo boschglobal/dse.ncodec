@@ -3,11 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <stdio.h>
+#include <dse/logger.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/interface/pdu.h>
 
 #define UNUSED(x) ((void)x)
 
+uint8_t __log_level__ = LOG_QUIET; /* LOG_QUIET LOG_INFO LOG_DEBUG LOG_TRACE */
 
 static void trace_read(NCODEC* nc, NCodecMessage* m)
 {

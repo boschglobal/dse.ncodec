@@ -14,7 +14,7 @@
     Types relating to the implementation of the Stream/Frame interface of
     the NCodec API for transmission of CAN Messages.
 
-    The root type is `NCodecCanMessage` which may be substitued for the
+    The root type is `NCodecCanMessage` which may be substituted for the
     `NCodecMessage` type when calling NCodec API methods (e.g.
    `ncodec_write()`).
 */
