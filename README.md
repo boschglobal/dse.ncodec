@@ -11,186 +11,172 @@ SPDX-License-Identifier: Apache-2.0
 ![GitHub](https://img.shields.io/github/license/boschglobal/dse.ncodec)
 
 
-* [Architecture Overview](#architecture-overview)
-* [Simplified API Example](#api-example)
-* [Project Structure](#architecture-overview)
-* Examples:
-  * [Generalised example of Codec API Interfaces](dse/ncodec/examples/codec/README.md)
-  * [Integration for AB Codec with PDU Stream and FMI 2 String Variables](dse/ncodec/examples/ab-codec-fmi/README.md)
-* Codecs:
-  * [AB Codec - PDU & Frame Schemas with Stream Interfaces; for Automotive Bus Networks](#automotive-bus-codec)
-* Integrations:
-  * [DSE Model C - AB Codec with custom stream implementation](https://github.com/boschglobal/dse.modelc/blob/main/dse/modelc/model/ncodec.c) (additional [trace](https://github.com/boschglobal/dse.modelc/blob/main/dse/modelc/model/trace.c) code)
-  * [DSE FMI - AB Codec with specialised integration and tracing support](https://github.com/boschglobal/dse.fmi/blob/main/dse/fmu/ncodec.c)
-
-
 ## Introduction
 
-The Network Codec Library of the Dynamic Simulation Environment (DSE) Core
-Platform provides a solution for exchanging of Network Messages in simulations.
-The MIMEtype based mechanism can be used to exchange any kind of binary
-data between models in a simulation.
-
-A Codec implementation representing the [Automotive Bus
-Schema](https://github.com/boschglobal/automotive-bus-schema/blob/main/schemas/stream/frame.fbs)
-is included with the library, as well as supporting [API
-documentation](https://boschglobal.github.io/dse.doc/apis/ncodec).
-
-
-
-
-### Architecture Overview
+Network Codec Library (NCodec) of the Dynamic Simulation Environment (DSE) Core Platform.
 
 ![NCodec Simple Arch](doc/static/ncodec-simple-arch.png)
 
-
-### API Example
-
-```c
-void do_network(NCODEC* nc) {
-    NCodecCanMessage   msg = {};
-
-    /* Message RX. */
-    while (1) {
-        if (ncodec_read(m->nc, &msg) < 0) break;
-        put_rx_frame_to_queue(msg.frame_id, msg.buffer, msg.len);
-    }
-    ncodec_truncate(m->nc); /* Clear the stream buffer. */
-
-    /* Message TX. */
-    while (get_tx_frame_from_queue(&msg.frame_id, &msg.buffer, &msg.len)) {
-        ncodec_write(m->nc, &msg);
-    }
-    ncodec_flush(m->nc); /* Finalise the stream buffer. */
-}
-
-```
+__Codecs__: [AB Codec](#ab-codec)
+<br/>
+__Integrations__:
+[DSE ModelC][dse_modelc] ([trace][dse_modelc_trace] code)
+/ [DSE FMI][dse_fmi] (esp. FMI 2)
+/ [DSE Network][dse_network]
 
 
 ### Project Structure
 
 ```text
-doc/                        <-- Documentation including generated content.
-dse
-└── ncodec
-    └── codec/ab
-    │   ├── codec.c         <-- Automotive-Bus (AB) Codec implementation.
-    │   ├── codec.h         <-- Automotive-Bus (AB) Codec headers.
-    │   ├── frame_fbs.c     <-- Frame stream (CAN w. Flatbuffers encoding).
-    │   └── pdu_fbs.c       <-- PDU stream (CAN/FlexRay/IP/SOMEIP w. Flatbuffers encoding).
-    ├── examples
-    │   └── codec/          <-- Codec example (generic API implementation).
-    │   └── ab-codec-fmi/   <-- AB Codec basis integration for FMI (esp. FMI 2).
-    │   └── flexray/        <-- AB Codec FlexRay interface and virtual bus.
-    ├── schema
-    │   └── abs/            <-- Automotive-Bus-Schema generated code.
-    ├── stream
-    │   └── buffer.c        <-- Buffer based stream implementation.
-    ├── codec.c             <-- NCodec API implementation.
-    └── codec.h             <-- NCodec API headers.
-extra
-└── external/               <-- External library build infrastructure.
-licenses/                   <-- Third Party Licenses.
-tests
-└── cmocka
-    └── codec/ab/           <-- Automotive-Bus Codec unit tests.
-Makefile                    <-- Repo level Makefile.
+dse.ncodec
+└── doc/content         <-- Content for documentation systems
+└── dse/ncodec
+    └── codec/ab        <-- Automotive-Bus (AB) Codec implementation
+        └── flexray     <-- FlexRay Bus Model implementation
+    └── interface
+        └── frame.h     <-- Frame based message interface
+        └── pdu.h       <-- PDU based message interface
+    └── stream
+        └── buffer.h    <-- Buffer stream implementation
+    └── codec.c         <-- NCodec API implementation
+    └── codec.h         <-- NCodec API headers
+└── extra               <-- Build infrastructure
+└── licenses            <-- Third Party Licenses
+└── tests               <-- Unit and E2E tests
 ```
+
 
 
 ## Usage
 
-The Network Codec Library is a source code only library designed to be integrated
-directly into codebases. In general an integration requires the following elements:
+### Code Sample
 
-* NCodec API - User API, includes the NCodec API methods and abstract types.
-* Codec(s) - Codec implementations, typically based upon a published schema.
-* Streams(s) - Stream implementations supporting the simulation fabric.
+```c
+#include <dse/ncodec/codec.h>
+#include <dse/ncodec/interface/pdu.h>
+#define greeting "hello world"
 
-An integration of the Network Codec Library, and its included Automotive Bus
-Codec, is available in the [__DSE Model C
-Library__](https://github.com/boschglobal/dse.modelc) (file:
-[ncodec.c](https://github.com/boschglobal/dse.modelc/blob/main/dse/modelc/model/ncodec.c))
-which includes a stream implementation supporting the Model C Simulation Bus,
-and in implementation of the `ncodec_open()` method (which completes the NCodec
-API). A custom trace implementation is also available (file:
-[trace.c](https://github.com/boschglobal/dse.modelc/blob/main/dse/modelc/model/trace.c)).
-An [example](https://github.com/boschglobal/dse.modelc/tree/main/dse/modelc/examples/ncodec)
-is also provided.
+void network_rxtx(NCODEC* nc) {
+    /* Message RX. */
+    while (1) {
+        NCodecPdu pdu = {};
+        if (ncodec_read(nc, &msg) < 0) break;
+        printf("(%u) message: %s", msg.id, message.payload);
+    }
+    ncodec_truncate(nc); /* Clear the stream. */
 
-This integration is also packaged and available in the [__DSE FMI Library__](https://github.com/boschglobal/dse.fmi),
-supporting both FMI 2 and FMI 3 simulation environments. [Examples](https://github.com/boschglobal/dse.fmi/tree/main/dse/examples/fmu/network) are also provided.
+    /* Message TX. */
+    ncodec_write(nc, &(struct NCodecPdu){
+        .id = 42,
+        .payload = (uint8_t*)greeting,
+        .payload_len = strlen(greeting),
+        .transport_type = NCodecPduTransportTypeCan,
+    });
+    ncodec_flush(nc); /* Flush messages to the stream. */
+}
+```
 
-
-## Automotive Bus Codec
-
-Implementation of Network Codec supporting the
-[Automotive Bus Stream](https://github.com/boschglobal/automotive-bus-schema/blob/main/schemas/stream/frame.fbs).
-interface schema.
-
-
-### PDU Schema
-
-MIME Type
-: application/x-automotive-bus; interface=stream; type=pdu; schema=fbs
-
-Flatbuffers file identifier
-: SPDU
+More information about the NCodec API, including a complete example, is available in the [Network Codec API Reference](https://boschglobal.github.io/dse.doc/apis/ncodec/). Useful developer documentation relating to the DSE ModelC integration is available in the [Developer Documentation](https://boschglobal.github.io/dse.doc/docs/devel/ncodec/).
 
 
-#### CAN Bus
+### CMake Build Integration
 
-MIME Type (minimal)
-: application/x-automotive-bus; interface=stream; type=pdu; schema=fbs
+__CMakeLists.txt__
+```cmake
+# Fetch the NCodec code.
+include(FetchContent)
+FetchContent_Declare(dse_ncodec
+    URL                 $ENV{DSE_NCODEC_URL}
+    SOURCE_SUBDIR       dse/ncodec
+)
+FetchContent_MakeAvailable(dse_ncodec)
 
-MIME Type (extended)
-: application/x-automotive-bus; interface=stream; type=pdu; schema=fbs; swc_id=1; ecu_id=2
+# Define a build target using the AB Codec (from the DSE NCodec library).
+add_library(some_lib)
+target_include_directories(some_lib
+    PRIVATE
+        ${dse_ncodec_SOURCE_DIR}
+)
+target_link_libraries(some_lib
+    PUBLIC
+        ab-codec
+)
+```
+
+__Makefile__
+```makefile
+DSE_NCODEC_REPO ?= https://github.com/boschglobal/dse.ncodec
+DSE_NCODEC_VERSION ?= 1.1.0
+export DSE_NCODEC_URL ?= $(DSE_NCODEC_REPO)/archive/refs/tags/v$(DSE_NCODEC_VERSION).zip
+
+.PHONY: build
+build:
+  $(MAKE) build-some_lib
+```
 
 
-#### Additional Properties
 
-The following parameters can be encoded directly in the MIME Type string
-or set with calls to `ncodec_config()`.
+## Codecs
 
-| Property | Type | Default |
-| --- |--- |--- |
-| swc_id | uint8_t | 0 (must be set for normal operation [^1]) |
-| ecu_id | uint8_t | 0 |
+### AB Codec
 
-[^1]: Message filtering on `swc_id` (i.e. filter if Tx Node = Rx Node) is
-only enabled when this parameter is set.
+__MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 
-### Frame Schema
+#### Feature Matrix
 
-MIME Type
-: application/x-automotive-bus; interface=stream; type=frame; schema=fbs
+|  | PDU Interface | Frame Interface |
+| :--- | :---: | :---: |
+| Header | [interface/pdu.h][pdu_h] | [interface/frame.h][frame_h] |
+| Stream | [stream/buffer.c][stream_buffer][^fmi2] |  [stream/buffer.c][stream_buffer][^fmi2] |
+| Schema | [pdu.fbs][pdu_fbs] | [frame.fbs][frame_fbs] |
+| Bus Models | supported | - |
+| MIME type | `type=pdu; schema=fbs` | `type=frame; schema=fbs` |
+| Language Support | C/C++ <br> Go <br> Python | C/C++ |
+| Intergrations | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] <br> [DSE Network][dse_network]  |
 
-Flatbuffers file identifier
-: SFRA
 
-#### CAN Bus
+#### Network Support
 
-MIME Type (minimal)
-: application/x-automotive-bus; interface=stream; type=frame; bus=can; schema=fbs
+| Bus / Network | PDU Interface | Frame Interface |
+| :--- | :---: | :---: |
+| CAN | &check; | &check; |
+| FlexRay | &check; | - |
+| IP (SomeIP/DoIP) | &check; | - |
+| LIN | *[^lin] | - |
+| PDU (Autosar Adaptive) | &check; | - |
+| Struct (C-Structs) | &check; | - |
 
-MIME Type (extended)
-: application/x-automotive-bus; interface=stream; type=frame; bus=can; schema=fbs; bus_id=1; node_id=2; interface_id=3
 
-#### Additional Properties
+#### MIME type - Frame Interface
 
-The following parameters can be encoded directly in the MIME Type string
-or set with calls to `ncodec_config()`.
+| Field | Type | Value (default) |  CAN |
+| :--- | :---: | :---: | :---: |
+| bus_id       | uint8_t | 1.. | &check;&check; |
+| node_id      | uint8_t | 1.. | &check;&check;[^node_id] |
+| interface_id | uint8_t |     | &check; |
 
-| Property | Type | Default |
-| --- |--- |--- |
-| bus_id | uint8_t | 0 |
-| node_id | uint8_t | 0 (must be set for normal operation [^2]) |
-| interface_id | uint8_t | 0 |
 
-[^2]: Message filtering on `node_id` (i.e. filter if Tx Node = Rx Node) is
-only enabled when this parameter is set.
+> [!NOTE]
+> __&check;&check;__ indicates a required field. Other fields default to `0` or `NULL`.
 
+
+#### MIME type - PDU Interface
+
+| Field | Type | Value |  CAN | FlexRay | IP | PDU | Struct |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| ecu_id       | uint8_t | 1..                    | &check;&check; | &check;&check; | &check;&check; | &check;&check; | &check;&check; |
+| cc_id        | uint8_t | 1..                    | - | &check; | - | - | - |
+| swc_id       | uint8_t | 1..                    | &check;[^swc_id] | &check; | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
+| model        | string  | `flexray`              |  - | &check;&check; | - | - | - |
+| pwr          | string  | `on(default)\|off\|nc` |  - | &check; | - | - | - |
+| vcn          | uint8_t | 0,1,2                  |  - | &check; | - | - | - |
+| poca         | uint8_t | 1..9[^poc]             |  - | &check; | - | - | - |
+| pocb         | uint8_t | 1..9[^poc]             |  - | &check; | - | - | - |
+
+
+> [!NOTE]
+> __&check;&check;__ indicates a required field. Other fields default to `0` or `NULL`.
 
 
 ## Build
@@ -226,6 +212,7 @@ $ make cleanall
 Please refer to the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
 
+
 ## License
 
 Dynamic Simulation Environment Network Codec Library is open-sourced under the Apache-2.0 license.
@@ -236,3 +223,34 @@ See the [LICENSE](LICENSE) and [NOTICE](./NOTICE) files for details.
 ### Third Party Licenses
 
 [Third Party Licenses](licenses/)
+
+
+
+<!--- Schema Links --->
+[frame_fbs]: https://github.com/boschglobal/automotive-bus-schema/blob/main/schemas/stream/frame.fbs
+[pdu_fbs]: https://github.com/boschglobal/automotive-bus-schema/blob/main/schemas/stream/pdu.fbs
+
+<!--- Code Links --->
+[frame_h]: https://github.com/boschglobal/dse.ncodec/blob/main/dse/ncodec/interface/frame.h
+[pdu_h]: https://github.com/boschglobal/dse.ncodec/blob/main/dse/ncodec/interface/pdu.h
+[stream_buffer]: https://github.com/boschglobal/dse.ncodec/blob/main/dse/ncodec/stream/buffer.c
+[stream_ascii85]: https://github.com/boschglobal/dse.ncodec/blob/main/dse/ncodec/stream/ascii85.c
+
+<!--- Integration Links --->
+[dse_modelc]: https://github.com/boschglobal/dse.modelc/blob/main/dse/modelc/model/ncodec.c
+[dse_modelc_trace]: https://github.com/boschglobal/dse.modelc/blob/main/dse/modelc/model/trace.c
+[dse_fmi]: https://github.com/boschglobal/dse.fmi/blob/main/dse/fmu/ncodec.c
+[dse_network]: https://github.com/boschglobal/dse.network/blob/main/dse/network/encoder.c
+
+<!--- Footnotes --->
+[^lin]: LIN Support planned.
+
+[^fmi2]: Via FMI 2 String Variables using ASCII85 encoding ([ascii85.c][stream_ascii85]).
+
+[^poc]: Sets the initial POC State, e.g. 5 = NormalActive (see `NCodecPduFlexrayPocState` in [interface/pdu.h][pdu_h] for all POC states). Otherwise POC State is set by the FlexRay model according to its mode-of-operation.
+
+[^swc_id]: Message filtering on `swc_id` (i.e. filter if Tx Node = Rx Node) is
+only enabled when this parameter is set.
+
+[^node_id]: Message filtering on `node_id` (i.e. filter if Tx Node = Rx Node) is
+only enabled when this parameter is set.
