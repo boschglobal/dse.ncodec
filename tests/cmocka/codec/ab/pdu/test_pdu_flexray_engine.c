@@ -148,7 +148,7 @@ void test_flexray__communication_parameters(void** state)
     __log_level__ = LOG_FATAL;
     config.static_slot_length = 4;
     pdu.transport.flexray.metadata.config = config;
-    assert_int_equal(-EBADE, process_config(&pdu, engine));
+    assert_int_equal(-EINVAL, process_config(&pdu, engine));
     assert_int_equal(55, engine->static_slot_length_mt);
 
     config.bit_rate = 0; /* Null config / No config. */

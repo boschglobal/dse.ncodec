@@ -33,7 +33,7 @@ static inline int __merge_uint32(uint32_t* param, uint32_t v)
 {
     if (*param != 0 && *param != v) {
         log_error("FlexRay config mismatch");
-        return -EBADE;
+        return -EINVAL;
     } else {
         *param = v;
         return 0;
@@ -212,7 +212,7 @@ int calculate_budget(FlexrayEngine* engine, double step_size)
 
     if (step_size <= 0.0) {
         if (engine->sim_step_size <= 0.0) {
-            return -EBADE;
+            return -EINVAL;
         }
         step_size = engine->sim_step_size;
     }
