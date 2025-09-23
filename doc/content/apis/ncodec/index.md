@@ -244,7 +244,7 @@ NULL
 
 Available by inspection of `errno`.
 
-ELIBACC
+ENODEV
 : Static library(ies) not loaded.
 
 EINVAL

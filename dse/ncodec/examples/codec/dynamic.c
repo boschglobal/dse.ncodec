@@ -30,7 +30,7 @@ int32_t ncodec_load(const char* filename, const char* hint)
 NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream)
 {
     if (__handle == NULL) {
-        errno = ELIBACC;
+        errno = ENODEV;
         return NULL;
     }
     if (stream == NULL) {
