@@ -60,8 +60,8 @@ void network_rxtx(NCODEC* nc) {
     /* Message RX. */
     while (1) {
         NCodecPdu pdu = {};
-        if (ncodec_read(nc, &msg) < 0) break;
-        printf("(%u) message: %s", msg.id, message.payload);
+        if (ncodec_read(nc, &pdu) < 0) break;
+        printf("(%u) message: %s", pdu.id, pdu.payload);
     }
     ncodec_truncate(nc); /* Clear the stream. */
 
@@ -69,7 +69,7 @@ void network_rxtx(NCODEC* nc) {
     ncodec_write(nc, &(struct NCodecPdu){
         .id = 42,
         .payload = (uint8_t*)greeting,
-        .payload_len = strlen(greeting),
+        .payload_len = strlen(greeting) + 1,
         .transport_type = NCodecPduTransportTypeCan,
     });
     ncodec_flush(nc); /* Flush messages to the stream. */
@@ -152,9 +152,9 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 | Field | Type | Value (default) |  CAN |
 | :--- | :---: | :---: | :---: |
-| bus_id       | uint8_t | 1.. | &check;&check; |
-| node_id      | uint8_t | 1.. | &check;&check;[^node_id] |
-| interface_id | uint8_t |     | &check; |
+| <var>bus_id</var>       | <code>uint8_t</code> | 1.. | &check;&check; |
+| <var>node_id</var>      | <code>uint8_t</code> | 1.. | &check;&check;[^node_id] |
+| <var>interface_id</var> | <code>uint8_t</code> | 0.. | &check; |
 
 
 > [!NOTE]
@@ -165,14 +165,14 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 | Field | Type | Value |  CAN | FlexRay | IP | PDU | Struct |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| ecu_id       | uint8_t | 1..                    | &check;&check; | &check;&check; | &check;&check; | &check;&check; | &check;&check; |
-| cc_id        | uint8_t | 1..                    | - | &check; | - | - | - |
-| swc_id       | uint8_t | 1..                    | &check;[^swc_id] | &check; | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
-| model        | string  | `flexray`              |  - | &check;&check; | - | - | - |
-| pwr          | string  | `on(default)\|off\|nc` |  - | &check; | - | - | - |
-| vcn          | uint8_t | 0,1,2                  |  - | &check; | - | - | - |
-| poca         | uint8_t | 1..9[^poc]             |  - | &check; | - | - | - |
-| pocb         | uint8_t | 1..9[^poc]             |  - | &check; | - | - | - |
+| <var>ecu_id</var>       | <code>uint8_t</code> | 1..                    | &check;&check; | &check;&check; | &check;&check; | &check;&check; | &check;&check; |
+| <var>cc_id</var>        | <code>uint8_t</code> | 1..                    | - | &check; | - | - | - |
+| <var>swc_id</var>       | <code>uint8_t</code> | 1..                    | &check;[^swc_id] | &check; | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
+| <var>model</var>        | <code>string</code>  | `flexray`              |  - | &check;&check; | - | - | - |
+| <var>pwr</var>          | <code>string</code>  | `on(default)\|off\|nc` |  - | &check; | - | - | - |
+| <var>vcn</var>          | <code>uint8_t</code> | 0,1,2                  |  - | &check; | - | - | - |
+| <var>poca</var>         | <code>uint8_t</code> | 1..9[^poc]             |  - | &check; | - | - | - |
+| <var>pocb</var>         | <code>uint8_t</code> | 1..9[^poc]             |  - | &check; | - | - | - |
 
 
 > [!NOTE]
