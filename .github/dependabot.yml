@@ -25,4 +25,5 @@ updates:
           - "minor"
           - "major"
     labels:
+      - "automerge"
       - "dependabot"
