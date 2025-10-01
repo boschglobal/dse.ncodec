@@ -34,6 +34,8 @@ SUBDIRS = extra/external $(NAMESPACE)/$(MODULE)
 # SUBDIRS = extra/external $(SRC_DIR)/examples
 
 
+
+
 ###############
 ## Package parameters.
 export PACKAGE_VERSION ?= 0.0.1
@@ -44,17 +46,18 @@ PACKAGE_NAME = dse.ncodec
 PACKAGE_NAME_LC = dse.ncodec
 PACKAGE_PATH = $(NAMESPACE)/dist
 
-#		--user $$(id -u):$$(id -g) \
 
 ifneq ($(CI), true)
-	DOCKER_BUILDER_CMD := docker run -it --rm \
+DOCKER_BUILDER_CMD := \
+	mkdir -p $(EXTERNAL_BUILD_DIR); \
+	docker run -it --rm \
+		--user $$(id -u):$$(id -g) \
 		--env CMAKE_TOOLCHAIN_FILE=/tmp/repo/extra/cmake/$(PACKAGE_ARCH).cmake \
 		--env EXTERNAL_BUILD_DIR=$(EXTERNAL_BUILD_DIR) \
 		--env PACKAGE_ARCH=$(PACKAGE_ARCH) \
 		--env PACKAGE_VERSION=$(PACKAGE_VERSION) \
 		--volume $$(pwd):/tmp/repo \
 		--volume $(EXTERNAL_BUILD_DIR):$(EXTERNAL_BUILD_DIR) \
-		--volume ~/.ccache:/root/.ccache \
 		--workdir /tmp/repo \
 		$(GCC_BUILDER_IMAGE)
 endif
@@ -67,7 +70,7 @@ DSE_CLANG_FORMAT_CMD := docker run -it --rm \
 
 default: build
 
-build:
+build: 
 	@${DOCKER_BUILDER_CMD} $(MAKE) do-build
 
 test: test_cmocka
