@@ -103,9 +103,15 @@ static void _push_nodes(TestTxRx* test)
         }
     }
 
-    /* Each Node gets a copy of the full set of messages from
-    all Nodes. That way each Node gets the same set of messages
-    and the Bus Model can progress as expected. */
+    /**
+     * The effect of a SimBus must be created. Each node produces a
+     * sequence of messages, the SimBus combines the sequences from each node
+     * to a buffer, that buffer then becomes the input for each node.
+     *
+     * To recreate the effect; for each node, get the stream object, then
+     * for each node, produce a message sequence using _that_ stream object
+     * and the properties of the nodes NC object, and flush to the stream.
+     */
 
     /* For each Node. */
     for (size_t n_idx = 0; n_idx < TEST_NODES; n_idx++) {
@@ -115,47 +121,41 @@ static void _push_nodes(TestTxRx* test)
         /* Push messages from each node to this Nodes NC Object. */
         for (size_t nc_idx = 0; nc_idx < TEST_NODES; nc_idx++) {
             if (test->config.node[nc_idx].nc == NULL) break;
+
+            /* Underlying stream object is the same. */
+            NCODEC*         nc2 = test->config.node[nc_idx].nc;
+            NCodecInstance* _nc2 = (NCodecInstance*)nc2;
+            _nc2->stream = test->config.node[n_idx].stream;
+
             NCodecPduFlexrayConfig config = test->config.node[nc_idx].config;
             config.frame_config.table = test->config.frame_table.map[nc_idx];
-            rc = ncodec_write(nc,
-                &(NCodecPdu){
-                    .ecu_id =
-                        test->config.node[nc_idx].config.node_ident.node.ecu_id,
-                    .transport_type = NCodecPduTransportTypeFlexray,
+            rc = ncodec_write(nc2,
+                &(NCodecPdu){ .transport_type = NCodecPduTransportTypeFlexray,
                     .transport.flexray = {
                         .metadata_type = NCodecPduFlexrayMetadataTypeConfig,
                         .metadata.config = config,
                     } });
 
-            if (test->run.push_active == false) continue;
+            if (test->run.push_active == false) goto end_test_run_push_active;
 
-            rc = ncodec_write(nc,
-                &(NCodecPdu){
-                    .ecu_id =
-                        test->config.node[nc_idx].config.node_ident.node.ecu_id,
-                    .transport_type = NCodecPduTransportTypeFlexray,
+            rc = ncodec_write(nc2,
+                &(NCodecPdu){ .transport_type = NCodecPduTransportTypeFlexray,
                     .transport.flexray = {
                         .metadata_type = NCodecPduFlexrayMetadataTypeStatus,
                         .metadata.status = {
                             .channel[0].poc_command =
                                 NCodecPduFlexrayCommandConfig,
                         } } });
-            rc = ncodec_write(nc,
-                &(NCodecPdu){
-                    .ecu_id =
-                        test->config.node[nc_idx].config.node_ident.node.ecu_id,
-                    .transport_type = NCodecPduTransportTypeFlexray,
+            rc |= ncodec_write(nc2,
+                &(NCodecPdu){ .transport_type = NCodecPduTransportTypeFlexray,
                     .transport.flexray = {
                         .metadata_type = NCodecPduFlexrayMetadataTypeStatus,
                         .metadata.status = {
                             .channel[0].poc_command =
                                 NCodecPduFlexrayCommandReady,
                         } } });
-            rc = ncodec_write(nc,
-                &(NCodecPdu){
-                    .ecu_id =
-                        test->config.node[nc_idx].config.node_ident.node.ecu_id,
-                    .transport_type = NCodecPduTransportTypeFlexray,
+            rc |= ncodec_write(nc2,
+                &(NCodecPdu){ .transport_type = NCodecPduTransportTypeFlexray,
                     .transport.flexray = {
                         .metadata_type = NCodecPduFlexrayMetadataTypeStatus,
                         .metadata.status = {
@@ -163,10 +163,14 @@ static void _push_nodes(TestTxRx* test)
                                 NCodecPduFlexrayCommandRun,
                         } } });
             assert_int_equal(rc, 0);
-        };
 
-        /* Flush N messages to this Nodes NC Object. */
-        ncodec_flush(nc);
+        end_test_run_push_active:
+
+            /* Flush N messages to this Nodes NC Object. */
+            ncodec_flush(nc2);
+            /* Restore the stream. */
+            _nc2->stream = test->config.node[nc_idx].stream;
+        };
     };
 }
 

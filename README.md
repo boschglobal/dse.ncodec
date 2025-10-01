@@ -29,20 +29,20 @@ __Integrations__:
 
 ```text
 dse.ncodec
-└── doc/content         <-- Content for documentation systems
+└── doc/content             <-- Content for documentation systems
 └── dse/ncodec
-    └── codec/ab        <-- Automotive-Bus (AB) Codec implementation
-        └── flexray     <-- FlexRay Bus Model implementation
+    └── codec/ab            <-- Automotive-Bus (AB) Codec implementation
+        └── flexray         <-- FlexRay Bus Model implementation
     └── interface
-        └── frame.h     <-- Frame based message interface
-        └── pdu.h       <-- PDU based message interface
+        └── frame.h         <-- Frame based message interface
+        └── pdu.h           <-- PDU based message interface
     └── stream
-        └── buffer.h    <-- Buffer stream implementation
-    └── codec.c         <-- NCodec API implementation
-    └── codec.h         <-- NCodec API headers
-└── extra               <-- Build infrastructure
-└── licenses            <-- Third Party Licenses
-└── tests               <-- Unit and E2E tests
+        └── buffer.h        <-- Buffer stream implementation
+    └── codec.c             <-- NCodec API implementation
+    └── codec.h             <-- NCodec API headers
+└── extra                   <-- Build infrastructure
+└── licenses                <-- Third Party Licenses
+└── tests                   <-- Unit and E2E tests
 ```
 
 
@@ -165,10 +165,10 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 | Field | Type | Value |  CAN | FlexRay | IP | PDU | Struct |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| <var>ecu_id</var>       | <code>uint8_t</code> | 1..                    | &check;&check; | &check;&check; | &check;&check; | &check;&check; | &check;&check; |
-| <var>cc_id</var>        | <code>uint8_t</code> | 1..                    | - | &check; | - | - | - |
-| <var>swc_id</var>       | <code>uint8_t</code> | 1..                    | &check;[^swc_id] | &check; | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
-| <var>model</var>        | <code>string</code>  | `flexray`              |  - | &check;&check; | - | - | - |
+| <var>ecu_id</var>       | <code>uint8_t</code> | 0[^pop], 1..                    | &check;&check; | &check;&check; | &check;&check; | &check;&check; | &check;&check; |
+| <var>cc_id</var>        | <code>uint8_t</code> | 0 \|1                     | - | &check; | - | - | - |
+| <var>swc_id</var>       | <code>uint8_t</code> | 0 ..                    | &check;[^swc_id] | &check; | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
+| <var>model</var>        | <code>string</code>  | `flexray\|flexray_pop` |  - | &check;&check; | - | - | - |
 | <var>pwr</var>          | <code>string</code>  | `on(default)\|off\|nc` |  - | &check; | - | - | - |
 | <var>vcn</var>          | <code>uint8_t</code> | 0,1,2                  |  - | &check; | - | - | - |
 | <var>poca</var>         | <code>uint8_t</code> | 1..9[^poc]             |  - | &check; | - | - | - |
@@ -248,6 +248,8 @@ See the [LICENSE](LICENSE) and [NOTICE](./NOTICE) files for details.
 [^fmi2]: Via FMI 2 String Variables using ASCII85 encoding ([ascii85.c][stream_ascii85]).
 
 [^poc]: Sets the initial POC State, e.g. 5 = NormalActive (see `NCodecPduFlexrayPocState` in [interface/pdu.h][pdu_h] for all POC states). Otherwise POC State is set by the FlexRay model according to its mode-of-operation.
+
+[^pop]: A value of 0 may only configured for a Point of Presence (PoP) node (i.e. a Gateway model connecting a NCodec network to an external Virtual Bus).
 
 [^swc_id]: Message filtering on `swc_id` (i.e. filter if Tx Node = Rx Node) is
 only enabled when this parameter is set.
