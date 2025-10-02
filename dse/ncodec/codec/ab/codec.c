@@ -69,7 +69,9 @@ void free_codec(ABCodecInstance* _nc)
     if (_nc->swc_id_str) free(_nc->swc_id_str);
     if (_nc->ecu_id_str) free(_nc->ecu_id_str);
     if (_nc->cc_id_str) free(_nc->cc_id_str);
+    if (_nc->name) free(_nc->name);
     if (_nc->model) free(_nc->model);
+    if (_nc->mode) free(_nc->mode);
     if (_nc->pwr) free(_nc->pwr);
     if (_nc->vcn_count_str) free(_nc->vcn_count_str);
     if (_nc->poc_state_cha_str) free(_nc->poc_state_cha_str);
@@ -172,9 +174,19 @@ int32_t codec_config(NCODEC* nc, NCodecConfigItem item)
         _nc->cc_id = strtoul(item.value, NULL, 10);
         return 0;
     }
+    if (strcmp(item.name, "name") == 0) {
+        if (_nc->name) free(_nc->name);
+        _nc->name = strdup(item.value);
+        return 0;
+    }
     if (strcmp(item.name, "model") == 0) {
         if (_nc->model) free(_nc->model);
         _nc->model = strdup(item.value);
+        return 0;
+    }
+    if (strcmp(item.name, "mode") == 0) {
+        if (_nc->mode) free(_nc->mode);
+        _nc->mode = strdup(item.value);
         return 0;
     }
     if (strcmp(item.name, "pwr") == 0) {
@@ -256,22 +268,30 @@ NCodecConfigItem codec_stat(NCODEC* nc, int32_t* index)
         value = _nc->cc_id_str;
         break;
     case 10:
+        name = "name";
+        value = _nc->name;
+        break;
+    case 11:
         name = "model";
         value = _nc->model;
         break;
-    case 11:
+    case 12:
+        name = "mode";
+        value = _nc->mode;
+        break;
+    case 13:
         name = "pwr";
         value = _nc->pwr;
         break;
-    case 12:
+    case 14:
         name = "vcn";
         value = _nc->vcn_count_str;
         break;
-    case 13:
+    case 15:
         name = "poca";
         value = _nc->poc_state_cha_str;
         break;
-    case 14:
+    case 16:
         name = "pocb";
         value = _nc->poc_state_chb_str;
         break;

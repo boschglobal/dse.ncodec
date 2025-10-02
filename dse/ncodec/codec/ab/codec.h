@@ -78,7 +78,9 @@ typedef struct ABCodecInstance {
     char*   swc_id_str;
     char*   ecu_id_str;
     char*   cc_id_str;         /* Communication Controller. */
+    char*   name;              /* Optional name of node. */
     char*   model;             /* Bus Model. */
+    char*   mode;              /* Mode (of Bus Model operation). */
     char*   pwr;               /* Initial power state (on|off or not set). */
     char*   vcn_count_str;     /* Count of VCNs. */
     char*   poc_state_cha_str; /* Initial POC state (Channel A). */
