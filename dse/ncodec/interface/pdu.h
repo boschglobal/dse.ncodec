@@ -308,6 +308,7 @@ typedef struct NCodecPduFlexrayLpduConfig {
 typedef struct NCodecPduFlexrayConfig {
     /* Node Config items (Codec internal). */
     NCodecPduFlexrayNodeIdentifier node_ident;
+    const char*                    node_name;
     NCodecPduFlexrayNodeIdentifier vcn[MAX_VCN];
     size_t                         vcn_count;
     NCodecPduFlexrayPocState       initial_poc_state_cha;
@@ -374,6 +375,7 @@ typedef enum {
 
 typedef struct NCodecPduFlexrayTransport {
     NCodecPduFlexrayNodeIdentifier node_ident;
+    NCodecPduFlexrayNodeIdentifier pop_node_ident;
     NCodecPduFlexrayMetadataType   metadata_type;
     union {
         struct {

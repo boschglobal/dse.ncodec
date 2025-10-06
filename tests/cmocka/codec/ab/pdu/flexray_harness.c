@@ -51,6 +51,15 @@ static void __pdu_payload_destory(void* item, void* data)
     pdu->payload = NULL;
 }
 
+static void __pdu_trace_destory(void* item, void* data)
+{
+    UNUSED(data);
+    TestPduTrace* pdu_trace = item;
+
+    vector_clear(&pdu_trace->pdu_list, __pdu_payload_destory, NULL);
+    vector_reset(&pdu_trace->pdu_list);
+}
+
 int test_teardown(void** state)
 {
     Mock* mock = *state;
@@ -64,12 +73,24 @@ int test_teardown(void** state)
     }
     vector_clear(&mock->test.run.pdu_list, __pdu_payload_destory, NULL);
     vector_reset(&mock->test.run.pdu_list);
+    vector_clear(&mock->test.run.pdu_trace, __pdu_trace_destory, NULL);
+    vector_reset(&mock->test.run.pdu_trace);
 
     __log_level__ = mock->loglevel_save;
     free(mock);
     return 0;
 }
 
+
+static int __node_ident_compar(const void* left, const void* right)
+{
+    NCodecPduFlexrayNodeIdentifier l = ((TestPduTrace*)left)->node_ident;
+    NCodecPduFlexrayNodeIdentifier r = ((TestPduTrace*)right)->node_ident;
+
+    if (l.node_id < r.node_id) return -1;
+    if (l.node_id > r.node_id) return 1;
+    return 0;
+}
 
 static void _setup_nodes(TestTxRx* test)
 {
@@ -86,6 +107,8 @@ static void _setup_nodes(TestTxRx* test)
     }
 
     test->run.pdu_list = vector_make(sizeof(NCodecPdu), 0, NULL);
+    test->run.pdu_trace =
+        vector_make(sizeof(TestPduTrace), 0, __node_ident_compar);
 }
 
 static void _push_nodes(TestTxRx* test)
@@ -380,4 +403,173 @@ void flexray_harness_run_test(TestTxRx* test)
     _run_network(test);
     _expect_status_check(test);
     _expect_pdu_check(test);
+}
+
+
+static void _run_pop(TestTxRx* test)
+{
+#define CYCLE_STEPS_MAX (5 * 2 + 5) /* 1 cycle = 5 ms = 10 steps (+5)*/
+    int       rc;
+    NCodecPdu pdu;
+    uint8_t   cycle = 0;
+    uint8_t   cycle_loop = 0;
+    size_t    cycle_steps = 0;
+
+    for (size_t i = 0; (test->run.steps == 0) || (i < test->run.steps); i++) {
+        cycle_steps += 1;
+        if (test->run.push_at_cycle && test->run.push_at_cycle == cycle) {
+            _push_frames(test);
+            test->run.push_at_cycle = 0; /* Disable further pushes. */
+        }
+        if ((cycle_loop * 64u + cycle) == (test->run.cycles + 1)) {
+            break;
+        }
+        if (cycle_steps > CYCLE_STEPS_MAX) {
+            fail_msg("cycle limit exceeded, not progressing");
+            return;
+        }
+
+        for (size_t n_idx = 0; n_idx < TEST_NODES; n_idx++) {
+            NCODEC* nc = test->config.node[n_idx].nc;
+            if (nc == NULL) break;
+            NCodecPduFlexrayNodeIdentifier node_ident =
+                test->config.node[n_idx].node_ident;
+
+            /* Get a trace. */
+            TestPduTrace* pdu_trace = vector_find(&test->run.pdu_trace,
+                &(TestPduTrace){ .node_ident = node_ident }, 0, NULL);
+            if (pdu_trace == NULL) {
+                vector_push(&test->run.pdu_trace,
+                    &(TestPduTrace){
+                        .node_ident = node_ident,
+                        .pdu_list = vector_make(sizeof(NCodecPdu), 0, NULL),
+                    });
+                vector_sort(&test->run.pdu_trace);
+                pdu_trace = vector_find(&test->run.pdu_trace,
+                    &(TestPduTrace){ .node_ident = node_ident }, 0, NULL);
+            }
+            assert_non_null(pdu_trace);
+
+            /* Reset the stream pointer for reading. */
+            ncodec_seek(nc, 0, NCODEC_SEEK_SET);
+
+            /* Read from NC. */
+            log_info("POP:READ: step=%u", i);
+            size_t pdu_count = 0;
+            while ((rc = ncodec_read(nc, &pdu)) >= 0) {
+                if (pdu.transport_type != NCodecPduTransportTypeFlexray)
+                    continue;
+                pdu_count++;
+                // Push to trace.
+                if (pdu.payload_len) {
+                    uint8_t* payload = malloc(pdu.payload_len);
+                    memcpy(payload, pdu.payload, pdu.payload_len);
+                    pdu.payload = payload;
+                }
+                vector_push(&pdu_trace->pdu_list, &pdu);
+                // Checks.
+                if (pdu_count == 1 && node_ident.node_id != 0) {
+                    /* First PDU is status. Exclude POP. */
+                    assert_int_equal(
+                        NCodecPduTransportTypeFlexray, pdu.transport_type);
+                    assert_int_equal(NCodecPduFlexrayMetadataTypeStatus,
+                        pdu.transport.flexray.metadata_type);
+                    test->run.status_pdu[n_idx] = pdu;
+                }
+            }
+            assert_true(pdu_count > 0);
+
+            ncodec_truncate(nc);
+            ncodec_flush(nc);
+        }
+    }
+}
+
+
+static void _dump_trace(TestTxRx* test)
+{
+    for (size_t i = 0; i < vector_len(&test->run.pdu_trace); i++) {
+        TestPduTrace* pdu_trace = vector_at(&test->run.pdu_trace, i, NULL);
+        for (size_t j = 0; j < vector_len(&pdu_trace->pdu_list); j++) {
+            NCodecPdu* pdu = vector_at(&pdu_trace->pdu_list, j, NULL);
+
+            switch (pdu->transport.flexray.metadata_type) {
+            case (NCodecPduFlexrayMetadataTypeConfig):
+                log_info("[%u][%u]:(%u:%u:%u) Config", i, j,
+                    pdu->transport.flexray.node_ident.node.ecu_id,
+                    pdu->transport.flexray.node_ident.node.cc_id,
+                    pdu->transport.flexray.node_ident.node.swc_id);
+                break;
+            case (NCodecPduFlexrayMetadataTypeStatus):
+                log_info("[%u][%u]:(%u:%u:%u) Status", i, j,
+                    pdu->transport.flexray.node_ident.node.ecu_id,
+                    pdu->transport.flexray.node_ident.node.cc_id,
+                    pdu->transport.flexray.node_ident.node.swc_id);
+                break;
+            case (NCodecPduFlexrayMetadataTypeLpdu):
+                log_info("[%u][%u]:(%u:%u:%u) LPDU", i, j,
+                    pdu->transport.flexray.node_ident.node.ecu_id,
+                    pdu->transport.flexray.node_ident.node.cc_id,
+                    pdu->transport.flexray.node_ident.node.swc_id);
+                break;
+            default:
+                log_error("trace bad");
+                break;
+            }
+        }
+    }
+}
+
+
+static void _expect_trace_map_check(TestTxRx* test)
+{
+    for (size_t n_idx = 0; n_idx < TEST_NODES; n_idx++) {
+        for (size_t p_idx = 0; p_idx < TEST_NODES; p_idx++) {
+            NCodecPdu* pdu = &test->expect.trace_map.map[n_idx][p_idx];
+            if (pdu->transport_type == 0) break;
+            if (pdu->transport_type != NCodecPduTransportTypeFlexray) continue;
+            if (pdu->transport.flexray.metadata_type == 0) continue;
+
+            log_trace("Locate trace item: [%u][%u]", n_idx, p_idx);
+            TestPduTrace* pdu_trace =
+                vector_at(&test->run.pdu_trace, n_idx, NULL);
+            if (pdu_trace == NULL) fail_msg("Trace not found at [%u]", n_idx);
+            NCodecPdu* trace_pdu = vector_at(&pdu_trace->pdu_list, p_idx, NULL);
+            if (trace_pdu == NULL)
+                fail_msg("Trace item not found at [%u][%u]", n_idx, p_idx);
+
+            assert_int_equal(trace_pdu->transport.flexray.node_ident.node_id,
+                pdu->transport.flexray.node_ident.node_id);
+            assert_int_equal(
+                trace_pdu->transport.flexray.pop_node_ident.node_id,
+                pdu->transport.flexray.pop_node_ident.node_id);
+            switch (pdu->transport.flexray.metadata_type) {
+            case (NCodecPduFlexrayMetadataTypeStatus):
+                if (pdu->transport.flexray.metadata.status.channel[0]
+                        .tcvr_state) {
+                    assert_int_equal(
+                        trace_pdu->transport.flexray.metadata.status.channel[0]
+                            .tcvr_state,
+                        pdu->transport.flexray.metadata.status.channel[0]
+                            .tcvr_state);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
+
+void flexray_harness_run_pop_test(TestTxRx* test)
+{
+    _setup_nodes(test);
+    _push_nodes(test);
+    if (test->run.push_active && test->run.push_at_cycle == 0) {
+        _push_frames(test);
+    }
+    _run_pop(test);
+    _dump_trace(test);
+    _expect_trace_map_check(test);
 }

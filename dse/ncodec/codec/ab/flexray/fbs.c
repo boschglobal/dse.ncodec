@@ -147,6 +147,12 @@ void decode_flexray_metadata(
     fr->node_ident.node.ecu_id = ns(FlexrayMetadata_node_ident(fr_msg))->ecu_id;
     fr->node_ident.node.cc_id = ns(FlexrayMetadata_node_ident(fr_msg))->cc_id;
     fr->node_ident.node.swc_id = ns(FlexrayMetadata_node_ident(fr_msg))->swc_id;
+    fr->pop_node_ident.node.ecu_id =
+        ns(FlexrayMetadata_pop_node_ident(fr_msg))->ecu_id;
+    fr->pop_node_ident.node.cc_id =
+        ns(FlexrayMetadata_pop_node_ident(fr_msg))->cc_id;
+    fr->pop_node_ident.node.swc_id =
+        ns(FlexrayMetadata_pop_node_ident(fr_msg))->swc_id;
     ns(FlexrayMetadataType_union_type_t) metadata_type =
         ns(FlexrayMetadata_metadata_type(fr_msg));
     switch (metadata_type) {
@@ -286,6 +292,8 @@ uint32_t emit_flexray_metadata(flatcc_builder_t* B, NCodecPdu* _pdu)
     ns(FlexrayMetadata_start(B));
     ns(FlexrayMetadata_node_ident_create(B, fr->node_ident.node.ecu_id,
         fr->node_ident.node.cc_id, fr->node_ident.node.swc_id));
+    ns(FlexrayMetadata_pop_node_ident_create(B, fr->pop_node_ident.node.ecu_id,
+        fr->pop_node_ident.node.cc_id, fr->pop_node_ident.node.swc_id));
     if (config) {
         ns(FlexrayMetadata_metadata_Config_add(B, config));
     } else if (status) {

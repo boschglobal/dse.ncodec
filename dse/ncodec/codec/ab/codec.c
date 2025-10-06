@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
+#include <dse/logger.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 
@@ -27,6 +28,7 @@ extern int32_t pdu_flush(NCODEC* nc);
 extern int32_t pdu_truncate(NCODEC* nc);
 
 extern void flexray_bus_model_create(ABCodecInstance* nc);
+extern void flexray_pop_bus_model_create(ABCodecInstance* nc);
 
 
 char* trim(char* s)
@@ -54,6 +56,11 @@ void clear_free_list(ABCodecInstance* _nc)
     vector_clear(&_nc->free_list, __free_item, NULL);
 }
 
+void destroy_free_list(ABCodecInstance* _nc)
+{
+    vector_clear(&_nc->free_list, __free_item, NULL);
+    vector_reset(&_nc->free_list);
+}
 
 void free_codec(ABCodecInstance* _nc)
 {
@@ -82,6 +89,7 @@ void free_codec(ABCodecInstance* _nc)
     /* The Bus Model NCodec object is a shallow copy, only free the
     specifically allocated resources. */
     if (_nc->reader.bus_model.nc != NULL) {
+        destroy_free_list(_nc->reader.bus_model.nc);
         if (_nc->reader.bus_model.nc->fbs_builder_initalized) {
             flatcc_builder_clear(&_nc->reader.bus_model.nc->fbs_builder);
         }
@@ -95,16 +103,22 @@ void free_codec(ABCodecInstance* _nc)
         }
         free(_nc->reader.bus_model.model);
     }
-
-    clear_free_list(_nc);
-    vector_reset(&_nc->free_list);
+    destroy_free_list(_nc);
 }
 
 void create_bus_model(ABCodecInstance* nc)
 {
     if (strcmp(nc->type, "pdu") == 0) {
         if (nc->model && strcmp(nc->model, "flexray") == 0) {
-            flexray_bus_model_create(nc);
+            if (nc->mode) {
+                if (strcmp(nc->mode, "pop") == 0) {
+                    flexray_pop_bus_model_create(nc);
+                } else {
+                    log_fatal("Unknown FlexRay bus model mode: %s", nc->mode);
+                }
+            } else {
+                flexray_bus_model_create(nc);
+            }
         }
     }
 }

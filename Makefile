@@ -11,7 +11,7 @@ DSE_CLANG_FORMAT_IMAGE ?= ghcr.io/boschglobal/dse-clang-format:main
 ###############
 ## External Projects.
 ABS_REPO ?= https://github.com/boschglobal/automotive-bus-schema
-ABS_VERSION ?= 1.0.14
+ABS_VERSION ?= 1.0.16
 export ABS_URL ?= $(ABS_REPO)/releases/download/v$(ABS_VERSION)/automotive-bus-schema.tar.gz
 
 DSE_CLIB_REPO ?= https://github.com/boschglobal/dse.clib

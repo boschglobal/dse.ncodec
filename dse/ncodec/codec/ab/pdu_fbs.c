@@ -439,6 +439,7 @@ void _reader_reset(ABCodecReader* reader)
     reader->stage.model_produced = false;
     reader->stage.model_consumed = false;
     _reader_reset_state(reader, true);
+    // clear_free_list();
 }
 
 
@@ -613,8 +614,7 @@ int32_t pdu_read(NCODEC* _nc, NCodecPdu* pdu)
     if (nc->c.stream == NULL) return -ENOSR;
 
     /* Reset the message, in case caller ignores the return value. */
-    pdu->payload_len = 0;
-    pdu->payload = NULL;
+    *pdu = (NCodecPdu){};
 
     return _next_pdu(nc, pdu);
 }
