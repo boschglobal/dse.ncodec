@@ -17,8 +17,9 @@
 
 
 typedef struct {
-    const char*            mimetype;
-    NCodecPduFlexrayConfig config;
+    const char*                    mimetype;
+    NCodecPduFlexrayConfig         config;
+    NCodecPduFlexrayNodeIdentifier node_ident;
 
     NCodecStreamVTable* stream;
     NCODEC*             nc;
@@ -48,6 +49,21 @@ typedef struct TestPduList {
     TestPdu list[TEST_PDUS];
 } TestPduList;
 
+typedef struct TestPduPlayback {
+    size_t    step;
+    uint8_t   node_idx;
+    NCodecPdu pdu;
+} TestPduPlayback;
+
+typedef struct TestPduTrace {
+    NCodecPduFlexrayNodeIdentifier node_ident;
+    Vector                         pdu_list; /* NCodecPdu */
+} TestPduTrace;
+typedef struct TestTraceMap {
+    NCodecPdu map[TEST_NODES][TEST_FRAMES];
+} TestTraceMap;
+
+
 typedef struct {
     /* Config */
     struct {
@@ -63,9 +79,12 @@ typedef struct {
 
         NCodecPdu status_pdu[TEST_NODES];
         Vector    pdu_list;
+        Vector    pdu_trace; /* TestPduTrace by node_id */
 
         size_t cycles;
         size_t steps;
+
+        TestPduPlayback pop_playback_list[TEST_FRAMES];
     } run;
 
     /* Expect */
@@ -76,7 +95,8 @@ typedef struct {
         NCodecPduFlexrayPocState         poc_state;
         NCodecPduFlexrayTransceiverState tcvr_state;
 
-        TestPduList pdu;
+        TestPduList  pdu;
+        TestTraceMap trace_map;
     } expect;
 } TestTxRx;
 
@@ -91,6 +111,7 @@ typedef struct Mock {
 int  test_setup(void** state);
 int  test_teardown(void** state);
 void flexray_harness_run_test(TestTxRx* test);
+void flexray_harness_run_pop_test(TestTxRx* test);
 
 
 #endif  // TESTS_CMOCKA_CODEC_AB_PDU_FLEXRAY_HARNESS_H_

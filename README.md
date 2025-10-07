@@ -32,7 +32,8 @@ dse.ncodec
 └── doc/content             <-- Content for documentation systems
 └── dse/ncodec
     └── codec/ab            <-- Automotive-Bus (AB) Codec implementation
-        └── flexray         <-- FlexRay Bus Model implementation
+        └── flexray/        <-- FlexRay Bus Model implementation
+        └── flexray_pop/    <-- FlexRay Point-of-Presence Bus Model implementation
     └── interface
         └── frame.h         <-- Frame based message interface
         └── pdu.h           <-- PDU based message interface
@@ -168,7 +169,9 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 | <var>ecu_id</var>       | <code>uint8_t</code> | 0[^pop], 1..                    | &check;&check; | &check;&check; | &check;&check; | &check;&check; | &check;&check; |
 | <var>cc_id</var>        | <code>uint8_t</code> | 0 \|1                     | - | &check; | - | - | - |
 | <var>swc_id</var>       | <code>uint8_t</code> | 0 ..                    | &check;[^swc_id] | &check; | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
-| <var>model</var>        | <code>string</code>  | `flexray\|flexray_pop` |  - | &check;&check; | - | - | - |
+| <var>name</var>        | <code>string</code>  |  |  - | &check; | - | - | - |
+| <var>model</var>        | <code>string</code>  | `flexray` |  - | &check;&check; | - | - | - |
+| <var>mode</var>         | <code>string</code>  | `pop` |  - | &check; | - | - | - |
 | <var>pwr</var>          | <code>string</code>  | `on(default)\|off\|nc` |  - | &check; | - | - | - |
 | <var>vcn</var>          | <code>uint8_t</code> | 0,1,2                  |  - | &check; | - | - | - |
 | <var>poca</var>         | <code>uint8_t</code> | 1..9[^poc]             |  - | &check; | - | - | - |

@@ -583,6 +583,29 @@ static inline int AutomotiveBus_Stream_Pdu_FlexrayConfigOp_is_known_value(Automo
     }
 }
 
+typedef int8_t AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_enum_t;
+__flatbuffers_define_integer_type(AutomotiveBus_Stream_Pdu_FlexrayBusModelMode, AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_enum_t, 8)
+#define AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_None ((AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_enum_t)INT8_C(0))
+#define AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_Pop ((AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_enum_t)INT8_C(1))
+
+static inline const char *AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_name(AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_None: return "None";
+    case AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_Pop: return "Pop";
+    default: return "";
+    }
+}
+
+static inline int AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_is_known_value(AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_enum_t value)
+{
+    switch (value) {
+    case AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_None: return 1;
+    case AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_Pop: return 1;
+    default: return 0;
+    }
+}
+
 
 struct AutomotiveBus_Stream_Pdu_IpAddressV6 {
     alignas(2) uint16_t v0;
@@ -782,11 +805,7 @@ static inline AutomotiveBus_Stream_Pdu_IpMessageMetadata_table_t AutomotiveBus_S
 __flatbuffers_offset_vec_at(AutomotiveBus_Stream_Pdu_IpMessageMetadata_table_t, vec, i, 0)
 __flatbuffers_table_as_root(AutomotiveBus_Stream_Pdu_IpMessageMetadata)
 
-/** 
- *         Ethernet (IEEE 802.1Q)
- *         ----------------------
- *     
- *  Ethernet: Destination MAC (stored in lower 48-bits, transmission order).
+/**  Ethernet: Destination MAC (stored in lower 48-bits, transmission order).
  *   example: uint64 := XX-XX-01-23-45-67-89-AB */
 __flatbuffers_define_scalar_field(0, AutomotiveBus_Stream_Pdu_IpMessageMetadata, eth_dst_mac, flatbuffers_uint64, uint64_t, UINT64_C(0))
 /**  Ethernet: Source MAC (stored in lower 48-bits, transmission order).
@@ -800,11 +819,7 @@ __flatbuffers_define_scalar_field(3, AutomotiveBus_Stream_Pdu_IpMessageMetadata,
 __flatbuffers_define_scalar_field(4, AutomotiveBus_Stream_Pdu_IpMessageMetadata, eth_tci_dei, flatbuffers_uint8, uint8_t, UINT8_C(0))
 /**  Ethernet: TCI: VLAN identifier. */
 __flatbuffers_define_scalar_field(5, AutomotiveBus_Stream_Pdu_IpMessageMetadata, eth_tci_vid, flatbuffers_uint16, uint16_t, UINT16_C(0))
-/** 
- *         IP Protocols
- *         ------------
- *     
- *  IP: Address. */
+/**  IP: Address. */
 __flatbuffers_define_union_field(flatbuffers_, 7, AutomotiveBus_Stream_Pdu_IpMessageMetadata, ip_addr, AutomotiveBus_Stream_Pdu_IpAddr, 0)
 /**  IP: Protocol Specifier. */
 __flatbuffers_define_scalar_field(8, AutomotiveBus_Stream_Pdu_IpMessageMetadata, ip_protocol, AutomotiveBus_Stream_Pdu_IpProtocol, AutomotiveBus_Stream_Pdu_IpProtocol_enum_t, UINT8_C(0))
@@ -812,10 +827,7 @@ __flatbuffers_define_scalar_field(8, AutomotiveBus_Stream_Pdu_IpMessageMetadata,
 __flatbuffers_define_scalar_field(9, AutomotiveBus_Stream_Pdu_IpMessageMetadata, ip_src_port, flatbuffers_uint16, uint16_t, UINT16_C(0))
 /**  IP: TCP/UDP Destination Port. */
 __flatbuffers_define_scalar_field(10, AutomotiveBus_Stream_Pdu_IpMessageMetadata, ip_dst_port, flatbuffers_uint16, uint16_t, UINT16_C(0))
-/** 
- *         Adapter Protocols
- *         -----------------
- *      */
+/**  Adapter: Socked adapter table. */
 __flatbuffers_define_union_field(flatbuffers_, 12, AutomotiveBus_Stream_Pdu_IpMessageMetadata, adapter, AutomotiveBus_Stream_Pdu_SocketAdapter, 0)
 
 /** 
@@ -852,70 +864,58 @@ static inline AutomotiveBus_Stream_Pdu_FlexrayConfig_table_t AutomotiveBus_Strea
 __flatbuffers_offset_vec_at(AutomotiveBus_Stream_Pdu_FlexrayConfig_table_t, vec, i, 0)
 __flatbuffers_table_as_root(AutomotiveBus_Stream_Pdu_FlexrayConfig)
 
-/** 
- *         Node Config Properties (Codec internal)
- *         ----------------------
- *     
- *  Config: Node configured Virtual Coldstart Nodes. */
+/**  Config: Node: Node configured Virtual Coldstart Nodes. */
 __flatbuffers_define_vector_field(0, AutomotiveBus_Stream_Pdu_FlexrayConfig, vcn, AutomotiveBus_Stream_Pdu_FlexrayNodeIdentifier_vec_t, 0)
-/**  Config: Initial FlexRay POC State for Channel A. */
+/**  Config: Node: Initial FlexRay POC State for Channel A. */
 __flatbuffers_define_scalar_field(1, AutomotiveBus_Stream_Pdu_FlexrayConfig, initial_poc_state_cha, AutomotiveBus_Stream_Pdu_FlexrayPocState, AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t, INT8_C(0))
-/**  Config: Initial FlexRay POC State for Channel B. */
+/**  Config: Node: Initial FlexRay POC State for Channel B. */
 __flatbuffers_define_scalar_field(2, AutomotiveBus_Stream_Pdu_FlexrayConfig, initial_poc_state_chb, AutomotiveBus_Stream_Pdu_FlexrayPocState, AutomotiveBus_Stream_Pdu_FlexrayPocState_enum_t, INT8_C(0))
-/**  Config: Inhibit NULL Frames. */
+/**  Config: Node: Inhibit NULL Frames. */
 __flatbuffers_define_scalar_field(3, AutomotiveBus_Stream_Pdu_FlexrayConfig, inhibit_null_frames, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
-/** 
- *         FlexRay Controller Properties
- *         -----------------------------
- *     
- *  Config: Macroticks per communication cycle (10..16000 MT). */
+/**  Config: Controller: Macroticks per communication cycle (10..16000 MT). */
 __flatbuffers_define_scalar_field(4, AutomotiveBus_Stream_Pdu_FlexrayConfig, macrotick_per_cycle, flatbuffers_uint16, uint16_t, UINT16_C(0))
-/**  Config: Microticks per communication cycle (640..640000 uT). */
+/**  Config: Controller: Microticks per communication cycle (640..640000 uT). */
 __flatbuffers_define_scalar_field(5, AutomotiveBus_Stream_Pdu_FlexrayConfig, microtick_per_cycle, flatbuffers_uint32, uint32_t, UINT32_C(0))
-/**  Config: Start of network idle, marks start-of-end of communication cycle (7..15997 MT). */
+/**  Config: Controller: Start of network idle, marks start-of-end of communication cycle (7..15997 MT). */
 __flatbuffers_define_scalar_field(6, AutomotiveBus_Stream_Pdu_FlexrayConfig, network_idle_start, flatbuffers_uint16, uint16_t, UINT16_C(0))
-/**  Config: Length of a static slot (4..659 MT). */
+/**  Config: Controller: Length of a static slot (4..659 MT). */
 __flatbuffers_define_scalar_field(7, AutomotiveBus_Stream_Pdu_FlexrayConfig, static_slot_length, flatbuffers_uint16, uint16_t, UINT16_C(0))
-/**  Config: Number of static slots (2..1023). */
+/**  Config: Controller: Number of static slots (2..1023). */
 __flatbuffers_define_scalar_field(8, AutomotiveBus_Stream_Pdu_FlexrayConfig, static_slot_count, flatbuffers_uint16, uint16_t, UINT16_C(0))
-/**  Config: Length of a mimi slot (2..63 MT). */
+/**  Config: Controller: Length of a mimi slot (2..63 MT). */
 __flatbuffers_define_scalar_field(9, AutomotiveBus_Stream_Pdu_FlexrayConfig, minislot_length, flatbuffers_uint8, uint8_t, UINT8_C(0))
-/**  Config: Number of mini slots (0..7986). */
+/**  Config: Controller: Number of mini slots (0..7986). */
 __flatbuffers_define_scalar_field(10, AutomotiveBus_Stream_Pdu_FlexrayConfig, minislot_count, flatbuffers_uint16, uint16_t, UINT16_C(0))
-/**  Config: Static segment payload length (0..254 bytes). */
+/**  Config: Controller: Static segment payload length (0..254 bytes). */
 __flatbuffers_define_scalar_field(11, AutomotiveBus_Stream_Pdu_FlexrayConfig, static_slot_payload_length, flatbuffers_uint32, uint32_t, UINT32_C(0))
-/**  Config: The FlexRay bitrate. */
+/**  Config: Controller: The FlexRay bitrate. */
 __flatbuffers_define_scalar_field(12, AutomotiveBus_Stream_Pdu_FlexrayConfig, bit_rate, AutomotiveBus_Stream_Pdu_FlexrayBitrate, AutomotiveBus_Stream_Pdu_FlexrayBitrate_enum_t, INT8_C(0))
-/**  Config: Channels enabled. */
+/**  Config: Controller: Channels enabled. */
 __flatbuffers_define_scalar_field(13, AutomotiveBus_Stream_Pdu_FlexrayConfig, channel_enable, AutomotiveBus_Stream_Pdu_FlexrayChannel, AutomotiveBus_Stream_Pdu_FlexrayChannel_enum_t, INT8_C(0))
-/** 
- *         Coldstart & Sync Config Properties
- *         ----------------------------------
- *     
- *  Config: Coldstart node (1=yes, 0=no). */
+/**  Config: Coldstart: Coldstart node (1=yes, 0=no). */
 __flatbuffers_define_scalar_field(14, AutomotiveBus_Stream_Pdu_FlexrayConfig, coldstart_node, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
-/**  Config: Sync node (1=yes, 0=no). */
+/**  Config: Coldstart: Sync node (1=yes, 0=no). */
 __flatbuffers_define_scalar_field(15, AutomotiveBus_Stream_Pdu_FlexrayConfig, sync_node, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
-/**  Config: Coldstart attempts (2..31). */
+/**  Config: Coldstart: Coldstart attempts (2..31). */
 __flatbuffers_define_scalar_field(16, AutomotiveBus_Stream_Pdu_FlexrayConfig, coldstart_attempts, flatbuffers_uint8, uint8_t, UINT8_C(0))
-/**  Config: Wakeup channel selector (0=A, 1=B). */
+/**  Config: Coldstart: Wakeup channel selector (0=A, 1=B). */
 __flatbuffers_define_scalar_field(17, AutomotiveBus_Stream_Pdu_FlexrayConfig, wakeup_channel_select, flatbuffers_uint8, uint8_t, UINT8_C(0))
-/**  Config: Startup in single slot mode. */
+/**  Config: Coldstart: Startup in single slot mode. */
 __flatbuffers_define_scalar_field(18, AutomotiveBus_Stream_Pdu_FlexrayConfig, single_slot_enabled, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
-/**  Config: Key slot id (for simplified startup). */
+/**  Config: Coldstart: Key slot id (for simplified startup). */
 __flatbuffers_define_scalar_field(19, AutomotiveBus_Stream_Pdu_FlexrayConfig, key_slot_id, flatbuffers_uint16, uint16_t, UINT16_C(0))
-/**  Config: Key slot Payload (related to LPDU). */
+/**  Config: Coldstart: Key slot Payload (related to LPDU). */
 __flatbuffers_define_vector_field(20, AutomotiveBus_Stream_Pdu_FlexrayConfig, key_slot_payload, flatbuffers_uint8_vec_t, 0)
-/**  Config: Key slot LPDU (for startup with payload). */
+/**  Config: Coldstart: Key slot LPDU (for startup with payload). */
 __flatbuffers_define_table_field(21, AutomotiveBus_Stream_Pdu_FlexrayConfig, key_slot_lpdu, AutomotiveBus_Stream_Pdu_FlexrayLpdu_table_t, 0)
-/** 
- *         Frame Config Table
- *         ------------------
- *     
- *  Config: Frame/LPDU static config table. */
+/**  Config: Frame: Frame/LPDU static config table. */
 __flatbuffers_define_vector_field(22, AutomotiveBus_Stream_Pdu_FlexrayConfig, frame_table, AutomotiveBus_Stream_Pdu_FlexrayLpduConfig_vec_t, 0)
-/**  Config: Config operation, relates specifically to 'frame_table'. */
+/**  Config: Frame: Config operation, relates specifically to 'frame_table'. */
 __flatbuffers_define_scalar_field(23, AutomotiveBus_Stream_Pdu_FlexrayConfig, config_op, AutomotiveBus_Stream_Pdu_FlexrayConfigOp, AutomotiveBus_Stream_Pdu_FlexrayConfigOp_enum_t, INT8_C(0))
+/**  Config: Node: Bus Model mode selector. */
+__flatbuffers_define_scalar_field(24, AutomotiveBus_Stream_Pdu_FlexrayConfig, bus_model_mode, AutomotiveBus_Stream_Pdu_FlexrayBusModelMode, AutomotiveBus_Stream_Pdu_FlexrayBusModelMode_enum_t, INT8_C(0))
+/**  Config: Node: Node name (supports debug/logging). */
+__flatbuffers_define_string_field(25, AutomotiveBus_Stream_Pdu_FlexrayConfig, node_name, 0)
 
 /** 
  *     FlexRay Status Metadata
@@ -1046,9 +1046,14 @@ static inline AutomotiveBus_Stream_Pdu_FlexrayMetadata_table_t AutomotiveBus_Str
 __flatbuffers_offset_vec_at(AutomotiveBus_Stream_Pdu_FlexrayMetadata_table_t, vec, i, 0)
 __flatbuffers_table_as_root(AutomotiveBus_Stream_Pdu_FlexrayMetadata)
 
+/**  FlexRay Metadata: Node identifier of the _sending_ node. */
 __flatbuffers_define_struct_field(0, AutomotiveBus_Stream_Pdu_FlexrayMetadata, node_ident, AutomotiveBus_Stream_Pdu_FlexrayNodeIdentifier_struct_t, 0)
-/**  FlexRay Metadata can be one of several Tables. */
+/**  FlexRay Metadata: Metadata table. */
 __flatbuffers_define_union_field(flatbuffers_, 2, AutomotiveBus_Stream_Pdu_FlexrayMetadata, metadata, AutomotiveBus_Stream_Pdu_FlexrayMetadataType, 0)
+/**  FlexRay Metadata: PoP Node identifier of the node this message represents.
+ *      PoP:node_ident(0.0.0) sends message to node by setting pop_node_ident(1.0.0)
+ *      PoP Bus Model exchanges: node_ident <= pop_node_ident */
+__flatbuffers_define_struct_field(3, AutomotiveBus_Stream_Pdu_FlexrayMetadata, pop_node_ident, AutomotiveBus_Stream_Pdu_FlexrayNodeIdentifier_struct_t, 0)
 /** 
  *     PDU Object / Stream
  *     ------------------- */

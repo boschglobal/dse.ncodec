@@ -34,7 +34,7 @@ bool flexray_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
             node_ident.node.swc_id);
         for (size_t i = 0;
              i < pdu->transport.flexray.metadata.config.vcn_count &&
-             i < MAX_VCN;
+             i < NCODEC_PDU_MAX_VCN;
              i++) {
             register_vcn_node_state(
                 &m->state, pdu->transport.flexray.metadata.config.vcn[i]);

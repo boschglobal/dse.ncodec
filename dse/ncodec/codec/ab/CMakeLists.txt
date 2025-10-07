@@ -22,6 +22,7 @@ add_library(ab-codec OBJECT
         flexray/fbs.c
         flexray/state.c
         flexray/flexray.c
+        flexray_pop/flexray_pop.c
         ${DSE_NCODEC_SOURCE_DIR}/codec.c
         ${DSE_NCODEC_SOURCE_DIR}/stream/ascii85.c
         ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c

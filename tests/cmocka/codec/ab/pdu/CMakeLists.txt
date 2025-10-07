@@ -13,12 +13,13 @@ add_executable(test_codec_ab_pdu
     test_pdu_can.c
     test_pdu_ip.c
     test_pdu_struct.c
-    test_pdu_flexray_engine.c
-    test_pdu_flexray_state.c
+    test_pdu_flexray__engine.c
+    test_pdu_flexray__state.c
     test_pdu_flexray__startup.c
     test_pdu_flexray__single_node.c
     test_pdu_flexray__multi_node.c
     test_pdu_flexray__null_frame.c
+    flexray/pop/test_flexray_pop.c
     flexray_harness.c
 )
 target_link_libraries(test_codec_ab_pdu
