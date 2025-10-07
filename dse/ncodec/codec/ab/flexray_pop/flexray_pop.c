@@ -226,8 +226,7 @@ void flexray_pop_bus_model_progress(ABCodecBusModel* bm)
                     .transport_type = NCodecPduTransportTypeFlexray,
                     .transport.flexray.metadata_type =
                         NCodecPduFlexrayMetadataTypeStatus,
-                    .transport.flexray.node_ident =
-                        pdu_route->node_ident.node_id,
+                    .transport.flexray.node_ident = pdu_route->node_ident,
                     .transport.flexray.metadata.status.channel[0].tcvr_state =
                         NCodecPduFlexrayTransceiverStateNoConnection,
                 });
@@ -241,7 +240,7 @@ void flexray_pop_bus_model_progress(ABCodecBusModel* bm)
     assert(node_pdu_route);
     for (size_t i = 0; i < vector_len(&node_pdu_route->pdu_list); i++) {
         NCodecPdu* pdu = vector_at(&node_pdu_route->pdu_list, i, NULL);
-        ncodec_write(bm->nc, pdu);
+        ncodec_write((NCODEC*)bm->nc, pdu);
     }
 
 

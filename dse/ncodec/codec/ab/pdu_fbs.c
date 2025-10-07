@@ -249,6 +249,14 @@ int32_t pdu_write(NCODEC* nc, NCodecPdu* pdu)
         if (_pdu->transport.flexray.metadata_type ==
             NCodecPduFlexrayMetadataTypeConfig) {
             /* Inject codec internal config. */
+            if ((strlen(_pdu->transport.flexray.metadata.config.node_name) ==
+                    0) &&
+                (_nc->name != NULL)) {
+                /* Only set node_name if not already set, otherwise, pass
+                the value through unaltered (PoP use-case). */
+                strncpy(_pdu->transport.flexray.metadata.config.node_name,
+                    _nc->name, NCODEC_PDU_NODE_NAME_LEN - 1);
+            }
             _pdu->transport.flexray.metadata.config.vcn_count = _nc->vcn_count;
             _pdu->transport.flexray.metadata.config.vcn[0] =
                 _pdu->transport.flexray.node_ident;

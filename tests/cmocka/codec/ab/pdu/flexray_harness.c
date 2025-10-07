@@ -544,6 +544,13 @@ static void _expect_trace_map_check(TestTxRx* test)
                 trace_pdu->transport.flexray.pop_node_ident.node_id,
                 pdu->transport.flexray.pop_node_ident.node_id);
             switch (pdu->transport.flexray.metadata_type) {
+            case (NCodecPduFlexrayMetadataTypeConfig):
+                if (pdu->transport.flexray.metadata.config.node_name[0]) {
+                    assert_string_equal(
+                        trace_pdu->transport.flexray.metadata.config.node_name,
+                        pdu->transport.flexray.metadata.config.node_name);
+                }
+                break;
             case (NCodecPduFlexrayMetadataTypeStatus):
                 if (pdu->transport.flexray.metadata.status.channel[0]
                         .tcvr_state) {

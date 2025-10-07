@@ -49,13 +49,13 @@ static NCodecPduFlexrayConfig config = {
 static TestNode testnode_POP = (TestNode){
     .mimetype = "application/x-automotive-bus; "
                 "interface=stream;type=pdu;schema=fbs;"
-                "ecu_id=0;model=flexray;mode=pop",
+                "ecu_id=0;name=PoP;model=flexray;mode=pop",
     .node_ident = { .node.ecu_id = 0 },
 };
 static TestNode testnode_A = (TestNode){
     .mimetype = "application/x-automotive-bus; "
                 "interface=stream;type=pdu;schema=fbs;"
-                "ecu_id=1;model=flexray;mode=pop",
+                "ecu_id=1;name=ECU1;model=flexray;mode=pop",
     .node_ident = { .node.ecu_id = 1 },
 };
 
@@ -163,6 +163,7 @@ void single_node__no_controller(void** state)
                             .transport.flexray.pop_node_ident = { .node.ecu_id = 0} ,
                             .transport.flexray.metadata_type =
                                 NCodecPduFlexrayMetadataTypeConfig,
+                            .transport.flexray.metadata.config.node_name = "ECU1",
                         },
                     },
                     /* Node 1 */

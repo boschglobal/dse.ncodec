@@ -27,6 +27,8 @@ static void _decode_flexray_config(
     /* Force the config node_ident. */
     c->node_ident = _pdu->transport.flexray.node_ident;
 
+    strncpy(c->node_name, ns(FlexrayConfig_node_name(fc_msg)),
+        NCODEC_PDU_NODE_NAME_LEN - 1);
     c->vcn_count =
         ns(FlexrayNodeIdentifier_vec_len(ns(FlexrayConfig_vcn(fc_msg))));
     // FIXME: decode this properly.
@@ -176,11 +178,17 @@ static uint32_t _emit_flexray_config(flatcc_builder_t* B, NCodecPdu* _pdu)
 
     if (c->vcn_count > 0) {
         ns(FlexrayConfig_vcn_start(B));
-        for (size_t i = 0; i < c->vcn_count && i < MAX_VCN; i++) {
+        for (size_t i = 0; i < c->vcn_count && i < NCODEC_PDU_MAX_VCN; i++) {
             ns(FlexrayConfig_vcn_push_create(B, c->vcn[i].node.ecu_id,
                 c->vcn[i].node.cc_id, c->vcn[i].node.swc_id));
         }
         ns(FlexrayConfig_vcn_end(B));
+    }
+    if (c->node_name) {
+        flatbuffers_string_vec_ref_t _node_name =
+            flatbuffers_string_create_strn(
+                B, c->node_name, NCODEC_PDU_NODE_NAME_LEN);
+        ns(FlexrayConfig_node_name_add(B, _node_name));
     }
     ns(FlexrayConfig_initial_poc_state_cha_add(B, c->initial_poc_state_cha));
     ns(FlexrayConfig_initial_poc_state_chb_add(B, c->initial_poc_state_chb));

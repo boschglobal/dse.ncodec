@@ -145,7 +145,8 @@ typedef struct NCodecPduStructMetadata {
     -------------------------------------
 */
 
-#define MAX_VCN 2
+#define NCODEC_PDU_MAX_VCN       2
+#define NCODEC_PDU_NODE_NAME_LEN 32
 
 typedef struct NCodecPduFlexrayNodeIdentifier {
     union {
@@ -308,8 +309,8 @@ typedef struct NCodecPduFlexrayLpduConfig {
 typedef struct NCodecPduFlexrayConfig {
     /* Node Config items (Codec internal). */
     NCodecPduFlexrayNodeIdentifier node_ident;
-    const char*                    node_name;
-    NCodecPduFlexrayNodeIdentifier vcn[MAX_VCN];
+    char                           node_name[NCODEC_PDU_NODE_NAME_LEN];
+    NCodecPduFlexrayNodeIdentifier vcn[NCODEC_PDU_MAX_VCN];
     size_t                         vcn_count;
     NCodecPduFlexrayPocState       initial_poc_state_cha;
     NCodecPduFlexrayPocState       initial_poc_state_chb;
