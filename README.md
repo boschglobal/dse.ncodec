@@ -32,7 +32,8 @@ dse.ncodec
 └── doc/content             <-- Content for documentation systems
 └── dse/ncodec
     └── codec/ab            <-- Automotive-Bus (AB) Codec implementation
-        └── flexray         <-- FlexRay Bus Model implementation
+        └── flexray/        <-- FlexRay Bus Model implementation
+        └── flexray_pop/    <-- FlexRay Point-of-Presence Bus Model implementation
     └── interface
         └── frame.h         <-- Frame based message interface
         └── pdu.h           <-- PDU based message interface

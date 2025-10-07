@@ -188,8 +188,149 @@ void single_node__no_controller(void** state)
 
 void single_node__controller_normal_active(void** state)
 {
+    // Connect to a FrameSync Bus
+    // Push the node to NormalActive
+    // Node should get cycle and MA from POP/Controller
+    // No Tx (but LPDU are pushed)
+    //
+    // POP <--> A (ECU_ID__1) ,
+    // A -> config -> POP -> Controller
+    // A -> status -> POP -> Controller
+    // A -> lpdu -> POP -> Controller
+    // Controller -> POP -> status -> A -> model
+
+    //__log_level__ = LOG_DEBUG;
+    testnode_POP.config = config;
+    testnode_A.config = config;
+
     Mock* mock = *state;
-    skip();
+    mock->test = (TestTxRx){
+        .config = {
+            .node = {
+                testnode_POP,
+                testnode_A,
+            },
+            .frame_table = frame_table_POP_A,
+        },
+        .run = {
+            .push_active = true,
+            .pdu_map = pdu_map_POP_A,
+            .steps = 2,
+            .pop_playback_list = {
+                {
+                    /* Step 0 ... Controller setup (POC: config/ready/run), but 
+                    has not responded via callbacks. */
+                    .step = 0,
+                    .node_idx = 0,
+                    .pdu = {
+                        .transport_type = NCodecPduTransportTypeFlexray,
+                        .transport.flexray.node_ident = { .node.ecu_id = 0 },
+                        .transport.flexray.pop_node_ident = { .node.ecu_id = 1 },
+                        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
+                        .transport.flexray.metadata.status.cycle = 0, /* Force to 0 while not in FrameSync. */
+                        .transport.flexray.metadata.status.macrotick = 0, /* Force to 0 while not in FrameSync. */
+                        .transport.flexray.metadata.status.channel[0].tcvr_state = NCodecPduFlexrayTransceiverStateNoSignal,
+                        .transport.flexray.metadata.status.channel[0].poc_state = NCodecPduFlexrayPocStateNormalPassive,
+                    },
+                },
+                {
+                    /* Step 1 ... Controller has responded to previous POC commands. */
+                    .step = 1,
+                    .node_idx = 0,
+                    .pdu = {
+                        .transport_type = NCodecPduTransportTypeFlexray,
+                        .transport.flexray.node_ident = { .node.ecu_id = 0 },
+                        .transport.flexray.pop_node_ident = { .node.ecu_id = 1 },
+                        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
+                        .transport.flexray.metadata.status.cycle = 5,
+                        .transport.flexray.metadata.status.macrotick = 1400,
+                        .transport.flexray.metadata.status.channel[0].tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync,
+                        .transport.flexray.metadata.status.channel[0].poc_state = NCodecPduFlexrayPocStateNormalActive,
+                    },
+                },
+                {
+                    /* Step 1 ... Node status. */
+                    .step = 1,
+                    .node_idx = 1,
+                    .pdu = {
+                        .transport_type = NCodecPduTransportTypeFlexray,
+                        .transport.flexray.node_ident = { .node.ecu_id = 0 },
+                        .transport.flexray.pop_node_ident = { .node.ecu_id = 1 },
+                        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
+                        .transport.flexray.metadata.status.channel[0].poc_command = NCodecPduFlexrayCommandNone,
+                    },
+                },
+            },
+        },
+        .expect = {
+            .trace_map = {
+                .map = {
+                    /* Node 0 */
+                    {
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
+                        },
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.channel[0].poc_command = NCodecPduFlexrayCommandConfig,
+                        },
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.channel[0].poc_command = NCodecPduFlexrayCommandReady,
+                        },
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.channel[0].poc_command = NCodecPduFlexrayCommandRun,
+                        },
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
+                        },
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
+                        },
+                    },
+                    /* Node 1 */
+                    {
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.pop_node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.cycle = 0,
+                            .transport.flexray.metadata.status.macrotick = 0,
+                            .transport.flexray.metadata.status.channel[0].tcvr_state = NCodecPduFlexrayTransceiverStateNoSignal,
+                            .transport.flexray.metadata.status.channel[0].poc_state = NCodecPduFlexrayPocStateNormalPassive,
+                        },
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.pop_node_ident = { .node.ecu_id = 1 },
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.cycle = 5,
+                            .transport.flexray.metadata.status.macrotick = 1400,
+                            .transport.flexray.metadata.status.channel[0].tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync,
+                            .transport.flexray.metadata.status.channel[0].poc_state = NCodecPduFlexrayPocStateNormalActive,
+                        },
+                    },
+                },
+            },
+        },
+    };
+    flexray_harness_run_pop_test(&mock->test);
 }
 
 void single_node__tx_rx(void** state)

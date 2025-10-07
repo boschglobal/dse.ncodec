@@ -49,6 +49,11 @@ typedef struct TestPduList {
     TestPdu list[TEST_PDUS];
 } TestPduList;
 
+typedef struct TestPduPlayback {
+    size_t    step;
+    uint8_t   node_idx;
+    NCodecPdu pdu;
+} TestPduPlayback;
 
 typedef struct TestPduTrace {
     NCodecPduFlexrayNodeIdentifier node_ident;
@@ -78,6 +83,8 @@ typedef struct {
 
         size_t cycles;
         size_t steps;
+
+        TestPduPlayback pop_playback_list[TEST_FRAMES];
     } run;
 
     /* Expect */

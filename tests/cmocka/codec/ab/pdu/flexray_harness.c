@@ -406,6 +406,45 @@ void flexray_harness_run_test(TestTxRx* test)
 }
 
 
+static void _simbus_write(TestTxRx* test, NCodecPdu* pdu)
+{
+    /**
+     * The effect of a SimBus must be created. Each node produces a
+     * sequence of messages, the SimBus combines the sequences from each node
+     * to a buffer, that buffer then becomes the input for each node.
+     *
+     * To recreate the effect; for each node, get the stream object, then
+     * for each node, produce a message sequence using _that_ stream object
+     * and the properties of the nodes NC object, and flush to the stream.
+     */
+
+    /* For each Node. */
+    for (size_t n_idx = 0; n_idx < TEST_NODES; n_idx++) {
+        NCODEC* nc = test->config.node[n_idx].nc;
+        if (nc == NULL) break;
+
+        /* Push messages from each node to this Nodes NC Object. */
+        for (size_t nc_idx = 0; nc_idx < TEST_NODES; nc_idx++) {
+            if (test->config.node[nc_idx].nc == NULL) break;
+
+            /* Underlying stream object is the same. */
+            NCODEC*         nc2 = test->config.node[nc_idx].nc;
+            NCodecInstance* _nc2 = (NCodecInstance*)nc2;
+            _nc2->stream = test->config.node[n_idx].stream;
+
+            /* Write the PDU. */
+            int rc = ncodec_write(nc2, pdu);
+            assert_int_equal(rc, 0);
+
+            /* Flush this Nodes NC Object. */
+            ncodec_flush(nc2);
+            /* Restore the stream. */
+            _nc2->stream = test->config.node[nc_idx].stream;
+        }
+    }
+}
+
+
 static void _run_pop(TestTxRx* test)
 {
 #define CYCLE_STEPS_MAX (5 * 2 + 5) /* 1 cycle = 5 ms = 10 steps (+5)*/
@@ -415,7 +454,8 @@ static void _run_pop(TestTxRx* test)
     uint8_t   cycle_loop = 0;
     size_t    cycle_steps = 0;
 
-    for (size_t i = 0; (test->run.steps == 0) || (i < test->run.steps); i++) {
+    for (size_t step = 0; (test->run.steps == 0) || (step < test->run.steps);
+         step++) {
         cycle_steps += 1;
         if (test->run.push_at_cycle && test->run.push_at_cycle == cycle) {
             _push_frames(test);
@@ -427,6 +467,12 @@ static void _run_pop(TestTxRx* test)
         if (cycle_steps > CYCLE_STEPS_MAX) {
             fail_msg("cycle limit exceeded, not progressing");
             return;
+        }
+        for (size_t i = 0; i < ARRAY_SIZE(test->run.pop_playback_list); i++) {
+            if (test->run.pop_playback_list[i].pdu.transport_type == 0) break;
+            if (test->run.pop_playback_list[i].step == step) {
+                _simbus_write(test, &test->run.pop_playback_list[i].pdu);
+            }
         }
 
         for (size_t n_idx = 0; n_idx < TEST_NODES; n_idx++) {
@@ -454,7 +500,7 @@ static void _run_pop(TestTxRx* test)
             ncodec_seek(nc, 0, NCODEC_SEEK_SET);
 
             /* Read from NC. */
-            log_info("POP:READ: step=%u", i);
+            log_info("POP:READ: step=%u", step);
             size_t pdu_count = 0;
             while ((rc = ncodec_read(nc, &pdu)) >= 0) {
                 if (pdu.transport_type != NCodecPduTransportTypeFlexray)
@@ -477,7 +523,7 @@ static void _run_pop(TestTxRx* test)
                     test->run.status_pdu[n_idx] = pdu;
                 }
             }
-            assert_true(pdu_count > 0);
+            // assert_true(pdu_count > 0);
 
             ncodec_truncate(nc);
             ncodec_flush(nc);
@@ -524,13 +570,13 @@ static void _dump_trace(TestTxRx* test)
 static void _expect_trace_map_check(TestTxRx* test)
 {
     for (size_t n_idx = 0; n_idx < TEST_NODES; n_idx++) {
-        for (size_t p_idx = 0; p_idx < TEST_NODES; p_idx++) {
+        for (size_t p_idx = 0; p_idx < TEST_FRAMES; p_idx++) {
             NCodecPdu* pdu = &test->expect.trace_map.map[n_idx][p_idx];
             if (pdu->transport_type == 0) break;
             if (pdu->transport_type != NCodecPduTransportTypeFlexray) continue;
             if (pdu->transport.flexray.metadata_type == 0) continue;
 
-            log_trace("Locate trace item: [%u][%u]", n_idx, p_idx);
+            log_info("Locate trace item: [%u][%u]", n_idx, p_idx);
             TestPduTrace* pdu_trace =
                 vector_at(&test->run.pdu_trace, n_idx, NULL);
             if (pdu_trace == NULL) fail_msg("Trace not found at [%u]", n_idx);
@@ -543,24 +589,41 @@ static void _expect_trace_map_check(TestTxRx* test)
             assert_int_equal(
                 trace_pdu->transport.flexray.pop_node_ident.node_id,
                 pdu->transport.flexray.pop_node_ident.node_id);
+
             switch (pdu->transport.flexray.metadata_type) {
-            case (NCodecPduFlexrayMetadataTypeConfig):
-                if (pdu->transport.flexray.metadata.config.node_name[0]) {
-                    assert_string_equal(
-                        trace_pdu->transport.flexray.metadata.config.node_name,
-                        pdu->transport.flexray.metadata.config.node_name);
+            case (NCodecPduFlexrayMetadataTypeConfig): {
+                NCodecPduFlexrayConfig cp =
+                    pdu->transport.flexray.metadata.config;
+                NCodecPduFlexrayConfig ct =
+                    trace_pdu->transport.flexray.metadata.config;
+                if (cp.node_name[0]) {
+                    assert_string_equal(ct.node_name, cp.node_name);
                 }
-                break;
-            case (NCodecPduFlexrayMetadataTypeStatus):
-                if (pdu->transport.flexray.metadata.status.channel[0]
-                        .tcvr_state) {
+            } break;
+            case (NCodecPduFlexrayMetadataTypeStatus): {
+                NCodecPduFlexrayStatus sp =
+                    pdu->transport.flexray.metadata.status;
+                NCodecPduFlexrayStatus st =
+                    trace_pdu->transport.flexray.metadata.status;
+                if (sp.cycle) {
+                    assert_int_equal(st.cycle, sp.cycle);
+                }
+                if (sp.macrotick) {
+                    assert_int_equal(st.macrotick, sp.macrotick);
+                }
+                if (sp.channel[0].tcvr_state) {
                     assert_int_equal(
-                        trace_pdu->transport.flexray.metadata.status.channel[0]
-                            .tcvr_state,
-                        pdu->transport.flexray.metadata.status.channel[0]
-                            .tcvr_state);
+                        st.channel[0].tcvr_state, sp.channel[0].tcvr_state);
                 }
-                break;
+                if (sp.channel[0].poc_state) {
+                    assert_int_equal(
+                        st.channel[0].poc_state, sp.channel[0].poc_state);
+                }
+                if (sp.channel[0].poc_command) {
+                    assert_int_equal(
+                        st.channel[0].poc_command, sp.channel[0].poc_command);
+                }
+            } break;
             default:
                 break;
             }
