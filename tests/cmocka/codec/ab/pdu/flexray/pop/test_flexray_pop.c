@@ -226,11 +226,16 @@ void single_node__controller_normal_active(void** state)
                         .transport_type = NCodecPduTransportTypeFlexray,
                         .transport.flexray.node_ident = { .node.ecu_id = 0 },
                         .transport.flexray.pop_node_ident = { .node.ecu_id = 1 },
-                        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
-                        .transport.flexray.metadata.status.cycle = 0, /* Force to 0 while not in FrameSync. */
-                        .transport.flexray.metadata.status.macrotick = 0, /* Force to 0 while not in FrameSync. */
-                        .transport.flexray.metadata.status.channel[0].tcvr_state = NCodecPduFlexrayTransceiverStateNoSignal,
-                        .transport.flexray.metadata.status.channel[0].poc_state = NCodecPduFlexrayPocStateNormalPassive,
+                        .transport.flexray.metadata_type =
+                            NCodecPduFlexrayMetadataTypeStatus,
+                        /* Force to 0 while not in FrameSync. */
+                        .transport.flexray.metadata.status.cycle = 0,
+                        /* Force to 0 while not in FrameSync. */
+                        .transport.flexray.metadata.status.macrotick = 0,
+                        .transport.flexray.metadata.status.channel[0].tcvr_state =
+                            NCodecPduFlexrayTransceiverStateNoSignal,
+                        .transport.flexray.metadata.status.channel[0].poc_state =
+                            NCodecPduFlexrayPocStateNormalPassive,
                     },
                 },
                 {
@@ -241,11 +246,14 @@ void single_node__controller_normal_active(void** state)
                         .transport_type = NCodecPduTransportTypeFlexray,
                         .transport.flexray.node_ident = { .node.ecu_id = 0 },
                         .transport.flexray.pop_node_ident = { .node.ecu_id = 1 },
-                        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
+                        .transport.flexray.metadata_type =
+                            NCodecPduFlexrayMetadataTypeStatus,
                         .transport.flexray.metadata.status.cycle = 5,
                         .transport.flexray.metadata.status.macrotick = 1400,
-                        .transport.flexray.metadata.status.channel[0].tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync,
-                        .transport.flexray.metadata.status.channel[0].poc_state = NCodecPduFlexrayPocStateNormalActive,
+                        .transport.flexray.metadata.status.channel[0].tcvr_state =
+                            NCodecPduFlexrayTransceiverStateFrameSync,
+                        .transport.flexray.metadata.status.channel[0].poc_state =
+                         NCodecPduFlexrayPocStateNormalActive,
                     },
                 },
                 {
@@ -256,8 +264,10 @@ void single_node__controller_normal_active(void** state)
                         .transport_type = NCodecPduTransportTypeFlexray,
                         .transport.flexray.node_ident = { .node.ecu_id = 0 },
                         .transport.flexray.pop_node_ident = { .node.ecu_id = 1 },
-                        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
-                        .transport.flexray.metadata.status.channel[0].poc_command = NCodecPduFlexrayCommandNone,
+                        .transport.flexray.metadata_type =
+                            NCodecPduFlexrayMetadataTypeStatus,
+                        .transport.flexray.metadata.status.channel[0].poc_command =
+                            NCodecPduFlexrayCommandNone,
                     },
                 },
             },
@@ -270,35 +280,44 @@ void single_node__controller_normal_active(void** state)
                         {
                             .transport_type = NCodecPduTransportTypeFlexray,
                             .transport.flexray.node_ident = { .node.ecu_id = 1 },
-                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeConfig,
                         },
                         {
                             .transport_type = NCodecPduTransportTypeFlexray,
                             .transport.flexray.node_ident = { .node.ecu_id = 1 },
-                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
-                            .transport.flexray.metadata.status.channel[0].poc_command = NCodecPduFlexrayCommandConfig,
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.channel[0].poc_command =
+                                NCodecPduFlexrayCommandConfig,
                         },
                         {
                             .transport_type = NCodecPduTransportTypeFlexray,
                             .transport.flexray.node_ident = { .node.ecu_id = 1 },
-                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
-                            .transport.flexray.metadata.status.channel[0].poc_command = NCodecPduFlexrayCommandReady,
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.channel[0].poc_command =
+                                NCodecPduFlexrayCommandReady,
                         },
                         {
                             .transport_type = NCodecPduTransportTypeFlexray,
                             .transport.flexray.node_ident = { .node.ecu_id = 1 },
-                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeStatus,
-                            .transport.flexray.metadata.status.channel[0].poc_command = NCodecPduFlexrayCommandRun,
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.channel[0].poc_command =
+                                NCodecPduFlexrayCommandRun,
                         },
                         {
                             .transport_type = NCodecPduTransportTypeFlexray,
                             .transport.flexray.node_ident = { .node.ecu_id = 1 },
-                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeLpdu,
                         },
                         {
                             .transport_type = NCodecPduTransportTypeFlexray,
                             .transport.flexray.node_ident = { .node.ecu_id = 1 },
-                            .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeLpdu,
                         },
                     },
                     /* Node 1 */
@@ -311,8 +330,10 @@ void single_node__controller_normal_active(void** state)
                                 NCodecPduFlexrayMetadataTypeStatus,
                             .transport.flexray.metadata.status.cycle = 0,
                             .transport.flexray.metadata.status.macrotick = 0,
-                            .transport.flexray.metadata.status.channel[0].tcvr_state = NCodecPduFlexrayTransceiverStateNoSignal,
-                            .transport.flexray.metadata.status.channel[0].poc_state = NCodecPduFlexrayPocStateNormalPassive,
+                            .transport.flexray.metadata.status.channel[0].tcvr_state =
+                                NCodecPduFlexrayTransceiverStateNoSignal,
+                            .transport.flexray.metadata.status.channel[0].poc_state =
+                                NCodecPduFlexrayPocStateNormalPassive,
                         },
                         {
                             .transport_type = NCodecPduTransportTypeFlexray,
@@ -322,8 +343,10 @@ void single_node__controller_normal_active(void** state)
                                 NCodecPduFlexrayMetadataTypeStatus,
                             .transport.flexray.metadata.status.cycle = 5,
                             .transport.flexray.metadata.status.macrotick = 1400,
-                            .transport.flexray.metadata.status.channel[0].tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync,
-                            .transport.flexray.metadata.status.channel[0].poc_state = NCodecPduFlexrayPocStateNormalActive,
+                            .transport.flexray.metadata.status.channel[0].tcvr_state =
+                                NCodecPduFlexrayTransceiverStateFrameSync,
+                            .transport.flexray.metadata.status.channel[0].poc_state =
+                                NCodecPduFlexrayPocStateNormalActive,
                         },
                     },
                 },
