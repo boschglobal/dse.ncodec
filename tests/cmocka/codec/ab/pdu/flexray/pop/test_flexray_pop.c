@@ -64,7 +64,7 @@ static TestFrameMap frame_table_POP_A = {
         /* POP */
         { },
         /* Node A */
-        {
+        { .list = {
             {
                 .slot_id = 5,
                 .payload_length = 64,
@@ -86,7 +86,7 @@ static TestFrameMap frame_table_POP_A = {
                     .frame_table = 1,
                 },
             },
-        },
+        }, },
     },
 };
 #define PAYLOAD_5  "hello 5 world"
@@ -94,7 +94,7 @@ static TestFrameMap frame_table_POP_A = {
 static TestPduMap pdu_map_POP_A = {
     .map = {
         /* POP */
-        {
+        { .list = {
             // FIXME: check does the POP keep track of this or is it
             // direct from the Controller?
             // TODO: push at slot_id ... to create effect of bus.
@@ -105,9 +105,9 @@ static TestPduMap pdu_map_POP_A = {
                 .payload = PAYLOAD_10,
                 .payload_len = strlen(PAYLOAD_10),
             },
-        },
+        }, },
         /* Node A */
-        {
+        { .list = {
             {
                 .slot_id = 5,
                 .frame_config_index = 0,
@@ -120,7 +120,7 @@ static TestPduMap pdu_map_POP_A = {
                 .frame_config_index = 1,
                 .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
             },
-        },
+        }, },
     },
 };
 

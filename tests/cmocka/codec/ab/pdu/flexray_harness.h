@@ -38,12 +38,27 @@ typedef struct {
     NCodecPduFlexrayNodeIdentifier node_ident;
 } TestPdu;
 
-typedef struct TestPduMap {
-    TestPdu map[TEST_NODES][TEST_FRAMES];
-} TestPduMap;
+
+typedef struct TestFrameTable {
+    NCodecPduFlexrayLpduConfig list[TEST_FRAMES];
+} TestFrameTable;
 typedef struct TestFrameMap {
-    NCodecPduFlexrayLpduConfig map[TEST_NODES][TEST_FRAMES];
+    TestFrameTable map[TEST_NODES];
 } TestFrameMap;
+
+
+typedef struct TestPduTable {
+    size_t  count;
+    TestPdu list[TEST_FRAMES];
+} TestPduTable;
+typedef struct TestPduMap {
+    TestPduTable map[TEST_NODES];
+} TestPduMap;
+
+
+typedef struct TestPduMapOld {
+    TestPdu map[TEST_NODES][TEST_FRAMES];
+} TestPduMapOld;
 typedef struct TestPduList {
     size_t  count;
     TestPdu list[TEST_PDUS];

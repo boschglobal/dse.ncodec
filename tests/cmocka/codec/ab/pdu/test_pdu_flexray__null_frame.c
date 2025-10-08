@@ -88,7 +88,7 @@ void null_frames(void** state)
                  testnode_A,
             },
             .frame_table = { .map = {
-                { // Node 0
+                { .list = { // Node 0
                     /* Sent on Cycle 0, then Tx/Rx NULL on Cycle 1,2,3 ... */
                     {
                         .slot_id = 7,
@@ -189,13 +189,14 @@ void null_frames(void** state)
                             .frame_table = 9,  /* Self index. */
                         },
                     },
-                },
+                }, },
             },
             },
         },
         .run = {
             .push_active = true,
-            .pdu_map = { .map = {{
+            .pdu_map = { .map = {
+                { .list = {
                 {
                     .slot_id = 7,
                     .frame_config_index = 0,
@@ -256,7 +257,7 @@ void null_frames(void** state)
                     .frame_config_index = 9,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            }, },
+            }, }, },
             },
             .cycles = 1,
         },
@@ -361,7 +362,7 @@ void null_frame_inhibit(void** state)
                  testnode_A,
             },
             .frame_table = { .map = {
-                { // Node 0
+                { .list = { // Node 0
                     /* Sent on Cycle 0, then Tx/Rx NULL on Cycle 1,2,3 ... */
                     {
                         .slot_id = 7,
@@ -384,13 +385,14 @@ void null_frame_inhibit(void** state)
                         },
                         .inhibit_null = true,
                     },
-                },
+                }, },
             },
             },
         },
         .run = {
             .push_active = true,
-            .pdu_map = { .map = {{
+            .pdu_map = { .map = {
+                { .list = {
                 {
                     .slot_id = 7,
                     .frame_config_index = 0,
@@ -403,7 +405,7 @@ void null_frame_inhibit(void** state)
                     .frame_config_index = 1,
                     .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                 },
-            }, },
+            }, }, },
             },
             .cycles = 1,
         },
@@ -445,7 +447,7 @@ void null_config_inhibit(void** state)
                  testnode_inhibit,
             },
             .frame_table = { .map = {
-                { // Node 0
+                { .list = { // Node 0
                     /* Sent on Cycle 0, then Tx/Rx NULL on Cycle 1,2,3 ... */
                     {
                         .slot_id = 7,
@@ -467,14 +469,15 @@ void null_config_inhibit(void** state)
                             .frame_table = 1,  /* Self index. */
                         },
                     },
-                },
+                }, },
             },
             },
         },
         .run = {
             .push_active = true,
             .pdu_map = {
-                .map = {{
+                .map = {
+                    { .list = {
                     {
                         .slot_id = 7,
                         .frame_config_index = 0,
@@ -487,7 +490,7 @@ void null_config_inhibit(void** state)
                         .frame_config_index = 1,
                         .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
                     },
-                }, },
+                }, }, },
             },
             .cycles = 1,
         },

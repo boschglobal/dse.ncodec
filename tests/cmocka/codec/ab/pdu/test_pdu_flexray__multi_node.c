@@ -61,143 +61,140 @@ static TestNode testnode_C = (TestNode){
                 "ecu_id=3;model=flexray",
 };
 
-static TestFrameMap frame_table = { .map ={
-    /* Node A */
+static TestFrameTable frame_table_A = { .list = {
     {
-        {
-            .slot_id = 5,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionTx,
-            .transmit_mode = NCodecPduFlexrayTransmitModeContinuous,
-            .index = {
-                .frame_table = 0,
-            },
-        },
-        {
-            .slot_id = 10,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionTx,
-            .index = {
-                .frame_table = 1,
-            },
-        },
-        {
-            .slot_id = 15,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionTx,
-            .index = {
-                .frame_table = 2,
-            },
-        },
-        {
-            .slot_id = 60,
-            .payload_length = 64,
-            .direction = NCodecPduFlexrayDirectionTx,
-            .index = {
-                .frame_table = 3,
-            },
+        .slot_id = 5,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionTx,
+        .transmit_mode = NCodecPduFlexrayTransmitModeContinuous,
+        .index = {
+            .frame_table = 0,
         },
     },
-    /* Node B */
     {
-        {
-            .slot_id = 5,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionRx,
-            .transmit_mode = NCodecPduFlexrayTransmitModeContinuous,
-            .index = {
-                .frame_table = 0,
-            },
-        },
-        {
-            .slot_id = 10,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionRx,
-            .index = {
-                .frame_table = 1,
-            },
-        },
-        {
-            .slot_id = 15,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionRx,
-            .index = {
-                .frame_table = 2,
-            },
-        },
-        {
-            .slot_id = 60,
-            .payload_length = 64,
-            .direction = NCodecPduFlexrayDirectionRx,
-            .index = {
-                .frame_table = 3,
-            },
+        .slot_id = 10,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionTx,
+        .index = {
+            .frame_table = 1,
         },
     },
-    /* Node C */
     {
-        {
-            .slot_id = 5,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionRx,
-            .transmit_mode = NCodecPduFlexrayTransmitModeContinuous,
-            .index = {
-                .frame_table = 0,
-            },
-        },
-        {
-            .slot_id = 10,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionRx,
-            .index = {
-                .frame_table = 1,
-            },
-        },
-        {
-            .slot_id = 15,
-            .payload_length = 64,
-            .base_cycle = 0,
-            .cycle_repetition = 1,
-            .direction = NCodecPduFlexrayDirectionRx,
-            .index = {
-                .frame_table = 2,
-            },
-        },
-        {
-            .slot_id = 60,
-            .payload_length = 64,
-            .direction = NCodecPduFlexrayDirectionRx,
-            .index = {
-                .frame_table = 3,
-            },
+        .slot_id = 15,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionTx,
+        .index = {
+            .frame_table = 2,
         },
     },
+    {
+        .slot_id = 60,
+        .payload_length = 64,
+        .direction = NCodecPduFlexrayDirectionTx,
+        .index = {
+            .frame_table = 3,
+        },
     },
+},
+};
+
+static TestFrameTable frame_table_B = { .list = {
+    {
+        .slot_id = 5,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionRx,
+        .transmit_mode = NCodecPduFlexrayTransmitModeContinuous,
+        .index = {
+            .frame_table = 0,
+        },
+    },
+    {
+        .slot_id = 10,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionRx,
+        .index = {
+            .frame_table = 1,
+        },
+    },
+    {
+        .slot_id = 15,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionRx,
+        .index = {
+            .frame_table = 2,
+        },
+    },
+    {
+        .slot_id = 60,
+        .payload_length = 64,
+        .direction = NCodecPduFlexrayDirectionRx,
+        .index = {
+            .frame_table = 3,
+        },
+    },
+},
+};
+
+static TestFrameTable frame_table_C = { .list = {
+    {
+        .slot_id = 5,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionRx,
+        .transmit_mode = NCodecPduFlexrayTransmitModeContinuous,
+        .index = {
+            .frame_table = 0,
+        },
+    },
+    {
+        .slot_id = 10,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionRx,
+        .index = {
+            .frame_table = 1,
+        },
+    },
+    {
+        .slot_id = 15,
+        .payload_length = 64,
+        .base_cycle = 0,
+        .cycle_repetition = 1,
+        .direction = NCodecPduFlexrayDirectionRx,
+        .index = {
+            .frame_table = 2,
+        },
+    },
+    {
+        .slot_id = 60,
+        .payload_length = 64,
+        .direction = NCodecPduFlexrayDirectionRx,
+        .index = {
+            .frame_table = 3,
+        },
+    },
+},
 };
 
 #define PAYLOAD_5  "hello 5 world"
 #define PAYLOAD_10 "hello 10 world"
 #define PAYLOAD_15 "hello 15 world"
 #define PAYLOAD_60 "hello 60 world"
-static TestPduMap pdu_map = { .map = {
-    /* Node A */
-    {
+static TestPduTable pdu_table_A = { .list = {
         {
             .slot_id = 5,
             .frame_config_index = 0,
@@ -227,8 +224,8 @@ static TestPduMap pdu_map = { .map = {
             .payload_len = strlen(PAYLOAD_60),
         },
     },
-    /* Node B */
-    {
+};
+static TestPduTable pdu_table_B = { .list = {
         {
             .slot_id = 5,
             .frame_config_index = 0,
@@ -250,8 +247,8 @@ static TestPduMap pdu_map = { .map = {
             .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
         },
     },
-    /* Node C */
-    {
+};
+static TestPduTable pdu_table_C = { .list = {
         {
             .slot_id = 5,
             .frame_config_index = 0,
@@ -273,7 +270,6 @@ static TestPduMap pdu_map = { .map = {
             .lpdu_status = NCodecPduFlexrayLpduStatusNotReceived,
         },
     },
-},
 };
 
 
@@ -454,13 +450,10 @@ static TestPduList pdu_multi_check = {
 
 void multi_node__mixed__2vcn(void** state)
 {
+    //__log_level__ = LOG_DEBUG;
     testnode_A_2vcn.config = config;
     testnode_B.config = config;
     testnode_C.config = config;
-
-    testnode_A_2vcn.config.node_ident.node_id = 1;
-    testnode_B.config.node_ident.node_id = 2;
-    testnode_C.config.node_ident.node_id = 3;
 
     Mock* mock = *state;
     mock->test = (TestTxRx){
@@ -470,11 +463,19 @@ void multi_node__mixed__2vcn(void** state)
                 testnode_B,
                 testnode_C,
             },
-            .frame_table = frame_table,
+            .frame_table = { .map = {
+                frame_table_A,
+                frame_table_B,
+                frame_table_C,
+            }, },
         },
         .run = {
             .push_active = true,
-            .pdu_map = pdu_map,
+            .pdu_map = { .map = {
+                pdu_table_A,
+                pdu_table_B,
+                pdu_table_C,
+            }, },
             .cycles = 1,
         },
         .expect = {

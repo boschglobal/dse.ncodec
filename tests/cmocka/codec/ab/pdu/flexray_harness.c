@@ -119,7 +119,7 @@ static void _push_nodes(TestTxRx* test)
     for (size_t n_idx = 0; n_idx < TEST_NODES; n_idx++) {
         if (test->config.node[n_idx].nc == NULL) break;
         for (size_t i = 0; i < TEST_FRAMES; i++) {
-            if (test->config.frame_table.map[n_idx][i].slot_id == 0) {
+            if (test->config.frame_table.map[n_idx].list[i].slot_id == 0) {
                 test->config.node[n_idx].config.frame_config.count = i;
                 break;
             }
@@ -151,7 +151,8 @@ static void _push_nodes(TestTxRx* test)
             _nc2->stream = test->config.node[n_idx].stream;
 
             NCodecPduFlexrayConfig config = test->config.node[nc_idx].config;
-            config.frame_config.table = test->config.frame_table.map[nc_idx];
+            config.frame_config.table =
+                test->config.frame_table.map[nc_idx].list;
             rc = ncodec_write(nc2,
                 &(NCodecPdu){ .transport_type = NCodecPduTransportTypeFlexray,
                     .transport.flexray = {
@@ -226,29 +227,32 @@ static void _push_frames(TestTxRx* test)
             _nc2->stream = test->config.node[n_idx].stream;
 
             for (size_t p_idx = 0; p_idx < TEST_FRAMES; p_idx++) {
-                if (test->run.pdu_map.map[nc_idx][p_idx].slot_id == 0) {
+                if (test->run.pdu_map.map[nc_idx].list[p_idx].slot_id == 0) {
                     break;
                 }
                 rc = ncodec_write(nc2,
                     &(NCodecPdu){
-                        .id = test->run.pdu_map.map[nc_idx][p_idx].slot_id,
-                        .payload =
-                            (const uint8_t*)test->run.pdu_map.map[nc_idx][p_idx]
-                                .payload,
-                        .payload_len =
-                            test->run.pdu_map.map[nc_idx][p_idx].payload_len,
+                        .id = test->run.pdu_map.map[nc_idx].list[p_idx].slot_id,
+                        .payload = (const uint8_t*)test->run.pdu_map.map[nc_idx]
+                                       .list[p_idx]
+                                       .payload,
+                        .payload_len = test->run.pdu_map.map[nc_idx]
+                                           .list[p_idx]
+                                           .payload_len,
                         .transport_type = NCodecPduTransportTypeFlexray,
                         .transport.flexray = {
                             .metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
                             .metadata.lpdu = {
                                 .frame_config_index =
-                                    test->run.pdu_map.map[nc_idx][p_idx]
+                                    test->run.pdu_map.map[nc_idx]
+                                        .list[p_idx]
                                         .frame_config_index,
-                                .status = test->run.pdu_map.map[nc_idx][p_idx]
+                                .status = test->run.pdu_map.map[nc_idx]
+                                              .list[p_idx]
                                               .lpdu_status,
                             } } });
                 assert_int_equal(
-                    rc, test->run.pdu_map.map[nc_idx][p_idx].payload_len);
+                    rc, test->run.pdu_map.map[nc_idx].list[p_idx].payload_len);
             }
 
             /* Flush N messages to this Nodes NC Object. */
