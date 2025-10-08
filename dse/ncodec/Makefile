@@ -36,6 +36,14 @@ build: external
 	@echo "--------------"
 	@find build/_out/ -type f -name '*' -exec ls -sh --color=auto {} \;
 
+examples: build
+	cd build; cmake --build examples -j $(MAKE_NPROC)
+	cd build; cmake --build examples -j $(MAKE_NPROC) -t install
+	@echo ""
+	@echo "Sandbox files: - $$(pwd)/build/_out"
+	@echo "--------------"
+	@find build/_out/ -type f -name '*' -exec ls -sh --color=auto {} \;
+
 package:
 	@echo "Package parameters:"
 	@echo "-------------------"

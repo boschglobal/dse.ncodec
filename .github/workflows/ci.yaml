@@ -63,3 +63,10 @@ jobs:
           PACKAGE_ARCH: ${{ matrix.package_arch }}
         run: |
           make test_cmocka
+
+      - name: Examples
+        if: ${{ matrix.package_arch == 'linux-amd64' }}
+        env:
+          PACKAGE_ARCH: ${{ matrix.package_arch }}
+        run: |
+          make examples

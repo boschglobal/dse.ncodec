@@ -70,55 +70,26 @@ DSE_CLANG_FORMAT_CMD := docker run -it --rm \
 
 default: build
 
+
+.PHONY: build
 build: 
 	@${DOCKER_BUILDER_CMD} $(MAKE) do-build
-
-test: test_cmocka
-
-update:
-	@${DOCKER_BUILDER_CMD} $(MAKE) do-update
-	$(MAKE) format
-
-.PHONY: format
-format:
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/ab
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/interface
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/stream
-	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
-
-clean:
-	@${DOCKER_BUILDER_CMD} $(MAKE) do-clean
-
-cleanall:
-	@${DOCKER_BUILDER_CMD} $(MAKE) do-cleanall
-	docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
-	docker images -qf dangling=true | xargs -r docker rmi
-	docker volume ls -qf dangling=true | xargs -r docker volume rm
-
-oss:
-	@${DOCKER_BUILDER_CMD} $(MAKE) do-oss
-	cd $(OSS_DIR)/fmi2; rm -r $$(ls -A | grep -v headers)
-	cd $(OSS_DIR)/fmi3; rm -r $$(ls -A | grep -v headers)
-
 do-build:
 	@for d in $(SUBDIRS); do ($(MAKE) -C $$d build ); done
 
-do-test_cmocka-build:
-	$(MAKE) -C tests/cmocka build
+.PHONY: examples
+examples:
+	@${DOCKER_BUILDER_CMD} $(MAKE) do-examples
+do-examples:
+	@for d in $(SUBDIRS); do ($(MAKE) -C $$d examples ); done
 
-do-test_cmocka-run:
-	$(MAKE) -C tests/cmocka run
+.PHONY: test
+test: test_cmocka
 
-test_cmocka:
-ifeq ($(PACKAGE_ARCH), linux-amd64)
-	@${DOCKER_BUILDER_CMD} $(MAKE) do-test_cmocka-build
-	@${DOCKER_BUILDER_CMD} $(MAKE) do-test_cmocka-run
-endif
-
-do-test:
-	$(MAKE) -C tests build
-	$(MAKE) -C tests run
-
+.PHONY: update
+update:
+	@${DOCKER_BUILDER_CMD} $(MAKE) do-update
+	$(MAKE) format
 do-update:
 	rm -rf $(SRC_DIR)/schema
 	mkdir -p $(SRC_DIR)/schema/abs
@@ -127,6 +98,47 @@ do-update:
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/util/ascii85.c $(NAMESPACE)/ncodec/stream/ascii85.c
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/collections/vector.h $(NAMESPACE)/ncodec/codec/ab/vector.h
 	sed -i 's/DSE_CLIB_COLLECTIONS_VECTOR_H_/DSE_NCODEC_CODEC_AB_VECTOR_H_/g' $(NAMESPACE)/ncodec/codec/ab/vector.h
+
+.PHONY: format
+format:
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/ab
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/interface
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/stream
+	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
+
+.PHONY: generate
+generate:
+	$(MAKE) -C doc generate
+
+.PHONY: clean
+clean:
+	@${DOCKER_BUILDER_CMD} $(MAKE) do-clean
+
+.PHONY: cleanall
+cleanall:
+	@${DOCKER_BUILDER_CMD} $(MAKE) do-cleanall
+	docker ps --filter status=dead --filter status=exited -aq | xargs -r docker rm -v
+	docker images -qf dangling=true | xargs -r docker rmi
+	docker volume ls -qf dangling=true | xargs -r docker volume rm
+
+.PHONY: oss
+oss:
+	@${DOCKER_BUILDER_CMD} $(MAKE) do-oss
+	cd $(OSS_DIR)/fmi2; rm -r $$(ls -A | grep -v headers)
+	cd $(OSS_DIR)/fmi3; rm -r $$(ls -A | grep -v headers)
+do-oss:
+	$(MAKE) -C extra/external oss
+
+test_cmocka:
+ifeq ($(PACKAGE_ARCH), linux-amd64)
+	@${DOCKER_BUILDER_CMD} $(MAKE) do-test_cmocka-build
+	@${DOCKER_BUILDER_CMD} $(MAKE) do-test_cmocka-run
+endif
+do-test_cmocka-build:
+	$(MAKE) -C tests/cmocka build
+
+do-test_cmocka-run:
+	$(MAKE) -C tests/cmocka run
 
 do-clean:
 	@for d in $(SUBDIRS); do ($(MAKE) -C $$d clean ); done
@@ -137,13 +149,6 @@ do-clean:
 
 do-cleanall: do-clean
 	@for d in $(SUBDIRS); do ($(MAKE) -C $$d cleanall ); done
-
-do-oss:
-	$(MAKE) -C extra/external oss
-
-.PHONY: generate
-generate:
-	$(MAKE) -C doc generate
 
 super-linter:
 	docker run --rm --volume $$(pwd):/tmp/lint \
@@ -156,6 +161,3 @@ super-linter:
 		--env VALIDATE_MARKDOWN=true \
 		--env VALIDATE_YAML=true \
 		ghcr.io/super-linter/super-linter:slim-v6
-
-.PHONY: docker build test update clean cleanall oss super-linter \
-		do-build do-test do-update do-clean do-cleanall

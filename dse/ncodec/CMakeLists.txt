@@ -56,7 +56,7 @@ set(DSE_CLIB_INCLUDE_DIR "${DSE_CLIB_SOURCE_DIR}/..")
 # Sub Modules
 # ===========
 add_subdirectory(codec/ab)
-add_subdirectory(examples)
+add_subdirectory(examples EXCLUDE_FROM_ALL)
 
 
 # Common Targets
