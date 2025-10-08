@@ -226,6 +226,7 @@ typedef struct {
     NCodecPduFlexrayNodeIdentifier vcs_n1;
     NCodecPduFlexrayNodeIdentifier vcs_n2;
     NCodecPduFlexrayNodeIdentifier node;
+    NCodecPduFlexrayNodeIdentifier node2;
     size_t                         vcs_node_count;
     struct {
         NCodecPduFlexrayTransceiverState initial_bus_condition;
@@ -240,6 +241,7 @@ typedef struct {
 
 void test_flexray__bus_condition(void** _state)
 {
+    //__log_level__ = LOG_DEBUG;
     Mock*         mock = *_state;
     FlexrayState* state = &mock->flexray_state;
     BusConditionTestCase checks[] = {
@@ -291,6 +293,23 @@ void test_flexray__bus_condition(void** _state)
                 .post_normal_active_poc_state = NCodecPduFlexrayPocStateNormalActive,
             }
         },
+        {
+            .name = "Multi Node with 2 VCS Nodes",
+            .vcs_n1 = {.node = {.ecu_id = 3, .swc_id = 1}},
+            .vcs_n2 = {.node = {.ecu_id = 1, .swc_id = 2}},
+            .node = {.node = {.ecu_id = 4}},
+            .node2 = {.node = {.ecu_id = 2}},
+            .vcs_node_count = 2,
+            .condition = {
+                .initial_bus_condition = NCodecPduFlexrayTransceiverStateFrameSync,
+                .pre_power = NCodecPduFlexrayTransceiverStateNoPower,
+                .post_power = NCodecPduFlexrayTransceiverStateNoConnection,
+                .pre_normal_active = NCodecPduFlexrayTransceiverStateFrameSync,
+                .post_normal_active = NCodecPduFlexrayTransceiverStateFrameSync,
+                .post_normal_active_bus_condition = NCodecPduFlexrayTransceiverStateFrameSync,
+                .post_normal_active_poc_state = NCodecPduFlexrayPocStateNormalActive,
+            }
+        },
     };
     for (size_t i = 0; i < ARRAY_SIZE(checks); i++) {
         log_info("Check %u: %s", i, checks[i].name);
@@ -300,9 +319,15 @@ void test_flexray__bus_condition(void** _state)
         if (checks[i].vcs_n2.node_id)
             register_vcn_node_state(state, checks[i].vcs_n2);
         register_node_state(state, checks[i].node, false, true);
+        if (checks[i].node2.node_id)
+            register_node_state(state, checks[i].node2, false, true);
         assert_int_equal(
             checks[i].vcs_node_count, vector_len(&state->vcs_node));
-        assert_int_equal(1, vector_len(&state->node_state));
+        if (checks[i].node2.node_id) {
+            assert_int_equal(2, vector_len(&state->node_state));
+        } else {
+            assert_int_equal(1, vector_len(&state->node_state));
+        }
 
         /* Add a node and push to Config state. */
         calculate_bus_condition(state);
@@ -315,20 +340,51 @@ void test_flexray__bus_condition(void** _state)
         set_node_power(state, checks[i].node, true);
         assert_int_equal(checks[i].condition.post_power,
             get_node_state(state, checks[i].node).tcvr_state);
+        if (checks[i].node2.node_id) {
+            assert_int_equal(checks[i].condition.pre_power,
+                get_node_state(state, checks[i].node2).tcvr_state);
+            set_node_power(state, checks[i].node2, true);
+            assert_int_equal(checks[i].condition.post_power,
+                get_node_state(state, checks[i].node2).tcvr_state);
+        }
 
         /* Push Node to Normal Active. */
         push_node_state(state, checks[i].node, NCodecPduFlexrayCommandConfig);
         push_node_state(state, checks[i].node, NCodecPduFlexrayCommandReady);
         push_node_state(state, checks[i].node, NCodecPduFlexrayCommandRun);
+        if (checks[i].node2.node_id) {
+            push_node_state(
+                state, checks[i].node2, NCodecPduFlexrayCommandConfig);
+            push_node_state(
+                state, checks[i].node2, NCodecPduFlexrayCommandReady);
+            push_node_state(state, checks[i].node2, NCodecPduFlexrayCommandRun);
+        }
+
         assert_int_equal(checks[i].condition.pre_normal_active,
             get_node_state(state, checks[i].node).tcvr_state);
+        if (checks[i].node2.node_id) {
+            assert_int_equal(checks[i].condition.pre_normal_active,
+                get_node_state(state, checks[i].node2).tcvr_state);
+        }
+
         calculate_bus_condition(state);
+
         assert_int_equal(checks[i].condition.post_normal_active,
             get_node_state(state, checks[i].node).tcvr_state);
         assert_int_equal(checks[i].condition.post_normal_active_bus_condition,
             state->bus_condition);
         assert_int_equal(checks[i].condition.post_normal_active_poc_state,
             get_node_state(state, checks[i].node).poc_state);
+        if (checks[i].node2.node_id) {
+            assert_int_equal(checks[i].condition.post_normal_active,
+                get_node_state(state, checks[i].node2).tcvr_state);
+            assert_int_equal(
+                checks[i].condition.post_normal_active_bus_condition,
+                state->bus_condition);
+            assert_int_equal(checks[i].condition.post_normal_active_poc_state,
+                get_node_state(state, checks[i].node2).poc_state);
+        }
+
         release_state(state);
     }
 }
