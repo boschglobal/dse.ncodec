@@ -51,7 +51,7 @@ int fmi2DoStep(void* c, double currentCommunicationPoint,
     size_t   buffer_len = 0;
 
     /* RX Codec - setup buffer and prime for reading. */
-    buffer = (uint8_t*)ascii85_decode(_rx_tx_buffer, &buffer_len);
+    buffer = (uint8_t*)ncodec_ascii85_decode(_rx_tx_buffer, &buffer_len);
     free(_rx_tx_buffer);
     NCODEC* rx_nc = ncodec_open(MIMETYPE, ncodec_buffer_stream_create(0));
     ((NCodecInstance*)rx_nc)->stream->write(rx_nc, buffer, buffer_len);
@@ -77,7 +77,7 @@ int fmi2DoStep(void* c, double currentCommunicationPoint,
     ncodec_seek(tx_nc, 0, NCODEC_SEEK_SET);
     ((NCodecInstance*)tx_nc)
         ->stream->read(tx_nc, &buffer, &buffer_len, NCODEC_POS_NC);
-    _rx_tx_buffer = ascii85_encode((char*)buffer, buffer_len);
+    _rx_tx_buffer = ncodec_ascii85_encode((char*)buffer, buffer_len);
 
     /* Destroy the NCodec objects. */
     ncodec_close(rx_nc);

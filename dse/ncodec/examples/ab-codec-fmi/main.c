@@ -71,7 +71,7 @@ int main(void)
     rc = ncodec_seek(nc, 0, NCODEC_SEEK_SET);
     if (rc) return _ncodec_fault("ncodec_seek", rc);
     stream->read(nc, &buffer, &buffer_len, NCODEC_POS_NC);
-    fmi_string = ascii85_encode((char*)buffer, buffer_len);
+    fmi_string = ncodec_ascii85_encode((char*)buffer, buffer_len);
     _log("BUFFER TX", "(%d)", buffer_len);
     _log("ASCII85 TX", "(%d) %s", strlen(fmi_string), fmi_string);
 
@@ -89,7 +89,7 @@ int main(void)
 
     /* Decode the FMI 2 String Variable and inject into the stream buffer. */
     _log("ASCII85 RX", "(%d) %s", strlen(v[0]), v[0]);
-    buffer = (uint8_t*)ascii85_decode(v[0], &buffer_len);
+    buffer = (uint8_t*)ncodec_ascii85_decode(v[0], &buffer_len);
     _log("BUFFER RX", "(%d)", buffer_len);
     stream->write(nc, buffer, buffer_len);
     free(buffer);
