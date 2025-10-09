@@ -245,20 +245,25 @@ static void process_slot(FlexrayEngine* engine)
         FlexrayLpdu* lpdu_item = vector_at(&slot_map_item->lpdus, i, NULL);
         if (lpdu_item->lpdu_config.direction == NCodecPduFlexrayDirectionTx) {
             /* TX LPDU. */
-            if (engine->pos_mt < engine->offset_dynamic_mt) {
-                /* Static Part. */
+            if (engine->pos_mt < engine->offset_network_mt) {
+                /* Static Part / Dynamic Part. */
                 if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
                 if (engine->pos_cycle %
-                        lpdu_item->lpdu_config.cycle_repetition ==
-                    lpdu_item->lpdu_config.base_cycle) {
-                    tx_lpdu = lpdu_item;
-                    log_debug("FlexRay%s:   Tx LPDU Identified (static): "
-                              "index=%u, base=%u, repeat=%u, status=%u",
-                        engine->log_id,
-                        lpdu_item->lpdu_config.index.frame_table,
-                        lpdu_item->lpdu_config.base_cycle,
-                        lpdu_item->lpdu_config.cycle_repetition,
-                        lpdu_item->lpdu_config.status);
+                        lpdu_item->lpdu_config.cycle_repetition !=
+                    lpdu_item->lpdu_config.base_cycle)
+                    continue;
+                /* Tx identified. */
+                tx_lpdu = lpdu_item;
+                log_debug("FlexRay%s:   Tx LPDU Identified (%s): "
+                          "index=%u, base=%u, repeat=%u, status=%u",
+                    engine->log_id,
+                    (engine->pos_mt < engine->offset_dynamic_mt) ? "static"
+                                                                 : "dynamic",
+                    lpdu_item->lpdu_config.index.frame_table,
+                    lpdu_item->lpdu_config.base_cycle,
+                    lpdu_item->lpdu_config.cycle_repetition,
+                    lpdu_item->lpdu_config.status);
+                if (engine->pos_mt < engine->offset_dynamic_mt) {
                     /* Determine if the Tx will represent a NULL Frame. */
                     if (tx_lpdu->lpdu_config.status ==
                             NCodecPduFlexrayLpduStatusNone ||
@@ -267,14 +272,6 @@ static void process_slot(FlexrayEngine* engine)
                         tx_null_frame = true;
                     }
                 }
-            } else if (engine->pos_mt < engine->offset_network_mt) {
-                /* Dynamic Part. */
-                log_debug(
-                    "FlexRay%s:   Tx LPDU Identified (dynamic): index=%u, "
-                    "status=%u",
-                    engine->log_id, lpdu_item->lpdu_config.index.frame_table,
-                    lpdu_item->lpdu_config.status);
-                tx_lpdu = lpdu_item;
             }
         }
     }
@@ -316,29 +313,25 @@ static void process_slot(FlexrayEngine* engine)
             }
             /* Check configured on the NCodec for this node.*/
             if (lpdu_item->node_ident.node_id == engine->node_ident.node_id) {
-                if (engine->pos_mt < engine->offset_dynamic_mt) {
-                    /* Static Part. */
+                if (engine->pos_mt < engine->offset_network_mt) {
+                    /* Static / Dynamic Part. */
                     if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
                     if (engine->pos_cycle %
-                            lpdu_item->lpdu_config.cycle_repetition ==
-                        lpdu_item->lpdu_config.base_cycle) {
-                        rx_lpdu = lpdu_item;
-                        log_debug("FlexRay%s:   Rx LPDU Identified (static): "
-                                  "index=%u, base=%u, repeat=%u, status=%u",
-                            engine->log_id,
-                            lpdu_item->lpdu_config.index.frame_table,
-                            lpdu_item->lpdu_config.base_cycle,
-                            lpdu_item->lpdu_config.cycle_repetition,
-                            lpdu_item->lpdu_config.status);
-                    }
-                } else if (engine->pos_mt < engine->offset_network_mt) {
-                    /* Dynamic Part. */
-                    log_debug("FlexRay%s:   Rx LPDU Identified (dynamic): "
-                              "index=%u, status=%u",
-                        engine->log_id,
-                        lpdu_item->lpdu_config.index.frame_table,
-                        lpdu_item->lpdu_config.status);
+                            lpdu_item->lpdu_config.cycle_repetition !=
+                        lpdu_item->lpdu_config.base_cycle)
+                        continue;
+                    /* Rx identified. */
                     rx_lpdu = lpdu_item;
+                    log_debug("FlexRay%s:   Rx LPDU Identified (%s): "
+                              "index=%u, base=%u, repeat=%u, status=%u",
+                        engine->log_id,
+                        (engine->pos_mt < engine->offset_dynamic_mt)
+                            ? "static"
+                            : "dynamic",
+                        lpdu_item->lpdu_config.index.frame_table,
+                        lpdu_item->lpdu_config.base_cycle,
+                        lpdu_item->lpdu_config.cycle_repetition,
+                        lpdu_item->lpdu_config.status);
                 }
             }
         }

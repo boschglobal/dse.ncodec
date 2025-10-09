@@ -89,6 +89,11 @@ static void _decode_flexray_config(
             lc->status = ns(FlexrayLpduConfig_status(lc_table));
             lc->inhibit_null = ns(FlexrayLpduConfig_inhibit_null(lc_table));
 
+            /* Correct cycle_repetition if repetition is 0. */
+            if (lc->cycle_repetition == 0) {
+                /* 0 or 1 possible, push to 1 to avoid divide-by-0 case. */
+                lc->cycle_repetition = 1;
+            }
             /* Correct base_cycle if repetition is 1. */
             if (lc->cycle_repetition == 1) {
                 lc->base_cycle = 0;
