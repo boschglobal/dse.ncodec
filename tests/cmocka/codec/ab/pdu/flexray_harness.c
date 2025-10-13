@@ -639,9 +639,11 @@ static void _expect_trace_map_check(TestTxRx* test)
 void flexray_harness_run_pop_test(TestTxRx* test)
 {
     _setup_nodes(test);
-    _push_nodes(test);
-    if (test->run.push_active && test->run.push_at_cycle == 0) {
-        _push_frames(test);
+    if (test->run.no_push == false) {
+        _push_nodes(test);
+        if (test->run.push_active && test->run.push_at_cycle == 0) {
+            _push_frames(test);
+        }
     }
     _run_pop(test);
     _dump_trace(test);

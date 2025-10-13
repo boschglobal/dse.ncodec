@@ -88,6 +88,7 @@ typedef struct {
 
     /* Run Condition */
     struct {
+        bool       no_push;
         bool       push_active;
         uint8_t    push_at_cycle;
         TestPduMap pdu_map;

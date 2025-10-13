@@ -125,6 +125,54 @@ static TestPduMap pdu_map_POP_A = {
 };
 
 
+void single_node__read_no_messages(void** state)
+{
+    // Codec with no messages, Bus Model shall return status NC regardless.
+    // POP <--> A (ECU_ID__1) ,
+    // --- -> POP -> status -> A -> model
+
+    //__log_level__ = LOG_DEBUG;
+    testnode_POP.config = config;
+    testnode_A.config = config;
+
+    Mock* mock = *state;
+    mock->test = (TestTxRx){
+        .config = {
+            .node = {
+                testnode_POP,
+                testnode_A,
+            },
+        },
+        .run = {
+            .no_push = true,
+            .steps = 1,
+        },
+        .expect = {
+            .trace_map = {
+                .map = {
+                    /* Node PoP */
+                    {
+                    },
+                    /* Node A */
+                    {
+                        {
+                            .transport_type = NCodecPduTransportTypeFlexray,
+                            .transport.flexray.node_ident = { .node.ecu_id = 1} ,
+                            .transport.flexray.pop_node_ident = { .node.ecu_id = 0} ,
+                            .transport.flexray.metadata_type =
+                                NCodecPduFlexrayMetadataTypeStatus,
+                            .transport.flexray.metadata.status.channel[0].tcvr_state =
+                                NCodecPduFlexrayTransceiverStateNoConnection,
+                        }
+                    },
+                },
+            },
+        },
+    };
+    flexray_harness_run_pop_test(&mock->test);
+}
+
+
 void single_node__no_controller(void** state)
 {
     // No controller, Bus Model shall return status NC regardless.
@@ -388,6 +436,7 @@ int run_pdu_flexray_pop(void)
 #define T cmocka_unit_test_setup_teardown
 
     const struct CMUnitTest tests[] = {
+        T(single_node__read_no_messages, s, t),
         T(single_node__no_controller, s, t),
         T(single_node__controller_normal_active, s, t),
         T(single_node__tx_rx, s, t),

@@ -85,31 +85,12 @@ static void __pdu_router_destroy(FlexrayPopBusModel* m)
     vector_reset(&m->pdu_router);
 }
 
-static void __pdu_router_push(
-    FlexrayPopBusModel* m, NodeIdentifier node_ident, NCodecPdu* pdu)
+static VectorPduRouteItem* __pdu_router_ensure_route(
+    FlexrayPopBusModel* m, NodeIdentifier node_ident)
 {
-    /* Create the origin route (the reverse/return route). */
-    NCodecPduFlexrayNodeIdentifier orig_node_ident =
-        pdu->transport.flexray.node_ident;
-    VectorPduRouteItem* orig_pdu_route = vector_find(&m->pdu_router,
-        &(VectorPduRouteItem){ .node_ident = orig_node_ident }, 0, NULL);
-    if (orig_pdu_route == NULL) {
-        vector_push(&m->pdu_router,
-            &(VectorPduRouteItem){
-                .node_ident = orig_node_ident,
-                .pdu_list =
-                    vector_make(sizeof(NCodecPdu), 0, __pdu_status_first),
-            });
-        vector_sort(&m->pdu_router);
-        orig_pdu_route = vector_find(&m->pdu_router,
-            &(VectorPduRouteItem){ .node_ident = orig_node_ident }, 0, NULL);
-    }
-    assert(orig_pdu_route);
-
-    /* Create the destination route. */
-    VectorPduRouteItem* pdu_route = vector_find(&m->pdu_router,
+    VectorPduRouteItem* route = vector_find(&m->pdu_router,
         &(VectorPduRouteItem){ .node_ident = node_ident }, 0, NULL);
-    if (pdu_route == NULL) {
+    if (route == NULL) {
         vector_push(&m->pdu_router,
             &(VectorPduRouteItem){
                 .node_ident = node_ident,
@@ -117,12 +98,24 @@ static void __pdu_router_push(
                     vector_make(sizeof(NCodecPdu), 0, __pdu_status_first),
             });
         vector_sort(&m->pdu_router);
-        pdu_route = vector_find(&m->pdu_router,
+        route = vector_find(&m->pdu_router,
             &(VectorPduRouteItem){ .node_ident = node_ident }, 0, NULL);
     }
-    assert(pdu_route);
+    assert(route);
+    return (route);
+}
 
+static void __pdu_router_push(
+    FlexrayPopBusModel* m, NodeIdentifier node_ident, NCodecPdu* pdu)
+{
+    /* Create the origin & destination routes (the reverse/return route). */
+    NCodecPduFlexrayNodeIdentifier orig_node_ident =
+        pdu->transport.flexray.node_ident;
+    VectorPduRouteItem* orig_pdu_route =
+        __pdu_router_ensure_route(m, orig_node_ident);
+    VectorPduRouteItem* pdu_route = __pdu_router_ensure_route(m, node_ident);
 
+    /* Push the PDU to the destination route. */
     log_info("POP:Route: (%u:%u:%u) -> (%u:%u:%u)", orig_node_ident.node.ecu_id,
         orig_node_ident.node.cc_id, orig_node_ident.node.swc_id,
         node_ident.node.ecu_id, node_ident.node.cc_id, node_ident.node.swc_id);
@@ -295,6 +288,7 @@ void flexray_pop_bus_model_create(ABCodecInstance* nc)
 
     bm->pdu_router =
         vector_make(sizeof(VectorPduRouteItem), 0, __node_ident_compar);
+    __pdu_router_ensure_route(bm, bm->node_ident);
 
 
     /* Install and configure the Bus Model VTable. */
