@@ -19,9 +19,31 @@ typedef struct FlexrayPopBusModel {
     NCodecPduFlexrayNodeIdentifier node_ident;
 
     Vector pdu_router; /* NCodecPdu: indexed by node_ident. */
+    char   log_id[FLEXRAY_LOG_ID_LEN];
 
+    struct {
+        /* Configuration items. */
+        NCodecPduFlexrayBitrate bit_rate;
+        uint32_t                microtick_per_cycle;
+        uint32_t                macrotick_per_cycle;
+        uint32_t                static_slot_length_mt;
+        uint32_t                static_slot_count;
 
-    char log_id[FLEXRAY_LOG_ID_LEN];
+        /* Calculated configuration. */
+        uint32_t step_budget_mt;
+    } config;
+
+    struct {
+        /* Observed status. */
+        NCodecPduFlexrayTransceiverState bus_condition;
+
+        uint8_t cycle;
+        bool    running; /* Set on the initial transition to FrameSync. */
+
+        /* Calculated state. */
+        uint32_t pos_mt;
+        uint32_t pos_cycle;
+    } status;
 } FlexrayPopBusModel;
 
 

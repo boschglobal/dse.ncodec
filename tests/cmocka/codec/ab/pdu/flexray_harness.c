@@ -412,38 +412,44 @@ void flexray_harness_run_test(TestTxRx* test)
 
 static void _simbus_write(TestTxRx* test, NCodecPdu* pdu)
 {
-    /**
-     * The effect of a SimBus must be created. Each node produces a
-     * sequence of messages, the SimBus combines the sequences from each node
-     * to a buffer, that buffer then becomes the input for each node.
+    /*
+     * The effect of a SimBus must be created.
      *
-     * To recreate the effect; for each node, get the stream object, then
-     * for each node, produce a message sequence using _that_ stream object
-     * and the properties of the nodes NC object, and flush to the stream.
+     * For a PDU written by Node X, send a message from Node X on each stream.
+     * Loop over each Node
+     *   Match on node_ident
+     *     Loop over each Node
+     *       Send PDU on the stream, using the outer Node (to fake node_ident)
      */
+    log_trace("Write PDU - %u/%u", pdu->transport.flexray.node_ident.node_id,
+        pdu->transport.flexray.pop_node_ident.node_id);
 
     /* For each Node. */
     for (size_t n_idx = 0; n_idx < TEST_NODES; n_idx++) {
         NCODEC* nc = test->config.node[n_idx].nc;
         if (nc == NULL) break;
+        if (test->config.node[n_idx].node_ident.node_id !=
+            pdu->transport.flexray.node_ident.node_id)
+            continue;
 
         /* Push messages from each node to this Nodes NC Object. */
         for (size_t nc_idx = 0; nc_idx < TEST_NODES; nc_idx++) {
             if (test->config.node[nc_idx].nc == NULL) break;
 
             /* Underlying stream object is the same. */
-            NCODEC*         nc2 = test->config.node[nc_idx].nc;
-            NCodecInstance* _nc2 = (NCodecInstance*)nc2;
-            _nc2->stream = test->config.node[n_idx].stream;
+            NCodecInstance* _nc = (NCodecInstance*)nc;
+            _nc->stream = test->config.node[nc_idx].stream;
 
-            /* Write the PDU. */
-            int rc = ncodec_write(nc2, pdu);
+            /* Write the PDU, use shallow copy as call modifies node_ident. */
+            NCodecPdu _pdu = *pdu;
+            int       rc = ncodec_write(nc, &_pdu);
             assert_int_equal(rc, 0);
 
             /* Flush this Nodes NC Object. */
-            ncodec_flush(nc2);
+            ncodec_flush(nc);
+
             /* Restore the stream. */
-            _nc2->stream = test->config.node[nc_idx].stream;
+            _nc->stream = test->config.node[n_idx].stream;
         }
     }
 }
@@ -609,10 +615,10 @@ static void _expect_trace_map_check(TestTxRx* test)
                     pdu->transport.flexray.metadata.status;
                 NCodecPduFlexrayStatus st =
                     trace_pdu->transport.flexray.metadata.status;
-                if (sp.cycle) {
+                if (sp.cycle || test->expect.force_trace_checks) {
                     assert_int_equal(st.cycle, sp.cycle);
                 }
-                if (sp.macrotick) {
+                if (sp.macrotick || test->expect.force_trace_checks) {
                     assert_int_equal(st.macrotick, sp.macrotick);
                 }
                 if (sp.channel[0].tcvr_state) {

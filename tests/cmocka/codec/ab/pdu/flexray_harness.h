@@ -113,6 +113,8 @@ typedef struct {
 
         TestPduList  pdu;
         TestTraceMap trace_map;
+
+        bool force_trace_checks;
     } expect;
 } TestTxRx;
 
