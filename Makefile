@@ -15,7 +15,7 @@ ABS_VERSION ?= 1.0.16
 export ABS_URL ?= $(ABS_REPO)/releases/download/v$(ABS_VERSION)/automotive-bus-schema.tar.gz
 
 DSE_CLIB_REPO ?= https://github.com/boschglobal/dse.clib
-DSE_CLIB_VERSION ?= 1.0.35
+DSE_CLIB_VERSION ?= 1.0.38
 export DSE_CLIB_URL ?= $(DSE_CLIB_REPO)/archive/refs/tags/v$(DSE_CLIB_VERSION).zip
 
 
@@ -30,10 +30,6 @@ export PACKAGE_ARCH_LIST ?= $(PACKAGE_ARCH)
 export CMAKE_TOOLCHAIN_FILE ?= $(shell pwd -P)/extra/cmake/$(PACKAGE_ARCH).cmake
 export SRC_DIR = $(NAMESPACE)/$(MODULE)
 SUBDIRS = extra/external $(NAMESPACE)/$(MODULE)
-# SUBDIRS = $(NAMESPACE)/$(MODULE)
-# SUBDIRS = extra/external $(SRC_DIR)/examples
-
-
 
 
 ###############
@@ -56,6 +52,7 @@ DOCKER_BUILDER_CMD := \
 		--env EXTERNAL_BUILD_DIR=$(EXTERNAL_BUILD_DIR) \
 		--env PACKAGE_ARCH=$(PACKAGE_ARCH) \
 		--env PACKAGE_VERSION=$(PACKAGE_VERSION) \
+		--env MAKE_NPROC=$(MAKE_NPROC) \
 		--volume $$(pwd):/tmp/repo \
 		--volume $(EXTERNAL_BUILD_DIR):$(EXTERNAL_BUILD_DIR) \
 		--workdir /tmp/repo \
@@ -72,7 +69,7 @@ default: build
 
 
 .PHONY: build
-build: 
+build:
 	@${DOCKER_BUILDER_CMD} $(MAKE) do-build
 do-build:
 	@for d in $(SUBDIRS); do ($(MAKE) -C $$d build ); done
@@ -96,7 +93,7 @@ do-update:
 	cp -rv $(EXTERNAL_BUILD_DIR)/automotive-bus-schema/flatbuffers/c/automotive_bus_schema/* $(SRC_DIR)/schema/abs
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/platform.h $(NAMESPACE)/platform.h
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/util/ascii85.c $(NAMESPACE)/ncodec/stream/ascii85.c
-	sed -i 's/ascii85_/ncodec_ascii85_/g' $(NAMESPACE)/ncodec/stream/ascii85.c
+	sed -i 's/dse_ascii85_/ncodec_ascii85_/g' $(NAMESPACE)/ncodec/stream/ascii85.c
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/collections/vector.h $(NAMESPACE)/ncodec/codec/ab/vector.h
 	sed -i 's/DSE_CLIB_COLLECTIONS_VECTOR_H_/DSE_NCODEC_CODEC_AB_VECTOR_H_/g' $(NAMESPACE)/ncodec/codec/ab/vector.h
 
@@ -161,4 +158,4 @@ super-linter:
 		--env VALIDATE_DOCKERFILE=true \
 		--env VALIDATE_MARKDOWN=true \
 		--env VALIDATE_YAML=true \
-		ghcr.io/super-linter/super-linter:slim-v6
+		ghcr.io/super-linter/super-linter:slim-v8

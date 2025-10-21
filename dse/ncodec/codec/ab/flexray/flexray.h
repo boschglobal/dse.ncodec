@@ -95,34 +95,37 @@ typedef struct FlexrayBusModel {
     FlexrayState  state;  // FIXME: array for chA chB
 
     char log_id[FLEXRAY_LOG_ID_LEN];
+
+    /* Logging interface, duplicated from ABCodecBusModel. */
+    ABCodecInstance* log_nc;
 } FlexrayBusModel;
 
 
-int  process_config(NCodecPdu* pdu, FlexrayEngine* engine);
-int  calculate_budget(FlexrayEngine* engine, double step_size);
-int  consume_slot(FlexrayEngine* engine);
-void release_config(FlexrayEngine* engine);
-int  shift_cycle(FlexrayEngine* engine, uint32_t mt, uint8_t cycle, bool force);
-int  set_lpdu(FlexrayEngine* engine, uint64_t node_id, uint32_t slot_id,
+int  process_config(FlexrayBusModel* m, NCodecPdu* pdu);
+int  calculate_budget(FlexrayBusModel* m, double step_size);
+int  consume_slot(FlexrayBusModel* m);
+void release_config(FlexrayBusModel* m);
+int  shift_cycle(FlexrayBusModel* m, uint32_t mt, uint8_t cycle, bool force);
+int  set_lpdu(FlexrayBusModel* m, uint64_t node_id, uint32_t slot_id,
      uint32_t frame_config_index, NCodecPduFlexrayLpduStatus status,
      const uint8_t* payload, size_t payload_len);
 
-int process_poc_command(
-    FlexrayNodeState* state, NCodecPduFlexrayPocCommand command);
-
-void register_node_state(FlexrayState* state,
-    NCodecPduFlexrayNodeIdentifier nid, bool pwr_on, bool pwr_off);
-void register_vcn_node_state(
-    FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid);
-void release_state(FlexrayState* state);
-void push_node_state(FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid,
+int process_poc_command(FlexrayBusModel* m, FlexrayNodeState* state,
     NCodecPduFlexrayPocCommand command);
-void calculate_bus_condition(FlexrayState* state);
+
+void register_node_state(FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid,
+    bool pwr_on, bool pwr_off);
+void register_vcn_node_state(
+    FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid);
+void release_state(FlexrayBusModel* m);
+void push_node_state(FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid,
+    NCodecPduFlexrayPocCommand command);
+void calculate_bus_condition(FlexrayBusModel* m);
 FlexrayNodeState get_node_state(
-    FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid);
+    FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid);
 void set_node_power(
-    FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid, bool power_on);
-void set_poc_state(FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid,
+    FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid, bool power_on);
+void set_poc_state(FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid,
     NCodecPduFlexrayPocState poc_state);
 
 const char* tcvr_state_string(unsigned int state);

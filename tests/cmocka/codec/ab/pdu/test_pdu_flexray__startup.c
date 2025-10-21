@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <dse/testing.h>
-#include <dse/logger.h>
 #include <errno.h>
 #include <stdio.h>
 #include <dse/ncodec/codec/ab/vector.h>
@@ -14,6 +13,7 @@
 #include <dse/ncodec/codec/ab/flexray/flexray.h>
 #include <flexray_harness.h>
 
+extern uint8_t __log_level__;
 
 static NCodecPduFlexrayConfig cc_config = {
     .bit_rate = NCodecPduFlexrayBitrate10,

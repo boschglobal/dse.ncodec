@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <dse/testing.h>
-#include <dse/logger.h>
 #include <errno.h>
 #include <stdio.h>
 #include <dse/ncodec/codec.h>
@@ -21,6 +20,7 @@
     "interface=stream;type=pdu;schema=fbs;"                                    \
     "ecu_id=1;cc_id=0;swc_id=1;vcn=2;pon=off"
 
+extern uint8_t __log_level__;
 
 extern NCodecConfigItem codec_stat(NCODEC* nc, int* index);
 extern NCODEC*          ncodec_create(const char* mime_type);
@@ -34,9 +34,11 @@ typedef struct Mock {
     FlexrayNodeState node_state;
 
     /* */
-    FlexrayState flexray_state;
+    FlexrayBusModel model;
 } Mock;
 
+extern void __ncodec_trace_log__(
+    void* nc, NCodecTraceLogLevel level, const char* msg);
 
 static int test_setup(void** state)
 {
@@ -46,7 +48,9 @@ static int test_setup(void** state)
     NCodecStreamVTable* stream = ncodec_buffer_stream_create(BUFFER_LEN);
     mock->nc = (void*)ncodec_open(MIMETYPE, stream);
     assert_non_null(mock->nc);
+    ((NCodecInstance*)mock->nc)->trace.log = __ncodec_trace_log__;
     mock->node_state = (FlexrayNodeState){ 0 };
+    mock->model = (FlexrayBusModel){ .log_nc = mock->nc };
 
     *state = mock;
     return 0;
@@ -57,7 +61,7 @@ static int test_teardown(void** state)
 {
     Mock* mock = *state;
     if (mock && mock->nc) ncodec_close((void*)mock->nc);
-    release_state(&mock->flexray_state);
+    release_state(&mock->model);
     if (mock) free(mock);
 
     return 0;
@@ -81,6 +85,7 @@ typedef struct {
 void test_flexray__node_state_changes(void** _state)
 {
     Mock*             mock = *_state;
+    FlexrayBusModel*  m = &mock->model;
     FlexrayNodeState* state = &mock->node_state;
     StateSequence checks[] = {
         {
@@ -202,7 +207,7 @@ void test_flexray__node_state_changes(void** _state)
     };
 
     for (size_t check = 0; check < ARRAY_SIZE(checks); check++) {
-        log_info("Check %u: %s", check, checks[check].name);
+        log_info(m->log_nc, "Check %u: %s", check, checks[check].name);
         *state =
             (FlexrayNodeState){ .poc_state = checks[check].initial_poc_state,
                 .tcvr_state = checks[check].initial_tcvr_state };
@@ -210,7 +215,7 @@ void test_flexray__node_state_changes(void** _state)
         for (size_t i = 0;
              checks[check].transition[i].command != NCodecPduFlexrayCommandNone;
              i++) {
-            assert_int_equal(0, process_poc_command(state,
+            assert_int_equal(0, process_poc_command(m, state,
                                     checks[check].transition[i].command));
             assert_int_equal(
                 state->poc_state, checks[check].transition[i].poc_state);
@@ -241,9 +246,10 @@ typedef struct {
 
 void test_flexray__bus_condition(void** _state)
 {
-    //__log_level__ = LOG_DEBUG;
-    Mock*         mock = *_state;
-    FlexrayState* state = &mock->flexray_state;
+    //__log_level__ = NCODEC_NCODEC_LOG_DEBUG;
+    Mock*            mock = *_state;
+    FlexrayBusModel* m = &mock->model;
+    FlexrayState*    state = &m->state;
     BusConditionTestCase checks[] = {
         {
             .name = "Zero VCS Nodes",
@@ -312,15 +318,15 @@ void test_flexray__bus_condition(void** _state)
         },
     };
     for (size_t i = 0; i < ARRAY_SIZE(checks); i++) {
-        log_info("Check %u: %s", i, checks[i].name);
+        log_info(m->log_nc, "Check %u: %s", i, checks[i].name);
         *state = (FlexrayState){ 0 };
         if (checks[i].vcs_n1.node_id)
-            register_vcn_node_state(state, checks[i].vcs_n1);
+            register_vcn_node_state(m, checks[i].vcs_n1);
         if (checks[i].vcs_n2.node_id)
-            register_vcn_node_state(state, checks[i].vcs_n2);
-        register_node_state(state, checks[i].node, false, true);
+            register_vcn_node_state(m, checks[i].vcs_n2);
+        register_node_state(m, checks[i].node, false, true);
         if (checks[i].node2.node_id)
-            register_node_state(state, checks[i].node2, false, true);
+            register_node_state(m, checks[i].node2, false, true);
         assert_int_equal(
             checks[i].vcs_node_count, vector_len(&state->vcs_node));
         if (checks[i].node2.node_id) {
@@ -330,62 +336,60 @@ void test_flexray__bus_condition(void** _state)
         }
 
         /* Add a node and push to Config state. */
-        calculate_bus_condition(state);
+        calculate_bus_condition(m);
         assert_int_equal(
             checks[i].condition.initial_bus_condition, state->bus_condition);
 
         /* Power-On the transceiver. */
         assert_int_equal(checks[i].condition.pre_power,
-            get_node_state(state, checks[i].node).tcvr_state);
-        set_node_power(state, checks[i].node, true);
+            get_node_state(m, checks[i].node).tcvr_state);
+        set_node_power(m, checks[i].node, true);
         assert_int_equal(checks[i].condition.post_power,
-            get_node_state(state, checks[i].node).tcvr_state);
+            get_node_state(m, checks[i].node).tcvr_state);
         if (checks[i].node2.node_id) {
             assert_int_equal(checks[i].condition.pre_power,
-                get_node_state(state, checks[i].node2).tcvr_state);
-            set_node_power(state, checks[i].node2, true);
+                get_node_state(m, checks[i].node2).tcvr_state);
+            set_node_power(m, checks[i].node2, true);
             assert_int_equal(checks[i].condition.post_power,
-                get_node_state(state, checks[i].node2).tcvr_state);
+                get_node_state(m, checks[i].node2).tcvr_state);
         }
 
         /* Push Node to Normal Active. */
-        push_node_state(state, checks[i].node, NCodecPduFlexrayCommandConfig);
-        push_node_state(state, checks[i].node, NCodecPduFlexrayCommandReady);
-        push_node_state(state, checks[i].node, NCodecPduFlexrayCommandRun);
+        push_node_state(m, checks[i].node, NCodecPduFlexrayCommandConfig);
+        push_node_state(m, checks[i].node, NCodecPduFlexrayCommandReady);
+        push_node_state(m, checks[i].node, NCodecPduFlexrayCommandRun);
         if (checks[i].node2.node_id) {
-            push_node_state(
-                state, checks[i].node2, NCodecPduFlexrayCommandConfig);
-            push_node_state(
-                state, checks[i].node2, NCodecPduFlexrayCommandReady);
-            push_node_state(state, checks[i].node2, NCodecPduFlexrayCommandRun);
+            push_node_state(m, checks[i].node2, NCodecPduFlexrayCommandConfig);
+            push_node_state(m, checks[i].node2, NCodecPduFlexrayCommandReady);
+            push_node_state(m, checks[i].node2, NCodecPduFlexrayCommandRun);
         }
 
         assert_int_equal(checks[i].condition.pre_normal_active,
-            get_node_state(state, checks[i].node).tcvr_state);
+            get_node_state(m, checks[i].node).tcvr_state);
         if (checks[i].node2.node_id) {
             assert_int_equal(checks[i].condition.pre_normal_active,
-                get_node_state(state, checks[i].node2).tcvr_state);
+                get_node_state(m, checks[i].node2).tcvr_state);
         }
 
-        calculate_bus_condition(state);
+        calculate_bus_condition(m);
 
         assert_int_equal(checks[i].condition.post_normal_active,
-            get_node_state(state, checks[i].node).tcvr_state);
+            get_node_state(m, checks[i].node).tcvr_state);
         assert_int_equal(checks[i].condition.post_normal_active_bus_condition,
             state->bus_condition);
         assert_int_equal(checks[i].condition.post_normal_active_poc_state,
-            get_node_state(state, checks[i].node).poc_state);
+            get_node_state(m, checks[i].node).poc_state);
         if (checks[i].node2.node_id) {
             assert_int_equal(checks[i].condition.post_normal_active,
-                get_node_state(state, checks[i].node2).tcvr_state);
+                get_node_state(m, checks[i].node2).tcvr_state);
             assert_int_equal(
                 checks[i].condition.post_normal_active_bus_condition,
                 state->bus_condition);
             assert_int_equal(checks[i].condition.post_normal_active_poc_state,
-                get_node_state(state, checks[i].node2).poc_state);
+                get_node_state(m, checks[i].node2).poc_state);
         }
 
-        release_state(state);
+        release_state(m);
     }
 }
 

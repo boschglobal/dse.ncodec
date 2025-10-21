@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <stdbool.h>
-#include <dse/logger.h>
+#include <stdio.h>
 #include <dse/ncodec/stream/stream.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/codec/ab/flexray_pop/flexray_pop.h>
@@ -105,9 +105,11 @@ static VectorPduRouteItem* __pdu_router_ensure_route(
     return (route);
 }
 
-static void __pdu_router_push(FlexrayPopBusModel* m, NodeIdentifier node_ident,
+static void __pdu_router_push(ABCodecBusModel* bm, NodeIdentifier node_ident,
     NCodecPdu* pdu, const char* msg)
 {
+    FlexrayPopBusModel* m = (FlexrayPopBusModel*)bm->model;
+
     /* Create the origin & destination routes (the reverse/return route). */
     NCodecPduFlexrayNodeIdentifier orig_node_ident =
         pdu->transport.flexray.node_ident;
@@ -116,7 +118,7 @@ static void __pdu_router_push(FlexrayPopBusModel* m, NodeIdentifier node_ident,
     VectorPduRouteItem* pdu_route = __pdu_router_ensure_route(m, node_ident);
 
     /* Push the PDU to the destination route. */
-    log_info("POP:Route: (%u:%u:%u) -[%s]-> (%u:%u:%u)",
+    log_info(bm->log_nc, "POP:Route: (%u:%u:%u) -[%s]-> (%u:%u:%u)",
         orig_node_ident.node.ecu_id, orig_node_ident.node.cc_id,
         orig_node_ident.node.swc_id, msg, node_ident.node.ecu_id,
         node_ident.node.cc_id, node_ident.node.swc_id);
@@ -142,14 +144,14 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
         /* No metadata content to decode. */
         break;
     case (NCodecPduFlexrayMetadataTypeConfig):
-        log_debug("FlexRay%s: Consume: (%u:%u:%u/%u:%u:%u) Config", m->log_id,
-            node_ident.node.ecu_id, node_ident.node.cc_id,
+        log_debug(bm->log_nc, "FlexRay%s: Consume: (%u:%u:%u/%u:%u:%u) Config",
+            m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
             node_ident.node.swc_id, pop_node_ident.node.ecu_id,
             pop_node_ident.node.cc_id, pop_node_ident.node.swc_id);
         if (node_ident.node_id != 0) {
             /* Node -> : route to PoP . */
             __pdu_router_push(
-                m, (NodeIdentifier){ .node_id = 0 }, pdu, "Config");
+                bm, (NodeIdentifier){ .node_id = 0 }, pdu, "Config");
         } else {
             /* PoP -> : extract config and discard. */
 // FIXME: step_size is a parameter.
@@ -163,7 +165,8 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
             m->config.static_slot_count = config->static_slot_count;
 
             if (m->config.bit_rate != NCodecPduFlexrayBitrate10) {
-                log_notice("Bit rate not supported (%u)", m->config.bit_rate);
+                log_notice(bm->log_nc, "Bit rate not supported (%u)",
+                    m->config.bit_rate);
                 break;
             }
 
@@ -171,8 +174,9 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
                 m->config.macrotick_per_cycle == 0 ||
                 m->config.static_slot_length_mt == 0 ||
                 m->config.static_slot_count == 0) {
-                log_notice("Partial configuration of PoP, macrotick estimation "
-                           "not available.");
+                log_notice(bm->log_nc,
+                    "Partial configuration of PoP, macrotick estimation "
+                    "not available.");
                 break;
             }
 
@@ -183,13 +187,13 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
                 (SIM_STEP_SIZE * 1000000000) / microtick_ns;
             m->config.step_budget_mt = step_budget_ut / macro2micro;
 
-            log_info(
-                "PoP step width in Macrotick: %u", m->config.step_budget_mt);
+            log_info(bm->log_nc, "PoP step width in Macrotick: %u",
+                m->config.step_budget_mt);
         }
         break;
     case (NCodecPduFlexrayMetadataTypeStatus):
-        log_debug("FlexRay%s: Consume: (%u:%u:%u/%u:%u:%u) Status", m->log_id,
-            node_ident.node.ecu_id, node_ident.node.cc_id,
+        log_debug(bm->log_nc, "FlexRay%s: Consume: (%u:%u:%u/%u:%u:%u) Status",
+            m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
             node_ident.node.swc_id, pop_node_ident.node.ecu_id,
             pop_node_ident.node.cc_id, pop_node_ident.node.swc_id);
         if (node_ident.node_id == 0) {
@@ -204,7 +208,8 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
                     m->status.running = false;
                     m->status.pos_cycle = 0;
                     m->status.pos_mt = 0;
-                    log_debug("FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u",
+                    log_debug(bm->log_nc,
+                        "FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u",
                         m->log_id, m->status.pos_cycle, m->status.pos_mt);
                     break;
                 }
@@ -228,22 +233,24 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
                     }
                     m->status.running = true;
                 }
-                log_debug("FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u",
-                    m->log_id, m->status.pos_cycle, m->status.pos_mt);
+                log_debug(bm->log_nc,
+                    "FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u", m->log_id,
+                    m->status.pos_cycle, m->status.pos_mt);
             } else {
                 /* PoP -> : route to node. */
-                __pdu_router_push(m, pop_node_ident, pdu, "Status");
+                __pdu_router_push(bm, pop_node_ident, pdu, "Status");
             }
         } else {
             /* Node -> : route to PoP. */
             __pdu_router_push(
-                m, (NodeIdentifier){ .node_id = 0 }, pdu, "Status");
+                bm, (NodeIdentifier){ .node_id = 0 }, pdu, "Status");
         }
         break;
     case (NCodecPduFlexrayMetadataTypeLpdu):
-        log_debug("FlexRay%s: Consume: (%u:%u:%u/%u:%u:%u) LPDU %04x index=%u, "
-                  "len=%u, "
-                  "status=%d",
+        log_debug(bm->log_nc,
+            "FlexRay%s: Consume: (%u:%u:%u/%u:%u:%u) LPDU %04x index=%u, "
+            "len=%u, "
+            "status=%d",
             m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
             node_ident.node.swc_id, pop_node_ident.node.ecu_id,
             pop_node_ident.node.cc_id, pop_node_ident.node.swc_id, pdu->id,
@@ -251,10 +258,11 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
             pdu->payload_len, pdu->transport.flexray.metadata.lpdu.status);
         if (node_ident.node_id != 0) {
             /* Node -> : route to PoP . */
-            __pdu_router_push(m, (NodeIdentifier){ .node_id = 0 }, pdu, "LPDU");
+            __pdu_router_push(
+                bm, (NodeIdentifier){ .node_id = 0 }, pdu, "LPDU");
         } else if (pop_node_ident.node_id != 0) {
             /* PoP -> : route to node. */
-            __pdu_router_push(m, pop_node_ident, pdu, "LPDU");
+            __pdu_router_push(bm, pop_node_ident, pdu, "LPDU");
         }
 
         /* Extract Macrotick from Static LPDUs. */
@@ -269,7 +277,8 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
                                             m->config.static_slot_length_mt;
                 if (start_dynamic_mt > m->status.pos_mt) {
                     m->status.pos_mt = start_dynamic_mt;
-                    log_debug("FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u",
+                    log_debug(bm->log_nc,
+                        "FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u",
                         m->log_id, m->status.pos_cycle, m->status.pos_mt);
                 }
             } else {
@@ -280,14 +289,15 @@ bool flexray_pop_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
                 if (lpdu_mt > m->status.pos_mt) {
                     /* Push the Macrotick to the trailing edge. */
                     m->status.pos_mt = lpdu_mt;
-                    log_debug("FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u",
+                    log_debug(bm->log_nc,
+                        "FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u",
                         m->log_id, m->status.pos_cycle, m->status.pos_mt);
                 } else {
                     if (m->status.pos_mt >
                         (lpdu_mt + m->config.step_budget_mt)) {
                         /* Macrotick is too far advanced, retard. */
                         m->status.pos_mt = lpdu_mt;
-                        log_debug(
+                        log_debug(bm->log_nc,
                             "FlexRay%s: PoP Status: pos_cycle=%u pos_mt=%u",
                             m->log_id, m->status.pos_cycle, m->status.pos_mt);
                     }
@@ -307,7 +317,7 @@ void flexray_pop_bus_model_progress(ABCodecBusModel* bm)
 {
     FlexrayPopBusModel* m = (FlexrayPopBusModel*)bm->model;
 
-    log_debug("FlexRay%s: Progress: ", m->log_id);
+    log_debug(bm->log_nc, "FlexRay%s: Progress: ", m->log_id);
 
     /* Each route should have at least a Status Message. */
     for (size_t i = 0; i < vector_len(&m->pdu_router); i++) {
@@ -370,7 +380,7 @@ void flexray_pop_bus_model_close(ABCodecBusModel* bm)
 {
     FlexrayPopBusModel* m = (FlexrayPopBusModel*)bm->model;
 
-    log_debug("FlexRay%s: Close: ", m->log_id);
+    log_debug(bm->log_nc, "FlexRay%s: Close: ", m->log_id);
 
     __pdu_router_destroy(m);
 }
@@ -378,6 +388,9 @@ void flexray_pop_bus_model_close(ABCodecBusModel* bm)
 
 void flexray_pop_bus_model_create(ABCodecInstance* nc)
 {
+    /* Install the logging interface. */
+    nc->reader.bus_model.log_nc = nc;
+
     /* Shallow copy the nc object. */
     ABCodecInstance* nc_copy = calloc(1, sizeof(ABCodecInstance));
     *nc_copy = *nc;
@@ -402,22 +415,22 @@ void flexray_pop_bus_model_create(ABCodecInstance* nc)
     nc->reader.bus_model.nc = nc_copy;
 
     /* Create the Bus Model object. */
-    FlexrayPopBusModel* bm = calloc(1, sizeof(FlexrayPopBusModel));
-    bm->node_ident.node.ecu_id = nc->ecu_id;
-    bm->node_ident.node.cc_id = nc->cc_id;
-    bm->node_ident.node.swc_id = nc->swc_id;
-    snprintf(bm->log_id, FLEXRAY_LOG_ID_LEN, "(%u:%u:%u)",
-        bm->node_ident.node.ecu_id, bm->node_ident.node.cc_id,
-        bm->node_ident.node.swc_id);
-    log_debug("FlexRay%s: Create: ", bm->log_id);
+    FlexrayPopBusModel* m = calloc(1, sizeof(FlexrayPopBusModel));
+    m->log_nc = nc->reader.bus_model.log_nc;
+    m->node_ident.node.ecu_id = nc->ecu_id;
+    m->node_ident.node.cc_id = nc->cc_id;
+    m->node_ident.node.swc_id = nc->swc_id;
+    snprintf(m->log_id, FLEXRAY_LOG_ID_LEN, "(%u:%u:%u)",
+        m->node_ident.node.ecu_id, m->node_ident.node.cc_id,
+        m->node_ident.node.swc_id);
+    log_debug(nc, "FlexRay%s: Create: ", m->log_id);
 
-    bm->pdu_router =
+    m->pdu_router =
         vector_make(sizeof(VectorPduRouteItem), 0, __node_ident_compar);
-    __pdu_router_ensure_route(bm, bm->node_ident);
-
+    __pdu_router_ensure_route(m, m->node_ident);
 
     /* Install and configure the Bus Model VTable. */
-    nc->reader.bus_model.model = bm;
+    nc->reader.bus_model.model = m;
     nc->reader.bus_model.vtable.consume = flexray_pop_bus_model_consume;
     nc->reader.bus_model.vtable.progress = flexray_pop_bus_model_progress;
     nc->reader.bus_model.vtable.close = flexray_pop_bus_model_close;

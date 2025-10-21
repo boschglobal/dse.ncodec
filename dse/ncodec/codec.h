@@ -94,8 +94,7 @@ Example
 
 */
 
-typedef struct {
-} NCODEC;
+typedef void NCODEC;
 
 
 /* Stream Interface */
@@ -164,12 +163,27 @@ typedef struct NCodecVTable {
     NCodecClose    close;
 } NCodecVTable;
 
+
+typedef enum NCodecTraceLogLevel {
+    NCODEC_LOG_TRACE = 0,
+    NCODEC_LOG_DEBUG,
+    NCODEC_LOG_CODEC,   /* Intermediate debug messages. */
+    NCODEC_LOG_INFO,
+    NCODEC_LOG_NOTICE, /* Application level messages. */
+    NCODEC_LOG_QUIET,  /* Suppress all logs, excluding errors. */
+    NCODEC_LOG_ERROR,  /* May print errno, if set. */
+    NCODEC_LOG_FATAL,  /* Will print errno and then call exit(). */
+} NCodecTraceLogLevel;
+
 typedef void (*NCodecTraceWrite)(NCODEC* nc, NCodecMessage* msg);
 typedef void (*NCodecTraceRead)(NCODEC* nc, NCodecMessage* msg);
+typedef void (*NCodecTraceLog)(NCODEC* nc, NCodecTraceLogLevel level,
+    const char* msg);
 
 typedef struct NCodecTraceVTable {
     NCodecTraceWrite write;
     NCodecTraceRead  read;
+    NCodecTraceLog   log;
 } NCodecTraceVTable;
 
 

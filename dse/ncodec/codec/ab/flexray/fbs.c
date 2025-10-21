@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <dse/logger.h>
 #include <dse/ncodec/codec/ab/vector.h>
 #include <dse/ncodec/interface/pdu.h>
 #include <dse/ncodec/schema/abs/stream/pdu_builder.h>
@@ -27,8 +26,10 @@ static void _decode_flexray_config(
     /* Force the config node_ident. */
     c->node_ident = _pdu->transport.flexray.node_ident;
 
-    strncpy(c->node_name, ns(FlexrayConfig_node_name(fc_msg)),
-        NCODEC_PDU_NODE_NAME_LEN - 1);
+    flatbuffers_string_t name = ns(FlexrayConfig_node_name(fc_msg));
+    if (flatbuffers_string_len(name) > 0) {
+        strncpy(c->node_name, name, NCODEC_PDU_NODE_NAME_LEN - 1);
+    }
     c->vcn_count =
         ns(FlexrayNodeIdentifier_vec_len(ns(FlexrayConfig_vcn(fc_msg))));
     // FIXME: decode this properly.
@@ -189,7 +190,7 @@ static uint32_t _emit_flexray_config(flatcc_builder_t* B, NCodecPdu* _pdu)
         }
         ns(FlexrayConfig_vcn_end(B));
     }
-    if (c->node_name) {
+    if (strlen(c->node_name)) {
         flatbuffers_string_vec_ref_t _node_name =
             flatbuffers_string_create_strn(
                 B, c->node_name, NCODEC_PDU_NODE_NAME_LEN);

@@ -5,6 +5,8 @@
 #ifndef DSE_NCODEC_CODEC_AB_CODEC_H_
 #define DSE_NCODEC_CODEC_AB_CODEC_H_
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <dse/ncodec/schema/abs/stream/flatbuffers_common_reader.h>
@@ -32,6 +34,8 @@ typedef struct ABCodecBusModel {
         NCodecBusModelProgress progress;
         NCodecBusModelClose    close;
     } vtable;
+    /* Logging interface. */
+    ABCodecInstance* log_nc;
 } ABCodecBusModel;
 
 
@@ -106,7 +110,78 @@ typedef struct ABCodecInstance {
 
     /* Free list (free called on truncate). */
     Vector free_list; /* void* references */
+
+    /* Trace interface. */
+    NCodecTraceLogLevel log_level;
 } ABCodecInstance;
+
+
+/* Log interface. */
+#define AB_CODEC_LOG_BUFFER_SIZE 512
+static inline void __trace_log(void* nc, NCodecTraceLogLevel level,
+    const char* file, int line, const char* format, ...)
+{
+    int         errno_save = errno;
+    va_list     args;
+    static char buffer[AB_CODEC_LOG_BUFFER_SIZE];
+
+    if (((NCodecInstance*)nc)->trace.log == NULL) return;
+
+    va_start(args, format);
+    int pos = vsnprintf(buffer, AB_CODEC_LOG_BUFFER_SIZE, format, args);
+    va_end(args);
+    if (level != NCODEC_LOG_NOTICE && pos >= 0) {
+        snprintf(buffer + pos, AB_CODEC_LOG_BUFFER_SIZE - pos, " (%s:%0d)",
+            file, line);
+    }
+    errno = errno_save;
+
+    ((NCodecInstance*)nc)->trace.log(nc, level, buffer);
+}
+
+#define log_trace(nc, ...)                                                     \
+    do {                                                                       \
+        if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_TRACE)             \
+            __trace_log(                                                       \
+                nc, NCODEC_LOG_TRACE, __func__, __LINE__, __VA_ARGS__);        \
+    } while (0)
+
+#define log_debug(nc, ...)                                                     \
+    do {                                                                       \
+        if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_DEBUG)             \
+            __trace_log(                                                       \
+                nc, NCODEC_LOG_DEBUG, __func__, __LINE__, __VA_ARGS__);        \
+    } while (0)
+
+#define log_info(nc, ...)                                                      \
+    do {                                                                       \
+        if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_INFO)              \
+            __trace_log(nc, NCODEC_LOG_INFO, __func__, __LINE__, __VA_ARGS__); \
+    } while (0)
+
+#define log_simbus(nc, ...)                                                    \
+    do {                                                                       \
+        if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_SIMBUS)            \
+            __trace_log(                                                       \
+                nc, NCODEC_LOG_SIMBUS, __func__, __LINE__, __VA_ARGS__);       \
+    } while (0)
+
+#define log_notice(nc, ...)                                                    \
+    do {                                                                       \
+        __trace_log(nc, NCODEC_LOG_NOTICE, __func__, __LINE__, __VA_ARGS__);   \
+    } while (0)
+
+#define log_error(nc, ...)                                                     \
+    do {                                                                       \
+        if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_ERROR)             \
+            __trace_log(                                                       \
+                nc, NCODEC_LOG_ERROR, __func__, __LINE__, __VA_ARGS__);        \
+    } while (0)
+
+#define log_fatal(nc, ...)                                                     \
+    do {                                                                       \
+        __trace_log(nc, NCODEC_LOG_FATAL, __func__, __LINE__, __VA_ARGS__);    \
+    } while (0)
 
 
 #endif  // DSE_NCODEC_CODEC_AB_CODEC_H_

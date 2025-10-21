@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <dse/testing.h>
-#include <dse/logger.h>
 #include <errno.h>
 #include <stdio.h>
 #include <dse/ncodec/codec/ab/vector.h>
@@ -14,14 +13,16 @@
 #include <dse/ncodec/codec/ab/flexray/flexray.h>
 #include <flexray_harness.h>
 
+extern uint8_t __log_level__;
 
 /* Enable Debug: Add this to the start of a test function.
-Values include: LOG_QUIET LOG_INFO LOG_DEBUG LOG_TRACE
+Values include: NCODEC_LOG_QUIET NCODEC_LOG_INFO NCODEC_LOG_DEBUG
+NCODEC_LOG_TRACE
 
 ```
 void some_test(void** state)
 {
-    __log_level__ = LOG_DEBUG;
+    __log_level__ = NCODEC_LOG_DEBUG;
     ...
 }
 ```
@@ -149,7 +150,7 @@ void null_frames(void** state)
                             .frame_table = 5,  /* Self index. */
                         },
                     },
-                    /* This dynamic frame will never have TX status set, no 
+                    /* This dynamic frame will never have TX status set, no
                     expected RX will occur. */
                     {
                         .slot_id = 42,

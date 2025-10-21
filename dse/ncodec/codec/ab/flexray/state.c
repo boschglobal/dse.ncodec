@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <dse/logger.h>
+#include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/interface/pdu.h>
 #include <dse/ncodec/codec/ab/flexray/flexray.h>
 
@@ -48,14 +48,14 @@ const char* poc_state_string(unsigned int state)
     }
 }
 
-static void __poc_state_transition(
-    FlexrayNodeState* state, NCodecPduFlexrayPocState target)
+static void __poc_state_transition(FlexrayBusModel* m, FlexrayNodeState* state,
+    NCodecPduFlexrayPocState target)
 {
     if (poc_state_string(target) == NULL) {
-        log_error("Invalid target POC State (%d)", target);
+        log_error(m->log_nc, "Invalid target POC State (%d)", target);
         return;
     }
-    log_debug("POC State Transition %s -> %s",
+    log_debug(m->log_nc, "POC State Transition %s -> %s",
         poc_state_string(state->poc_state), poc_state_string(target));
     state->poc_state = target;
 }
@@ -78,11 +78,12 @@ const char* tcvr_state_string(unsigned int state)
     }
 }
 
-static void __set_transceiver_state(FlexrayNodeState* state)
+static void __set_transceiver_state(FlexrayBusModel* m, FlexrayNodeState* state)
 {
     if (state->tcvr_state == NCodecPduFlexrayTransceiverStateNoPower) {
         /* No Power, adjustment based on POC state not valid. */
-        log_debug("Tranceiver State: %s", tcvr_state_string(state->tcvr_state));
+        log_debug(m->log_nc, "Tranceiver State: %s",
+            tcvr_state_string(state->tcvr_state));
         return;
     }
 
@@ -120,64 +121,67 @@ static void __set_transceiver_state(FlexrayNodeState* state)
     }
 
     if (tcvr_state_string(state->tcvr_state) == NULL) {
-        log_error("Invalid Transceiver State (%d)", state->tcvr_state);
+        log_error(
+            m->log_nc, "Invalid Transceiver State (%d)", state->tcvr_state);
         return;
     }
-    log_debug("Transceiver State: %s", tcvr_state_string(state->tcvr_state));
+    log_debug(m->log_nc, "Transceiver State: %s",
+        tcvr_state_string(state->tcvr_state));
 }
 
 void set_node_power(
-    FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid, bool power_on)
+    FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid, bool power_on)
 {
     /* Node states are consolidated per Node by zeroing out the `swc_id`. */
     nid.node.swc_id = 0;
-    FlexrayNodeState* node_state = vector_find(
-        &state->node_state, &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
+    FlexrayNodeState* node_state = vector_find(&m->state.node_state,
+        &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
     if (node_state) {
         if (power_on &&
             node_state->tcvr_state == NCodecPduFlexrayTransceiverStateNoPower) {
             node_state->tcvr_state =
                 NCodecPduFlexrayTransceiverStateNoConnection;
             node_state->poc_state = NCodecPduFlexrayPocStateDefaultConfig;
-            log_debug("Power On");
+            log_debug(m->log_nc, "Power On");
         } else if (power_on == false) {
             node_state->tcvr_state = NCodecPduFlexrayTransceiverStateNoPower;
             node_state->poc_state = NCodecPduFlexrayPocStateDefaultConfig;
-            log_debug("Power Off");
+            log_debug(m->log_nc, "Power Off");
         }
     } else {
-        log_error("Node State object not found (nid (%d:%d:%d))",
+        log_error(m->log_nc, "Node State object not found (nid (%d:%d:%d))",
             nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
     }
 }
 
-int process_poc_command(
-    FlexrayNodeState* state, NCodecPduFlexrayPocCommand command)
+int process_poc_command(FlexrayBusModel* m, FlexrayNodeState* state,
+    NCodecPduFlexrayPocCommand command)
 {
-    log_debug("POC Command=%d, POC State=%u, Tcrv State=%u", command,
+    log_debug(m->log_nc, "POC Command=%d, POC State=%u, Tcrv State=%u", command,
         state->poc_state, state->tcvr_state);
     if (command == NCodecPduFlexrayCommandNone) return 0;
 
     switch (state->poc_state) {
     case NCodecPduFlexrayPocStateDefaultConfig:
         if (command == NCodecPduFlexrayCommandConfig) {
-            __poc_state_transition(state, NCodecPduFlexrayPocStateConfig);
+            __poc_state_transition(m, state, NCodecPduFlexrayPocStateConfig);
         }
         break;
 
     case NCodecPduFlexrayPocStateConfig:
         if (command == NCodecPduFlexrayCommandReady) {
-            __poc_state_transition(state, NCodecPduFlexrayPocStateReady);
+            __poc_state_transition(m, state, NCodecPduFlexrayPocStateReady);
         }
         break;
 
     case NCodecPduFlexrayPocStateReady:
         switch (command) {
         case NCodecPduFlexrayCommandConfig:
-            __poc_state_transition(state, NCodecPduFlexrayPocStateConfig);
+            __poc_state_transition(m, state, NCodecPduFlexrayPocStateConfig);
             break;
         case NCodecPduFlexrayCommandRun:
-            __poc_state_transition(state, NCodecPduFlexrayPocStateNormalActive);
+            __poc_state_transition(
+                m, state, NCodecPduFlexrayPocStateNormalActive);
             break;
         default:
             break;
@@ -187,16 +191,16 @@ int process_poc_command(
     case NCodecPduFlexrayPocStateWakeup:
     case NCodecPduFlexrayPocStateStartup:
     case NCodecPduFlexrayPocStateNormalPassive:
-        __poc_state_transition(state, NCodecPduFlexrayPocStateNormalActive);
+        __poc_state_transition(m, state, NCodecPduFlexrayPocStateNormalActive);
         break;
 
     case NCodecPduFlexrayPocStateNormalActive:
         switch (command) {
         case NCodecPduFlexrayCommandHalt:
-            __poc_state_transition(state, NCodecPduFlexrayPocStateHalt);
+            __poc_state_transition(m, state, NCodecPduFlexrayPocStateHalt);
             break;
         case NCodecPduFlexrayCommandFreeze:
-            __poc_state_transition(state, NCodecPduFlexrayPocStateFreeze);
+            __poc_state_transition(m, state, NCodecPduFlexrayPocStateFreeze);
             break;
         default:
             break;
@@ -207,7 +211,7 @@ int process_poc_command(
         switch (command) {
         case NCodecPduFlexrayCommandConfig:
             __poc_state_transition(
-                state, NCodecPduFlexrayPocStateDefaultConfig);
+                m, state, NCodecPduFlexrayPocStateDefaultConfig);
             break;
         default:
             break;
@@ -219,11 +223,11 @@ int process_poc_command(
         break;
 
     default:
-        log_error("Unknown POC State (%d)", state->poc_state);
+        log_error(m->log_nc, "Unknown POC State (%d)", state->poc_state);
         break;
     }
 
-    __set_transceiver_state(state);
+    __set_transceiver_state(m, state);
 
     return 0;
 }
@@ -239,17 +243,17 @@ static int __node_ident_compar(const void* left, const void* right)
 }
 
 
-void register_node_state(FlexrayState* state,
-    NCodecPduFlexrayNodeIdentifier nid, bool pwr_on, bool pwr_off)
+void register_node_state(FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid,
+    bool pwr_on, bool pwr_off)
 {
     /* Node states are consolidated per Node by zeroing out the `swc_id`. */
-    if (state->node_state.capacity == 0) {
-        state->node_state =
+    if (m->state.node_state.capacity == 0) {
+        m->state.node_state =
             vector_make(sizeof(FlexrayNodeState), 0, __node_ident_compar);
     }
     nid.node.swc_id = 0;
-    FlexrayNodeState* node_state = vector_find(
-        &state->node_state, &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
+    FlexrayNodeState* node_state = vector_find(&m->state.node_state,
+        &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
     if (node_state == NULL) {
         /* Force power state, typically set via MIME type parameter `pon`. */
         NCodecPduFlexrayTransceiverState tcvr_state =
@@ -259,11 +263,11 @@ void register_node_state(FlexrayState* state,
         } else if (pwr_off) {
             tcvr_state = NCodecPduFlexrayTransceiverStateNoPower;
         }
-        vector_push(&state->node_state,
+        vector_push(&m->state.node_state,
             &(FlexrayNodeState){ .node_ident = nid, .tcvr_state = tcvr_state });
-        vector_sort(&state->node_state);
-        log_debug("Push Node State: tcvr_state=%d (nid (%d:%d:%d))", tcvr_state,
-            nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
+        vector_sort(&m->state.node_state);
+        log_debug(m->log_nc, "Push Node State: tcvr_state=%d (nid (%d:%d:%d))",
+            tcvr_state, nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
     } else {
         /* Force power state, typically set via MIME type parameter `pon`. */
         if (pwr_on) {
@@ -273,91 +277,92 @@ void register_node_state(FlexrayState* state,
             node_state->tcvr_state = NCodecPduFlexrayTransceiverStateNoPower;
         }
 
-        log_debug("Register Node State: tcvr_state=%d (nid (%d:%d:%d))",
+        log_debug(m->log_nc,
+            "Register Node State: tcvr_state=%d (nid (%d:%d:%d))",
             node_state->tcvr_state, nid.node.ecu_id, nid.node.cc_id,
             nid.node.swc_id);
     }
 }
 
-void set_poc_state(FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid,
+void set_poc_state(FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid,
     NCodecPduFlexrayPocState poc_state)
 {
     /* Node states are consolidated per Node by zeroing out the `swc_id`. */
     nid.node.swc_id = 0;
-    FlexrayNodeState* node_state = vector_find(
-        &state->node_state, &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
+    FlexrayNodeState* node_state = vector_find(&m->state.node_state,
+        &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
     if (node_state) {
         node_state->poc_state = poc_state;
-        __set_transceiver_state(node_state);
+        __set_transceiver_state(m, node_state);
     } else {
-        log_error("Node State object not found (nid (%d:%d:%d))",
+        log_error(m->log_nc, "Node State object not found (nid (%d:%d:%d))",
             nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
     }
 }
 
 void register_vcn_node_state(
-    FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid)
+    FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid)
 {
-    log_debug("Register VCN Node State (nid (%d:%d:%d))", nid.node.ecu_id,
-        nid.node.cc_id, nid.node.swc_id);
-    if (state->vcs_node.capacity == 0) {
-        state->vcs_node =
+    log_debug(m->log_nc, "Register VCN Node State (nid (%d:%d:%d))",
+        nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
+    if (m->state.vcs_node.capacity == 0) {
+        m->state.vcs_node =
             vector_make(sizeof(FlexrayNodeState), 0, __node_ident_compar);
     }
-    if (vector_find(&state->vcs_node, &(FlexrayNodeState){ .node_ident = nid },
-            0, NULL) == NULL) {
-        vector_push(&state->vcs_node,
+    if (vector_find(&m->state.vcs_node,
+            &(FlexrayNodeState){ .node_ident = nid }, 0, NULL) == NULL) {
+        vector_push(&m->state.vcs_node,
             &(FlexrayNodeState){ .node_ident = nid,
                 .tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync });
-        vector_sort(&state->vcs_node);
-        log_debug("Push VCN Node State (nid (%d:%d:%d))", nid.node.ecu_id,
-            nid.node.cc_id, nid.node.swc_id);
+        vector_sort(&m->state.vcs_node);
+        log_debug(m->log_nc, "Push VCN Node State (nid (%d:%d:%d))",
+            nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
     }
 }
 
-void push_node_state(FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid,
+void push_node_state(FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid,
     NCodecPduFlexrayPocCommand command)
 {
     /* Node states are consolidated per Node by zeroing out the `swc_id`. */
     nid.node.swc_id = 0;
-    FlexrayNodeState* node_state = vector_find(
-        &state->node_state, &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
+    FlexrayNodeState* node_state = vector_find(&m->state.node_state,
+        &(FlexrayNodeState){ .node_ident = nid }, 0, NULL);
     if (node_state) {
-        process_poc_command(node_state, command);
-        __set_transceiver_state(node_state);
+        process_poc_command(m, node_state, command);
+        __set_transceiver_state(m, node_state);
     } else {
-        log_error("Node State object not found (nid (%d:%d:%d))",
+        log_error(m->log_nc, "Node State object not found (nid (%d:%d:%d))",
             nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
     }
 }
 
 FlexrayNodeState get_node_state(
-    FlexrayState* state, NCodecPduFlexrayNodeIdentifier nid)
+    FlexrayBusModel* m, NCodecPduFlexrayNodeIdentifier nid)
 {
     /* Node states are consolidated per Node by zeroing out the `swc_id`. */
     nid.node.swc_id = 0;
     FlexrayNodeState node_state = { 0 };
-    vector_find(&state->node_state, &(FlexrayNodeState){ .node_ident = nid }, 0,
-        &node_state);
+    vector_find(&m->state.node_state, &(FlexrayNodeState){ .node_ident = nid },
+        0, &node_state);
     return node_state;
 }
 
-void calculate_bus_condition(FlexrayState* state)
+void calculate_bus_condition(FlexrayBusModel* m)
 {
     int frame_sync_node_count = 0;
     /* Range over Virtual Coldstart Nodes. */
-    for (size_t i = i; i < vector_len(&state->vcs_node); i++) {
+    for (size_t i = i; i < vector_len(&m->state.vcs_node); i++) {
         FlexrayNodeState node_state = { 0 };
-        vector_at(&state->vcs_node, i, &node_state);
+        vector_at(&m->state.vcs_node, i, &node_state);
         if (node_state.tcvr_state ==
             NCodecPduFlexrayTransceiverStateFrameSync) {
             frame_sync_node_count++;
         }
     }
     /* Range over Nodes. */
-    for (size_t i = i; i < vector_len(&state->node_state); i++) {
+    for (size_t i = i; i < vector_len(&m->state.node_state); i++) {
         FlexrayNodeState node_state = { 0 };
-        vector_at(&state->node_state, i, &node_state);
+        vector_at(&m->state.node_state, i, &node_state);
         if (node_state.tcvr_state ==
             NCodecPduFlexrayTransceiverStateFrameSync) {
             frame_sync_node_count++;
@@ -366,28 +371,28 @@ void calculate_bus_condition(FlexrayState* state)
 
     switch (frame_sync_node_count) {
     case 0:
-        state->bus_condition = NCodecPduFlexrayTransceiverStateNoSignal;
+        m->state.bus_condition = NCodecPduFlexrayTransceiverStateNoSignal;
         break;
     case 1:
-        state->bus_condition = NCodecPduFlexrayTransceiverStateFrameError;
+        m->state.bus_condition = NCodecPduFlexrayTransceiverStateFrameError;
         /* Push ActiveNormal nodes to ActivePassive. */
-        for (size_t i = i; i < vector_len(&state->node_state); i++) {
+        for (size_t i = i; i < vector_len(&m->state.node_state); i++) {
             FlexrayNodeState* node_state =
-                vector_at(&state->node_state, i, NULL);
+                vector_at(&m->state.node_state, i, NULL);
             if (node_state->poc_state == NCodecPduFlexrayPocStateNormalActive) {
                 node_state->poc_state = NCodecPduFlexrayPocStateNormalPassive;
-                __set_transceiver_state(node_state);
+                __set_transceiver_state(m, node_state);
             }
         }
         break;
     default:
-        state->bus_condition = NCodecPduFlexrayTransceiverStateFrameSync;
+        m->state.bus_condition = NCodecPduFlexrayTransceiverStateFrameSync;
         break;
     }
 }
 
-void release_state(FlexrayState* state)
+void release_state(FlexrayBusModel* m)
 {
-    vector_reset(&state->node_state);
-    vector_reset(&state->vcs_node);
+    vector_reset(&m->state.node_state);
+    vector_reset(&m->state.vcs_node);
 }

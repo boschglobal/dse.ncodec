@@ -3,10 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <dse/testing.h>
-#include <dse/logger.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/stream/stream.h>
 #include <flexray_harness.h>
+#undef log_trace
+#undef log_debug
+#undef log_info
+#undef log_simbus
+#undef log_notice
+#undef log_error
+#undef log_fatal
+#include <dse/logger.h>
 
 
 #define UNUSED(x)     ((void)x)
@@ -31,6 +38,10 @@ Strategy:
 
 */
 
+void __ncodec_trace_log__(void* nc, NCodecTraceLogLevel level, const char* msg)
+{
+    if (level >= __log_level__) __log2console(level, NULL, 0, "%s", msg);
+}
 
 int test_setup(void** state)
 {
@@ -104,6 +115,9 @@ static void _setup_nodes(TestTxRx* test)
             test->config.node[n_idx].mimetype, test->config.node[n_idx].stream);
         assert_non_null(test->config.node[n_idx].nc);
         ncodec_truncate(test->config.node[n_idx].nc);
+
+        ((NCodecInstance*)test->config.node[n_idx].nc)->trace.log =
+            __ncodec_trace_log__;
     }
 
     test->run.pdu_list = vector_make(sizeof(NCodecPdu), 0, NULL);

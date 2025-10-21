@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <stdbool.h>
-#include <dse/logger.h>
+#include <stdio.h>
 #include <dse/ncodec/stream/stream.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/codec/ab/flexray/flexray.h>
@@ -22,13 +22,13 @@ bool flexray_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
         /* No metadata content to decode. */
         break;
     case (NCodecPduFlexrayMetadataTypeConfig):
-        log_debug("FlexRay%s: Consume: (%u:%u:%u) Config", m->log_id,
-            node_ident.node.ecu_id, node_ident.node.cc_id,
+        log_debug(bm->log_nc, "FlexRay%s: Consume: (%u:%u:%u) Config",
+            m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
             node_ident.node.swc_id);
         /* Ensure the Config has the node_ident of the PDU. */
         pdu->transport.flexray.metadata.config.node_ident = node_ident;
-        process_config(pdu, &m->engine);
-        log_debug("Configure %d VCN (nid (%d:%d:%d))",
+        process_config(m, pdu);
+        log_debug(bm->log_nc, "Configure %d VCN (nid (%d:%d:%d))",
             pdu->transport.flexray.metadata.config.vcn_count,
             node_ident.node.ecu_id, node_ident.node.cc_id,
             node_ident.node.swc_id);
@@ -37,39 +37,40 @@ bool flexray_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
              i < NCODEC_PDU_MAX_VCN;
              i++) {
             register_vcn_node_state(
-                &m->state, pdu->transport.flexray.metadata.config.vcn[i]);
+                m, pdu->transport.flexray.metadata.config.vcn[i]);
         }
-        register_node_state(&m->state, node_ident, true, false);
+        register_node_state(m, node_ident, true, false);
         // TODO: map correct power state.
-        set_poc_state(&m->state, node_ident,
+        set_poc_state(m, node_ident,
             pdu->transport.flexray.metadata.config.initial_poc_state_cha);
         break;
     case (NCodecPduFlexrayMetadataTypeStatus):
-        log_debug("FlexRay%s: Consume: (%u:%u:%u) Status", m->log_id,
-            node_ident.node.ecu_id, node_ident.node.cc_id,
+        log_debug(bm->log_nc, "FlexRay%s: Consume: (%u:%u:%u) Status",
+            m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
             node_ident.node.swc_id);
         // TODO: state needs to be an array for CHA CHB
-        push_node_state(&m->state, node_ident,
+        push_node_state(m, node_ident,
             pdu->transport.flexray.metadata.status.channel[0].poc_command);
 
         // TODO: set the node power, does this need a specific command in the
         // Status message? set_node_power(state, checks[i].node, true);
-        // shift_cycle(&m->engine, 0, 0, true); // TODO: FR sync from bridge.
+        // shift_cycle(m, 0, 0, true); // TODO: FR sync from bridge.
         break;
     case (NCodecPduFlexrayMetadataTypeLpdu):
-        log_info("FlexRay%s: Consume: (%u:%u:%u) LPDU %04x index=%u, len=%u, "
-                 "status=%d",
+        log_info(bm->log_nc,
+            "FlexRay%s: Consume: (%u:%u:%u) LPDU %04x index=%u, len=%u, "
+            "status=%d",
             m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
             node_ident.node.swc_id, pdu->id,
             pdu->transport.flexray.metadata.lpdu.frame_config_index,
             pdu->payload_len, pdu->transport.flexray.metadata.lpdu.status);
-        set_lpdu(&m->engine, node_ident.node_id, pdu->id,
+        set_lpdu(m, node_ident.node_id, pdu->id,
             pdu->transport.flexray.metadata.lpdu.frame_config_index,
             pdu->transport.flexray.metadata.lpdu.status, pdu->payload,
             pdu->payload_len);
         break;
     default:
-        log_error("Unexpected FlexRay metadata type (%d)",
+        log_error(bm->log_nc, "Unexpected FlexRay metadata type (%d)",
             pdu->transport.flexray.metadata_type);
     }
 
@@ -81,42 +82,46 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
     FlexrayBusModel*               m = (FlexrayBusModel*)bm->model;
     NCodecPduFlexrayNodeIdentifier node_ident = m->node_ident;
 
-    calculate_bus_condition(&m->state);
-    log_trace("FlexRay%s: Progress: Bus Condition=%s", m->log_id,
+    calculate_bus_condition(m);
+    log_trace(bm->log_nc, "FlexRay%s: Progress: Bus Condition=%s", m->log_id,
         tcvr_state_string(m->state.bus_condition));
 
     if (m->state.bus_condition == NCodecPduFlexrayTransceiverStateFrameSync) {
 // TODO: use simulation time from pdu.simulation_time
 #define SIM_STEP_SIZE 0.0005
-        int rc = calculate_budget(&m->engine, SIM_STEP_SIZE);
+        int rc = calculate_budget(m, SIM_STEP_SIZE);
         if (rc == 0) {
-            log_trace("FlexRay%s: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
-                      "Budget (mt=%u, ut=%u)",
+            log_trace(bm->log_nc,
+                "FlexRay%s: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
+                "Budget (mt=%u, ut=%u)",
                 m->log_id, m->engine.pos_cycle, m->engine.pos_slot,
                 m->engine.pos_mt, m->engine.step_budget_mt,
                 m->engine.step_budget_ut);
-            for (; consume_slot(&m->engine) == 0;) {
-                log_trace("FlexRay%s: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
-                          "Budget (mt=%u, ut=%u)",
+            for (; consume_slot(m) == 0;) {
+                log_trace(bm->log_nc,
+                    "FlexRay%s: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
+                    "Budget (mt=%u, ut=%u)",
                     m->log_id, m->engine.pos_cycle, m->engine.pos_slot,
                     m->engine.pos_mt, m->engine.step_budget_mt,
                     m->engine.step_budget_ut);
             }
         } else {
-            log_error("Call to calculate_budget() returned %d", rc);
+            log_error(bm->log_nc, "Call to calculate_budget() returned %d", rc);
         }
     }
 
-    FlexrayNodeState ns = get_node_state(&m->state, node_ident);
-    log_trace("FlexRay%s: Progress (%u:%u:%u): poc=%u, tcvr=%u, cycle=%u, "
-              "slot=%u, mt=%u (MT=%u, UT=%u, LPDU=%u)",
+    FlexrayNodeState ns = get_node_state(m, node_ident);
+    log_trace(bm->log_nc,
+        "FlexRay%s: Progress (%u:%u:%u): poc=%u, tcvr=%u, cycle=%u, "
+        "slot=%u, mt=%u (MT=%u, UT=%u, LPDU=%u)",
         m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
         node_ident.node.swc_id, ns.poc_state, ns.tcvr_state,
         m->engine.pos_cycle, m->engine.pos_slot, m->engine.pos_mt,
         m->engine.step_budget_mt, m->engine.step_budget_ut,
         vector_len(&m->engine.txrx_list));
-    log_trace("FlexRay%s: Progress (%u:%u:%u): Status : poc_state=%s(%u), "
-              "tcvr_state=%s(%u)",
+    log_trace(bm->log_nc,
+        "FlexRay%s: Progress (%u:%u:%u): Status : poc_state=%s(%u), "
+        "tcvr_state=%s(%u)",
         m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
         node_ident.node.swc_id, poc_state_string(ns.poc_state), ns.poc_state,
         tcvr_state_string(ns.tcvr_state), ns.tcvr_state);
@@ -160,7 +165,7 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
         default:
             continue;
         }
-        log_info(
+        log_info(bm->log_nc,
             "FlexRay%s: Progress: (%u:%u:%u) LPDU %04x (len=%u) frame_index=%u "
             "status=%u, null=%u",
             m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
@@ -189,12 +194,15 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
 void flexray_bus_model_close(ABCodecBusModel* bm)
 {
     FlexrayBusModel* m = (FlexrayBusModel*)bm->model;
-    release_state(&m->state);
-    release_config(&m->engine);
+    release_state(m);
+    release_config(m);
 }
 
 void flexray_bus_model_create(ABCodecInstance* nc)
 {
+    /* Install the logging interface. */
+    nc->reader.bus_model.log_nc = nc;
+
     /* Shallow copy the nc object. */
     ABCodecInstance* nc_copy = calloc(1, sizeof(ABCodecInstance));
     *nc_copy = *nc;
@@ -219,26 +227,25 @@ void flexray_bus_model_create(ABCodecInstance* nc)
     nc->reader.bus_model.nc = nc_copy;
 
     /* Install the Bus Model object. */
-    FlexrayBusModel* bm = calloc(1, sizeof(FlexrayBusModel));
-    bm->node_ident.node.ecu_id = nc->ecu_id;
-    bm->node_ident.node.cc_id = nc->cc_id;
-    bm->node_ident.node.swc_id = nc->swc_id;
-    bm->engine.node_ident = bm->node_ident;
-    bm->engine.log_id = bm->log_id;
-
-    bm->vcn_count = nc->vcn_count;
-    bm->power_on = true;
+    FlexrayBusModel* m = calloc(1, sizeof(FlexrayBusModel));
+    m->log_nc = nc->reader.bus_model.log_nc;
+    m->node_ident.node.ecu_id = nc->ecu_id;
+    m->node_ident.node.cc_id = nc->cc_id;
+    m->node_ident.node.swc_id = nc->swc_id;
+    m->engine.node_ident = m->node_ident;
+    snprintf(m->log_id, FLEXRAY_LOG_ID_LEN, "(%u:%u:%u)",
+        m->node_ident.node.ecu_id, m->node_ident.node.cc_id,
+        m->node_ident.node.swc_id);
+    m->engine.log_id = m->log_id;
+    m->vcn_count = nc->vcn_count;
+    m->power_on = true;
     if (nc->pwr && strcmp(nc->pwr, "off")) {
-        bm->power_on = false;
+        m->power_on = false;
     }
-    nc->reader.bus_model.model = bm;
+    nc->reader.bus_model.model = m;
 
     /* Configure the Bus Model VTable. */
     nc->reader.bus_model.vtable.consume = flexray_bus_model_consume;
     nc->reader.bus_model.vtable.progress = flexray_bus_model_progress;
     nc->reader.bus_model.vtable.close = flexray_bus_model_close;
-
-    snprintf(bm->log_id, FLEXRAY_LOG_ID_LEN, "(%u:%u:%u)",
-        bm->node_ident.node.ecu_id, bm->node_ident.node.cc_id,
-        bm->node_ident.node.swc_id);
 }

@@ -44,6 +44,9 @@ typedef struct FlexrayPopBusModel {
         uint32_t pos_mt;
         uint32_t pos_cycle;
     } status;
+
+    /* Logging interface, duplicated from ABCodecBusModel. */
+    ABCodecInstance* log_nc;
 } FlexrayPopBusModel;
 
 

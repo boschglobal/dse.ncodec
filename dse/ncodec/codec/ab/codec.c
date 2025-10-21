@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
-#include <dse/logger.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 
@@ -114,7 +113,8 @@ void create_bus_model(ABCodecInstance* nc)
                 if (strcmp(nc->mode, "pop") == 0) {
                     flexray_pop_bus_model_create(nc);
                 } else {
-                    log_fatal("Unknown FlexRay bus model mode: %s", nc->mode);
+                    log_fatal(
+                        nc, "Unknown FlexRay bus model mode: %s", nc->mode);
                 }
             } else {
                 flexray_bus_model_create(nc);

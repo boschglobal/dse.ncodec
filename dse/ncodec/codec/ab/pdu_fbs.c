@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <dse/logger.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/codec/ab/flexray/flexray.h>

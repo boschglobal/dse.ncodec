@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <dse/testing.h>
-#include <dse/logger.h>
 #include <errno.h>
 #include <stdio.h>
 #include <dse/ncodec/codec.h>
@@ -17,6 +16,7 @@
 #define BUFFER_LEN    1024
 #define SIM_STEP_SIZE 0.0005
 
+extern uint8_t __log_level__;
 
 extern NCodecConfigItem codec_stat(NCODEC* nc, int* index);
 extern NCODEC*          ncodec_create(const char* mime_type);
@@ -24,9 +24,9 @@ extern int32_t stream_read(NCODEC* nc, uint8_t** data, size_t* len, int pos_op);
 
 
 typedef struct Mock {
-    NCODEC*       nc;
-    FlexrayEngine engine;
-    uint8_t       loglevel_save;
+    NCODEC*         nc;
+    FlexrayBusModel model;
+    uint8_t         loglevel_save;
 } Mock;
 
 
@@ -60,6 +60,8 @@ static NCodecPduFlexrayConfig cc_config = {
 
 static NCodecPduFlexrayLpduConfig frame_config__empty[0] = {};
 
+extern void __ncodec_trace_log__(
+    void* nc, NCodecTraceLogLevel level, const char* msg);
 
 static int test_setup(void** state)
 {
@@ -69,7 +71,8 @@ static int test_setup(void** state)
     NCodecStreamVTable* stream = ncodec_buffer_stream_create(BUFFER_LEN);
     mock->nc = (void*)ncodec_open(MIMETYPE, stream);
     assert_non_null(mock->nc);
-    mock->engine = (FlexrayEngine){ 0 };
+    ((NCodecInstance*)mock->nc)->trace.log = __ncodec_trace_log__;
+    mock->model = (FlexrayBusModel){ .log_nc = mock->nc };
     mock->loglevel_save = __log_level__;
 
     *state = mock;
@@ -81,7 +84,7 @@ static int test_teardown(void** state)
 {
     Mock* mock = *state;
     if (mock && mock->nc) ncodec_close((void*)mock->nc);
-    release_config(&mock->engine);
+    release_config(&mock->model);
 
     __log_level__ = mock->loglevel_save;
     free(mock);
@@ -97,7 +100,8 @@ void test_flexray__communication_parameters(void** state)
     config.frame_config.table = frame_table;
     config.frame_config.count = ARRAY_SIZE(frame_config__empty);
 
-    FlexrayEngine* engine = &mock->engine;
+    FlexrayBusModel* m = &mock->model;
+    FlexrayEngine*   engine = &m->engine;
     *engine = (FlexrayEngine){ .sim_step_size = SIM_STEP_SIZE };
 
     NCodecPdu pdu = {
@@ -107,7 +111,7 @@ void test_flexray__communication_parameters(void** state)
 
     // Check calculated parameters.
     pdu.transport.flexray.metadata.config = config;
-    assert_int_equal(0, process_config(&pdu, engine));
+    assert_int_equal(0, process_config(m, &pdu));
 
     assert_int_equal(200000, engine->microtick_per_cycle);
     assert_int_equal(3361, engine->macrotick_per_cycle);
@@ -131,10 +135,10 @@ void test_flexray__communication_parameters(void** state)
     assert_int_equal(88, engine->bits_per_minislot);   /* 1475 * 6 / 100 */
 
     // Budget allocation.
-    assert_int_equal(0, calculate_budget(engine, 0));
+    assert_int_equal(0, calculate_budget(m, 0));
     assert_int_equal(20000, engine->step_budget_ut); /* 500000 / 25 */
     assert_int_equal(338, engine->step_budget_mt);   /* 20000 / 59 */
-    assert_int_equal(0, calculate_budget(engine, SIM_STEP_SIZE));
+    assert_int_equal(0, calculate_budget(m, SIM_STEP_SIZE));
     assert_int_equal(40000, engine->step_budget_ut);
     assert_int_equal(677, engine->step_budget_mt); /* 40000 / 59 */
 
@@ -145,15 +149,15 @@ void test_flexray__communication_parameters(void** state)
 
 
     // TMerge Config.
-    __log_level__ = LOG_FATAL;
+    __log_level__ = NCODEC_LOG_FATAL;
     config.static_slot_length = 4;
     pdu.transport.flexray.metadata.config = config;
-    assert_int_equal(-EINVAL, process_config(&pdu, engine));
+    assert_int_equal(-EINVAL, process_config(m, &pdu));
     assert_int_equal(55, engine->static_slot_length_mt);
 
     config.bit_rate = 0; /* Null config / No config. */
     pdu.transport.flexray.metadata.config = config;
-    assert_int_equal(-EINVAL, process_config(&pdu, engine));
+    assert_int_equal(-EINVAL, process_config(m, &pdu));
     assert_int_equal(55, engine->static_slot_length_mt);
 }
 
@@ -175,9 +179,10 @@ void test_flexray__engine_cycle__empty_frame_config(void** state)
         .transport.flexray.metadata.config = config,
     };
 
-    FlexrayEngine* engine = &mock->engine;
+    FlexrayBusModel* m = &mock->model;
+    FlexrayEngine*   engine = &m->engine;
     *engine = (FlexrayEngine){ 0 };
-    assert_int_equal(0, process_config(&pdu, engine));
+    assert_int_equal(0, process_config(m, &pdu));
 
     CycleCheck checks[] = {
         { .slot = 1, .mt = 0 },
@@ -200,13 +205,13 @@ void test_flexray__engine_cycle__empty_frame_config(void** state)
         /* Calc the budget. */
         uint32_t budget = engine->step_budget_ut;
         size_t   slot = engine->pos_slot;
-        assert_int_equal(0, calculate_budget(engine, SIM_STEP_SIZE));
+        assert_int_equal(0, calculate_budget(m, SIM_STEP_SIZE));
         assert_int_equal(budget + 20000, engine->step_budget_ut);
         assert_int_equal(
             (budget + 20000) / engine->macro2micro, engine->step_budget_mt);
 
         /* Consume the budget. */
-        for (; consume_slot(engine) == 0;) {
+        for (; consume_slot(&mock->model) == 0;) {
         }
     }
     assert_int_equal(1, engine->pos_cycle);
@@ -233,9 +238,10 @@ void test_flexray__engine_cycle__with_frame_config(void** state)
         .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
         .transport.flexray.metadata.config = config,
     };
-    FlexrayEngine* engine = &mock->engine;
+    FlexrayBusModel* m = &mock->model;
+    FlexrayEngine*   engine = &m->engine;
     *engine = (FlexrayEngine){ 0 };
-    assert_int_equal(0, process_config(&pdu, engine));
+    assert_int_equal(0, process_config(m, &pdu));
 
     CycleCheck checks[] = {
         { .slot = 1, .mt = 0 },
@@ -258,13 +264,13 @@ void test_flexray__engine_cycle__with_frame_config(void** state)
         /* Calc the budget. */
         uint32_t budget = engine->step_budget_ut;
         size_t   slot = engine->pos_slot;
-        assert_int_equal(0, calculate_budget(engine, SIM_STEP_SIZE));
+        assert_int_equal(0, calculate_budget(m, SIM_STEP_SIZE));
         assert_int_equal(budget + 20000, engine->step_budget_ut);
         assert_int_equal(
             (budget + 20000) / engine->macro2micro, engine->step_budget_mt);
 
         /* Consume the budget. */
-        for (; consume_slot(engine) == 0;) {
+        for (; consume_slot(&mock->model) == 0;) {
         }
     }
     assert_int_equal(1, engine->pos_cycle);
@@ -282,9 +288,10 @@ void test_flexray__engine_cycle__wrap(void** state)
         .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
         .transport.flexray.metadata.config = config,
     };
-    FlexrayEngine* engine = &mock->engine;
+    FlexrayBusModel* m = &mock->model;
+    FlexrayEngine*   engine = &m->engine;
     *engine = (FlexrayEngine){ 0 };
-    assert_int_equal(0, process_config(&pdu, engine));
+    assert_int_equal(0, process_config(m, &pdu));
 
     CycleCheck checks[] = {
         { .slot = 1, .mt = 0 },
@@ -309,13 +316,13 @@ void test_flexray__engine_cycle__wrap(void** state)
             /* Calc the budget. */
             uint32_t budget = engine->step_budget_ut;
             size_t   slot = engine->pos_slot;
-            assert_int_equal(0, calculate_budget(engine, SIM_STEP_SIZE));
+            assert_int_equal(0, calculate_budget(m, SIM_STEP_SIZE));
             assert_int_equal(budget + 20000, engine->step_budget_ut);
             assert_int_equal(
                 (budget + 20000) / engine->macro2micro, engine->step_budget_mt);
 
             /* Consume the budget. */
-            for (; consume_slot(engine) == 0;) {
+            for (; consume_slot(&mock->model) == 0;) {
             }
         }
     }
@@ -334,18 +341,19 @@ void test_flexray__engine_cycle__shift(void** state)
         .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
         .transport.flexray.metadata.config = config,
     };
-    FlexrayEngine* engine = &mock->engine;
+    FlexrayBusModel* m = &mock->model;
+    FlexrayEngine*   engine = &m->engine;
     *engine = (FlexrayEngine){ 0 };
-    assert_int_equal(0, process_config(&pdu, engine));
+    assert_int_equal(0, process_config(m, &pdu));
 
     /* Shift into dynamic part should fail. */
-    assert_int_equal(1, shift_cycle(engine, 55 * 38, 4, false));
+    assert_int_equal(1, shift_cycle(m, 55 * 38, 4, false));
     assert_int_equal(1, engine->pos_slot);
     assert_int_equal(0, engine->pos_mt);
     assert_int_equal(0, engine->pos_cycle);
 
     /* Shift MT to 1000 somewhere in the static part (external sync event). */
-    assert_int_equal(0, shift_cycle(engine, 1100, 4, false));
+    assert_int_equal(0, shift_cycle(m, 1100, 4, false));
     assert_int_equal(21, engine->pos_slot);
     assert_int_equal(1100, engine->pos_mt);
     assert_int_equal(4, engine->pos_cycle);
@@ -371,13 +379,13 @@ void test_flexray__engine_cycle__shift(void** state)
         /* Calc the budget. */
         uint32_t budget = engine->step_budget_ut;
         size_t   slot = engine->pos_slot;
-        assert_int_equal(0, calculate_budget(engine, SIM_STEP_SIZE));
+        assert_int_equal(0, calculate_budget(m, SIM_STEP_SIZE));
         assert_int_equal(budget + 20000, engine->step_budget_ut);
         assert_int_equal(
             (budget + 20000) / engine->macro2micro, engine->step_budget_mt);
 
         /* Consume the budget. */
-        for (; consume_slot(engine) == 0;) {
+        for (; consume_slot(&mock->model) == 0;) {
         }
     }
     assert_int_equal(5, engine->pos_cycle);
@@ -977,14 +985,15 @@ void test_flexray__engine_txrx__frames(void** state)
     config_1.frame_config.table = frame_table_1;
     config_1.frame_config.count = ARRAY_SIZE(frame_table_1);
 
-    // __log_level__ = LOG_DEBUG;
+    // __log_level__ = NCODEC_LOG_DEBUG;
     for (size_t step = 0; step < ARRAY_SIZE(checks); step++) {
-        log_info("STEP %u", step);
+        FlexrayBusModel* m = &mock->model;
+        FlexrayEngine*   engine = &m->engine;
+        log_info(m->log_nc, "STEP %u", step);
 
         /* Configure and position. */
         config_0.node_ident.node_id = checks[step].lpdu_tx.node_id;
         config_1.node_ident.node_id = checks[step].lpdu_rx.node_id;
-        FlexrayEngine* engine = &mock->engine;
         *engine = (FlexrayEngine){ .node_ident.node_id =
                                        checks[step].condition.node_id };
 
@@ -1009,22 +1018,22 @@ void test_flexray__engine_txrx__frames(void** state)
                 NCodecPduFlexrayMetadataTypeConfig,
         };
         pdu.transport.flexray.metadata.config = config_0,
-        assert_int_equal(0, process_config(&pdu, engine));
+        assert_int_equal(0, process_config(m, &pdu));
         pdu.transport.flexray.metadata.config = config_1,
-        assert_int_equal(0, process_config(&pdu, engine));
-        assert_int_equal(0, shift_cycle(engine, checks[step].condition.mt,
+        assert_int_equal(0, process_config(m, &pdu));
+        assert_int_equal(0, shift_cycle(m, checks[step].condition.mt,
                                 checks[step].condition.cycle, true));
 
 /* Set the TX Payload. */
 #define PAYLOAD "hello world"
         assert_int_equal(
-            0, set_lpdu(engine, config_0.node_ident.node_id,
+            0, set_lpdu(m, config_0.node_ident.node_id,
                    frame_table_0[0].slot_id, 0, frame_table_0[0].status,
                    (uint8_t*)PAYLOAD, strlen(PAYLOAD)));
 
         /* Progress one sim step. */
-        assert_int_equal(0, calculate_budget(engine, SIM_STEP_SIZE));
-        for (; consume_slot(engine) == 0;) {
+        assert_int_equal(0, calculate_budget(m, SIM_STEP_SIZE));
+        for (; consume_slot(&mock->model) == 0;) {
         }
 
         /* Evaluate. */
@@ -1044,7 +1053,7 @@ void test_flexray__engine_txrx__frames(void** state)
                 checks[step].expect.rx_status, rx_lpdu->lpdu_config.status);
             assert_memory_equal(PAYLOAD, rx_lpdu->payload, strlen(PAYLOAD));
         }
-        release_config(engine);
+        release_config(&mock->model);
     }
 }
 
