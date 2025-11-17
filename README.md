@@ -190,7 +190,7 @@ $ git clone https://github.com/boschglobal/dse.ncodec.git
 $ cd dse.ncodec
 
 # Optionally set builder images.
-$ export GCC_BUILDER_IMAGE=ghcr.io/boschglobal/dse-gcc-builder:main
+$ export GCC_BUILDER_IMAGE=ghcr.io/boschglobal/dse-gcc-builder:latest
 
 # Build.
 $ make

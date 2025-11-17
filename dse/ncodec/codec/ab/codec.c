@@ -331,6 +331,8 @@ void codec_close(NCODEC* nc)
 
 NCODEC* ncodec_create(const char* mime_type)
 {
+    if (mime_type == NULL) return NULL;
+
     char*            _buf = strdup(mime_type);
     char*            _pos = NULL;
     ABCodecInstance* _nc = NULL;

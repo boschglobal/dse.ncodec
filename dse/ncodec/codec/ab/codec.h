@@ -139,6 +139,7 @@ static inline void __trace_log(void* nc, NCodecTraceLogLevel level,
     ((NCodecInstance*)nc)->trace.log(nc, level, buffer);
 }
 
+#undef log_trace
 #define log_trace(nc, ...)                                                     \
     do {                                                                       \
         if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_TRACE)             \
@@ -146,6 +147,7 @@ static inline void __trace_log(void* nc, NCodecTraceLogLevel level,
                 nc, NCODEC_LOG_TRACE, __func__, __LINE__, __VA_ARGS__);        \
     } while (0)
 
+#undef log_debug
 #define log_debug(nc, ...)                                                     \
     do {                                                                       \
         if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_DEBUG)             \
@@ -153,12 +155,14 @@ static inline void __trace_log(void* nc, NCodecTraceLogLevel level,
                 nc, NCODEC_LOG_DEBUG, __func__, __LINE__, __VA_ARGS__);        \
     } while (0)
 
+#undef log_info
 #define log_info(nc, ...)                                                      \
     do {                                                                       \
         if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_INFO)              \
             __trace_log(nc, NCODEC_LOG_INFO, __func__, __LINE__, __VA_ARGS__); \
     } while (0)
 
+#undef log_simbus
 #define log_simbus(nc, ...)                                                    \
     do {                                                                       \
         if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_SIMBUS)            \
@@ -166,11 +170,13 @@ static inline void __trace_log(void* nc, NCodecTraceLogLevel level,
                 nc, NCODEC_LOG_SIMBUS, __func__, __LINE__, __VA_ARGS__);       \
     } while (0)
 
+#undef log_notice
 #define log_notice(nc, ...)                                                    \
     do {                                                                       \
         __trace_log(nc, NCODEC_LOG_NOTICE, __func__, __LINE__, __VA_ARGS__);   \
     } while (0)
 
+#undef log_error
 #define log_error(nc, ...)                                                     \
     do {                                                                       \
         if (((ABCodecInstance*)nc)->log_level <= NCODEC_LOG_ERROR)             \
@@ -178,6 +184,7 @@ static inline void __trace_log(void* nc, NCodecTraceLogLevel level,
                 nc, NCODEC_LOG_ERROR, __func__, __LINE__, __VA_ARGS__);        \
     } while (0)
 
+#undef log_fatal
 #define log_fatal(nc, ...)                                                     \
     do {                                                                       \
         __trace_log(nc, NCODEC_LOG_FATAL, __func__, __LINE__, __VA_ARGS__);    \
