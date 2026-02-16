@@ -5,8 +5,8 @@
 #include <errno.h>
 #include <math.h>
 #include <dse/ncodec/codec/ab/codec.h>
-#include <dse/ncodec/codec/ab/vector.h>
 #include <dse/ncodec/interface/pdu.h>
+#include <dse/clib/collections/vector.h>
 #include <dse/ncodec/codec/ab/flexray/flexray.h>
 
 

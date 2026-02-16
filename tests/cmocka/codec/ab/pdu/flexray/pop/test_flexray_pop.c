@@ -6,7 +6,7 @@
 #include <dse/logger.h>
 #include <errno.h>
 #include <stdio.h>
-#include <dse/ncodec/codec/ab/vector.h>
+#include <dse/clib/collections/vector.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 #include <dse/ncodec/stream/stream.h>
@@ -262,7 +262,7 @@ void single_node__controller_normal_active(void** state)
             .steps = 2,
             .pop_playback_list = {
                 {
-                    /* Step 0 ... Controller setup (POC: config/ready/run), but 
+                    /* Step 0 ... Controller setup (POC: config/ready/run), but
                     has not responded via callbacks. */
                     .step = 0,
                     .node_idx = 0,

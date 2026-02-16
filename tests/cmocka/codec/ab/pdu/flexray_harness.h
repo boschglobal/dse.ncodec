@@ -6,7 +6,7 @@
 #define TESTS_CMOCKA_CODEC_AB_PDU_FLEXRAY_HARNESS_H_
 
 #include <stdint.h>
-#include <dse/ncodec/codec/ab/vector.h>
+#include <dse/clib/collections/vector.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/flexray/flexray.h>
 
