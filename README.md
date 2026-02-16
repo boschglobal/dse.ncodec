@@ -126,36 +126,36 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 #### Feature Matrix
 
-|  | PDU Interface | Frame Interface |
-| :--- | :---: | :---: |
-| Header | [interface/pdu.h][pdu_h] | [interface/frame.h][frame_h] |
-| Stream | [stream/buffer.c][stream_buffer][^fmi2] |  [stream/buffer.c][stream_buffer][^fmi2] |
-| Schema | [pdu.fbs][pdu_fbs] | [frame.fbs][frame_fbs] |
-| Bus Models | supported | - |
-| MIME type | `type=pdu; schema=fbs` | `type=frame; schema=fbs` |
-| Language Support | C/C++ <br> Go <br> Python | C/C++ |
-| Intergrations | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] <br> [DSE Network][dse_network]  |
+|                  | PDU Interface                                    | Frame Interface                                                                  |
+| :---             | :---:                                            | :---:                                                                            |
+| Header           | [interface/pdu.h][pdu_h]                         | [interface/frame.h][frame_h]                                                     |
+| Stream           | [stream/buffer.c][stream_buffer][^fmi2]          | [stream/buffer.c][stream_buffer][^fmi2]                                          |
+| Schema           | [pdu.fbs][pdu_fbs]                               | [frame.fbs][frame_fbs]                                                           |
+| Bus Models       | supported                                        | -                                                                                |
+| MIME type        | `type=pdu; schema=fbs`                           | `type=frame; schema=fbs`                                                         |
+| Language Support | C/C++ <br> Go <br> Python                        | C/C++                                                                            |
+| Intergrations    | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] <br> [DSE Network][dse_network] |
 
 
 #### Network Support
 
-| Bus / Network | PDU Interface | Frame Interface |
-| :--- | :---: | :---: |
-| CAN | &check; | &check; |
-| FlexRay | &check; | - |
-| IP (SomeIP/DoIP) | &check; | - |
-| LIN | *[^lin] | - |
-| PDU (Autosar Adaptive) | &check; | - |
-| Struct (C-Structs) | &check; | - |
+| Bus / Network          | PDU Interface | Frame Interface |
+| :---                   | :---:         | :---:           |
+| CAN                    | &check;       | &check;         |
+| FlexRay                | &check;       | -               |
+| IP (SomeIP/DoIP)       | &check;       | -               |
+| LIN                    | *[^lin]       | -               |
+| PDU (Autosar Adaptive) | &check;       | -               |
+| Struct (C-Structs)     | &check;       | -               |
 
 
 #### MIME type - Frame Interface
 
-| Field | Type | Value (default) |  CAN |
-| :--- | :---: | :---: | :---: |
-| <var>bus_id</var>       | <code>uint8_t</code> | 1.. | &check;&check; |
-| <var>node_id</var>      | <code>uint8_t</code> | 1.. | &check;&check;[^node_id] |
-| <var>interface_id</var> | <code>uint8_t</code> | 0.. | &check; |
+| Field                   | Type                 | Value (default) | CAN                      |
+| :---                    | :---:                | :---:           | :---:                    |
+| <var>bus_id</var>       | <code>uint8_t</code> | 1..             | &check;&check;           |
+| <var>node_id</var>      | <code>uint8_t</code> | 1..             | &check;&check;[^node_id] |
+| <var>interface_id</var> | <code>uint8_t</code> | 0..             | &check;                  |
 
 
 > [!NOTE]
@@ -164,18 +164,18 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 #### MIME type - PDU Interface
 
-| Field | Type | Value |  CAN | FlexRay | IP | PDU | Struct |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| <var>ecu_id</var>       | <code>uint8_t</code> | 0[^pop], 1..                    | &check;&check; | &check;&check; | &check;&check; | &check;&check; | &check;&check; |
-| <var>cc_id</var>        | <code>uint8_t</code> | 0 \|1                     | - | &check; | - | - | - |
-| <var>swc_id</var>       | <code>uint8_t</code> | 0 ..                    | &check;[^swc_id] | &check; | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
-| <var>name</var>        | <code>string</code>  |  |  - | &check; | - | - | - |
-| <var>model</var>        | <code>string</code>  | `flexray` |  - | &check;&check; | - | - | - |
-| <var>mode</var>         | <code>string</code>  | `pop` |  - | &check; | - | - | - |
-| <var>pwr</var>          | <code>string</code>  | `on(default)\|off\|nc` |  - | &check; | - | - | - |
-| <var>vcn</var>          | <code>uint8_t</code> | 0,1,2                  |  - | &check; | - | - | - |
-| <var>poca</var>         | <code>uint8_t</code> | 1..9[^poc]             |  - | &check; | - | - | - |
-| <var>pocb</var>         | <code>uint8_t</code> | 1..9[^poc]             |  - | &check; | - | - | - |
+| Field             | Type                 | Value                  |  CAN             | FlexRay        | IP               | PDU              | Struct           |
+| :---              | :---:                | :---:                  | :---:            | :---:          | :---:            | :---:            | :---:            |
+| <var>ecu_id</var> | <code>uint8_t</code> | 0[^pop], 1..           | &check;&check;   | &check;&check; | &check;&check;   | &check;&check;   | &check;&check;   |
+| <var>cc_id</var>  | <code>uint8_t</code> | 0 \|1                  | -                | &check;        | -                | -                | -                |
+| <var>swc_id</var> | <code>uint8_t</code> | 0 ..                   | &check;[^swc_id] | &check;        | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
+| <var>name</var>   | <code>string</code>  |                        | -                | &check;        | -                | -                | -                |
+| <var>model</var>  | <code>string</code>  | `flexray`              | -                | &check;&check; | -                | -                | -                |
+| <var>mode</var>   | <code>string</code>  | `pop`                  | -                | &check;        | -                | -                | -                |
+| <var>pwr</var>    | <code>string</code>  | `on(default)\|off\|nc` | -                | &check;        | -                | -                | -                |
+| <var>vcn</var>    | <code>uint8_t</code> | 0,1,2                  | -                | &check;        | -                | -                | -                |
+| <var>poca</var>   | <code>uint8_t</code> | 1..9[^poc]             | -                | &check;        | -                | -                | -                |
+| <var>pocb</var>   | <code>uint8_t</code> | 1..9[^poc]             | -                | &check;        | -                | -                | -                |
 
 
 > [!NOTE]
