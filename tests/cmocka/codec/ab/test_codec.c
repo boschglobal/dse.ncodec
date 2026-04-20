@@ -337,6 +337,38 @@ void test_codec_stat(void** state)
     free_codec(nc);
 }
 
+void test_codec_stat_returns_owned_value(void** state)
+{
+    Mock*            mock = *state;
+    ABCodecInstance* nc = mock->nc;
+    int              index = 5;
+
+    codec_config((void*)nc, (struct NCodecConfigItem){
+                                .name = "node_id",
+                                .value = "2",
+                            });
+
+    NCodecConfigItem initial = codec_stat((void*)nc, &index);
+    assert_string_equal(initial.name, "node_id");
+    assert_string_equal(initial.value, "2");
+    assert_false(initial.value == nc->node_id_str);
+
+    codec_config((void*)nc, (struct NCodecConfigItem){
+                                .name = "node_id",
+                                .value = "42",
+                            });
+
+    assert_string_equal(initial.value, "2");
+
+    index = 5;
+    NCodecConfigItem updated = codec_stat((void*)nc, &index);
+    assert_string_equal(updated.name, "node_id");
+    assert_string_equal(updated.value, "42");
+    assert_false(updated.value == nc->node_id_str);
+
+    free_codec(nc);
+}
+
 
 void test_ncodec_can_create_close(void** state)
 {
@@ -557,6 +589,7 @@ int run_codec_tests(void)
         cmocka_unit_test_setup_teardown(test_trim, s, t),
         cmocka_unit_test_setup_teardown(test_codec_config, s, t),
         cmocka_unit_test_setup_teardown(test_codec_stat, s, t),
+        cmocka_unit_test_setup_teardown(test_codec_stat_returns_owned_value, s, t),
         cmocka_unit_test_setup_teardown(test_ncodec_can_create_close, s, t),
         cmocka_unit_test_setup_teardown(test_ncodec_pdu_create_close, s, t),
         cmocka_unit_test_setup_teardown(test_ncodec_create_failon_mime, s, t),

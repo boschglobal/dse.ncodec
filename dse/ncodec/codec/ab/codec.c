@@ -50,15 +50,39 @@ static void __free_item(void* item, void* data)
     free(*_item);
 }
 
+static void __clear_vector_free_list(Vector* free_list)
+{
+    vector_clear(free_list, __free_item, NULL);
+}
+
+static void __destroy_vector_free_list(Vector* free_list)
+{
+    vector_clear(free_list, __free_item, NULL);
+    vector_reset(free_list);
+}
+
 void clear_free_list(ABCodecInstance* _nc)
 {
-    vector_clear(&_nc->free_list, __free_item, NULL);
+    __clear_vector_free_list(&_nc->free_list);
 }
 
 void destroy_free_list(ABCodecInstance* _nc)
 {
-    vector_clear(&_nc->free_list, __free_item, NULL);
-    vector_reset(&_nc->free_list);
+    __destroy_vector_free_list(&_nc->free_list);
+}
+
+static const char* __stat_strdup(ABCodecInstance* _nc, const char* value)
+{
+    if (value == NULL) return NULL;
+    if (_nc->stat_free_list.capacity == 0) {
+        _nc->stat_free_list = vector_make(sizeof(void*), 0, NULL);
+    }
+
+    char* dup = strdup(value);
+    if (dup == NULL) return NULL;
+
+    vector_push(&_nc->stat_free_list, &dup);
+    return dup;
 }
 
 void free_codec(ABCodecInstance* _nc)
@@ -102,6 +126,7 @@ void free_codec(ABCodecInstance* _nc)
         }
         free(_nc->reader.bus_model.model);
     }
+    __destroy_vector_free_list(&_nc->stat_free_list);
     destroy_free_list(_nc);
 }
 
@@ -315,7 +340,7 @@ NCodecConfigItem codec_stat(NCODEC* nc, int32_t* index)
 
     return (struct NCodecConfigItem){
         .name = name,
-        .value = value,
+        .value = __stat_strdup(_nc, value),
     };
 }
 
