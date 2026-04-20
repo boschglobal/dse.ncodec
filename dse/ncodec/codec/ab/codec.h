@@ -110,8 +110,6 @@ typedef struct ABCodecInstance {
 
     /* Free list (free called on truncate). */
     Vector free_list; /* void* references */
-    /* ncodec_stat() value allocations (free called on close). */
-    Vector stat_free_list; /* void* references */
 
     /* Trace interface. */
     NCodecTraceLogLevel log_level;

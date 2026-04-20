@@ -207,6 +207,7 @@ void flexray_bus_model_create(ABCodecInstance* nc)
     ABCodecInstance* nc_copy = calloc(1, sizeof(ABCodecInstance));
     *nc_copy = *nc;
     nc_copy->c.stream = NULL;
+    nc_copy->c.stat_free_list = (NCodecStatFreeList){ 0 };
     nc_copy->c.trace = (NCodecTraceVTable){ 0 };
     nc_copy->c.private = NULL;
     nc_copy->model = NULL;

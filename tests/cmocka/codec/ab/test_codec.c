@@ -339,34 +339,34 @@ void test_codec_stat(void** state)
 
 void test_codec_stat_returns_owned_value(void** state)
 {
-    Mock*            mock = *state;
-    ABCodecInstance* nc = mock->nc;
+    UNUSED(state);
+
+    const char* mime_type = "application/x-automotive-bus; "
+                            "interface=stream;type=frame;bus=can;schema=fbs;"
+                            "bus_id=1;node_id=2;interface_id=3";
+    NCodecInstance* nc = (NCodecInstance*)ncodec_create(mime_type);
+    assert_non_null(nc);
+
     int              index = 5;
-
-    codec_config((void*)nc, (struct NCodecConfigItem){
-                                .name = "node_id",
-                                .value = "2",
-                            });
-
-    NCodecConfigItem initial = codec_stat((void*)nc, &index);
+    NCodecConfigItem initial = ncodec_stat((void*)nc, &index);
     assert_string_equal(initial.name, "node_id");
     assert_string_equal(initial.value, "2");
-    assert_false(initial.value == nc->node_id_str);
+    assert_false(initial.value == ((ABCodecInstance*)nc)->node_id_str);
 
-    codec_config((void*)nc, (struct NCodecConfigItem){
-                                .name = "node_id",
-                                .value = "42",
-                            });
+    ncodec_config((void*)nc, (struct NCodecConfigItem){
+                                 .name = "node_id",
+                                 .value = "42",
+                             });
 
     assert_string_equal(initial.value, "2");
 
     index = 5;
-    NCodecConfigItem updated = codec_stat((void*)nc, &index);
+    NCodecConfigItem updated = ncodec_stat((void*)nc, &index);
     assert_string_equal(updated.name, "node_id");
     assert_string_equal(updated.value, "42");
-    assert_false(updated.value == nc->node_id_str);
+    assert_false(updated.value == ((ABCodecInstance*)nc)->node_id_str);
 
-    free_codec(nc);
+    ncodec_close((void*)nc);
 }
 
 

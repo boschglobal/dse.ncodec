@@ -2,7 +2,56 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <stdlib.h>
+#include <string.h>
 #include <dse/ncodec/codec.h>
+
+
+static void __ncodec_stat_free_list_clear(NCodecInstance* _nc)
+{
+    if (_nc == NULL) return;
+
+    for (size_t i = 0; i < _nc->stat_free_list.len; i++) {
+        free(_nc->stat_free_list.items[i]);
+    }
+    free(_nc->stat_free_list.items);
+    _nc->stat_free_list = (NCodecStatFreeList){ 0 };
+}
+
+static const char* __ncodec_stat_strdup(NCODEC* nc, const char* value)
+{
+    NCodecInstance* _nc = (NCodecInstance*)nc;
+    if (_nc == NULL || value == NULL) return value;
+
+    if (_nc->stat_free_list.len == _nc->stat_free_list.capacity) {
+        size_t next_capacity = _nc->stat_free_list.capacity ?
+            _nc->stat_free_list.capacity * 2 :
+            16;
+        char** items =
+            realloc(_nc->stat_free_list.items, next_capacity * sizeof(char*));
+        if (items == NULL) {
+            if (_nc->trace.log) {
+                _nc->trace.log(
+                    nc, NCODEC_LOG_ERROR, "Failed to allocate ncodec_stat() free list.");
+            }
+            return NULL;
+        }
+        _nc->stat_free_list.items = items;
+        _nc->stat_free_list.capacity = next_capacity;
+    }
+
+    char* dup = strdup(value);
+    if (dup == NULL) {
+        if (_nc->trace.log) {
+            _nc->trace.log(
+                nc, NCODEC_LOG_ERROR, "Failed to duplicate ncodec_stat() value.");
+        }
+        return NULL;
+    }
+
+    _nc->stat_free_list.items[_nc->stat_free_list.len++] = dup;
+    return dup;
+}
 
 
 /**
@@ -143,7 +192,12 @@ inline NCodecConfigItem ncodec_stat(NCODEC* nc, int32_t* index)
 {
     NCodecInstance* _nc = (NCodecInstance*)nc;
     if (_nc && _nc->codec.stat) {
-        return _nc->codec.stat(nc, index);
+        NCodecConfigItem item = _nc->codec.stat(nc, index);
+        if (item.value == NULL) return item;
+        return (NCodecConfigItem){
+            .name = item.name,
+            .value = __ncodec_stat_strdup(nc, item.value),
+        };
     } else {
         NCodecConfigItem _ = {};
         return _;
@@ -395,6 +449,7 @@ inline void ncodec_close(NCODEC* nc)
     if (_nc && _nc->stream && _nc->stream->close) {
         _nc->stream->close(nc);
     }
+    __ncodec_stat_free_list_clear(_nc);
     if (_nc && _nc->codec.close) {
         _nc->codec.close(nc);
     }

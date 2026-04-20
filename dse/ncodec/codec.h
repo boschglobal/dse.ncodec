@@ -138,6 +138,12 @@ typedef struct NCodecConfigItem {
     const char* value;
 } NCodecConfigItem;
 
+typedef struct NCodecStatFreeList {
+    char** items;
+    size_t len;
+    size_t capacity;
+} NCodecStatFreeList;
+
 typedef void NCodecMessage; /* Generic message container. */
 
 
@@ -191,6 +197,7 @@ typedef struct NCodecInstance {
     const char*         mime_type;
     NCodecVTable        codec;
     NCodecStreamVTable* stream;
+    NCodecStatFreeList  stat_free_list;
     /* Trace interface (optional). */
     NCodecTraceVTable   trace;
     /* Private reference data from API user (optional). */
