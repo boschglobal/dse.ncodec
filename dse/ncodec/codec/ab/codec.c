@@ -76,10 +76,17 @@ static const char* __stat_strdup(ABCodecInstance* _nc, const char* value)
     if (value == NULL) return NULL;
     if (_nc->stat_free_list.capacity == 0) {
         _nc->stat_free_list = vector_make(sizeof(void*), 0, NULL);
+        if (_nc->stat_free_list.items == NULL) {
+            log_error(_nc, "Failed to allocate stat value free list.");
+            return NULL;
+        }
     }
 
     char* dup = strdup(value);
-    if (dup == NULL) return NULL;
+    if (dup == NULL) {
+        log_error(_nc, "Failed to duplicate stat value.");
+        return NULL;
+    }
 
     vector_push(&_nc->stat_free_list, &dup);
     return dup;
