@@ -147,7 +147,7 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 | <var>vcn</var>      | <code>uint8_t</code> | 0,1,2                  | -                | &check;        | -                | -                | -                |
 | <var>poca</var>     | <code>uint8_t</code> | 1..9[^poc]             | -                | &check;        | -                | -                | -                |
 | <var>pocb</var>     | <code>uint8_t</code> | 1..9[^poc]             | -                | &check;        | -                | -                | -                |
-| <var>loopback</var> | <code>bool</code>    | 0(off),1(active)   | &check;          | &check;        | &check;          | &check;          | &check;           |
+| <var>loopback</var> | <code>bool</code>    | 0(off),1(active)       | &check;          | &check;        | &check;          | &check;          | &check;          |
 
 
 > [!NOTE]
