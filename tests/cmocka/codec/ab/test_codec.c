@@ -228,6 +228,11 @@ void test_codec_config(void** state)
             .int_value = 2,
             .offset_value = offsetof(ABCodecInstance, poc_state_chb_str),
             .offset_int_value = offsetof(ABCodecInstance, poc_state_chb) },
+        { .name = "loopback",
+            .value = "1",
+            .int_value = 1,
+            .offset_value = offsetof(ABCodecInstance, loopback_str),
+            .offset_int_value = offsetof(ABCodecInstance, loopback) },
         /* Bad integer values. */
         { .name = "bus_id",
             .value = "seven",
@@ -306,6 +311,7 @@ void test_codec_stat(void** state)
         { .index = 14, .name = "vcn", .value = "7" },
         { .index = 15, .name = "poca", .value = "4" },
         { .index = 16, .name = "pocb", .value = "2" },
+        { .index = 17, .name = "loopback", .value = "1" },
         { .index = -1, .name = "foo", .value = "bar" },
     };
 

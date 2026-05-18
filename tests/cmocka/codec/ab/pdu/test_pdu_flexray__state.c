@@ -213,8 +213,8 @@ void test_flexray__node_state_changes(void** _state)
                 .tcvr_state = checks[check].initial_tcvr_state };
 
         for (size_t i = 0;
-             checks[check].transition[i].command != NCodecPduFlexrayCommandNone;
-             i++) {
+            checks[check].transition[i].command != NCodecPduFlexrayCommandNone;
+            i++) {
             assert_int_equal(0, process_poc_command(m, state,
                                     checks[check].transition[i].command));
             assert_int_equal(

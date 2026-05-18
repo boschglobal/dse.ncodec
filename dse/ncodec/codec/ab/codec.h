@@ -16,6 +16,9 @@
 #include <dse/ncodec/interface/pdu.h>
 
 
+#define SIM_STEP_SIZE 0.0005
+
+
 typedef struct ABCodecInstance ABCodecInstance;
 typedef struct ABCodecBusModel ABCodecBusModel;
 
@@ -36,6 +39,9 @@ typedef struct ABCodecBusModel {
     } vtable;
     /* Logging interface. */
     ABCodecInstance* log_nc;
+    /* Time properties - may be updated between calls. */
+    double           simulation_time;
+    double           step_size;
 } ABCodecBusModel;
 
 
@@ -89,6 +95,7 @@ typedef struct ABCodecInstance {
     char*   vcn_count_str;     /* Count of VCNs. */
     char*   poc_state_cha_str; /* Initial POC state (Channel A). */
     char*   poc_state_chb_str; /* Initial POC state (Channel B). */
+    char*   loopback_str;      /* Disable filter sender==receiver. */
     /* Internal representation. */
     uint8_t bus_id;
     uint8_t node_id;
@@ -99,6 +106,7 @@ typedef struct ABCodecInstance {
     uint8_t vcn_count;
     uint8_t poc_state_cha;
     uint8_t poc_state_chb;
+    bool    loopback;
 
     /* Flatbuffer resources. */
     flatcc_builder_t fbs_builder;
@@ -113,6 +121,12 @@ typedef struct ABCodecInstance {
 
     /* Trace interface. */
     NCodecTraceLogLevel log_level;
+    FILE*               trace_file;
+
+    /* Simulation metadata. */
+    double simulation_time;
+    double step_size;
+    double step_size_correction;
 } ABCodecInstance;
 
 

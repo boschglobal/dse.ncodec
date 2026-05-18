@@ -13,9 +13,6 @@ export PACKAGE_VERSION ?= 0.0.2
 export MAKE_NPROC ?= $(shell nproc)
 
 
-SUBDIRS = adapter controller common
-
-
 default: build
 
 external:
@@ -34,7 +31,12 @@ build: external
 	@echo ""
 	@echo "Sandbox files: - $$(pwd)/build/_out"
 	@echo "--------------"
-	@find build/_out/ -type f -name '*' -exec ls -sh --color=auto {} \;
+	@cd build/_out && find . -type f \
+	! -name '*.yaml' \
+	! -name '*.yml' \
+	! -path './*license*' \
+	! -path './*LICENSE*' \
+	-printf '%s %P\n' | numfmt --to=iec --suffix=B --padding=6
 
 examples: build
 	cd build; cmake --build examples -j $(MAKE_NPROC)
@@ -42,7 +44,12 @@ examples: build
 	@echo ""
 	@echo "Sandbox files: - $$(pwd)/build/_out"
 	@echo "--------------"
-	@find build/_out/ -type f -name '*' -exec ls -sh --color=auto {} \;
+	@cd build/_out && find . -type f \
+	! -name '*.yaml' \
+	! -name '*.yml' \
+	! -path './*license*' \
+	! -path './*LICENSE*' \
+	-printf '%s %P\n' | numfmt --to=iec --suffix=B --padding=6
 
 package:
 	@echo "Package parameters:"
@@ -58,7 +65,6 @@ package:
 	@find build/_dist/ -type f -name '*' -exec ls -sh --color=auto {} \;
 
 clean:
-	@-for d in $(SUBDIRS); do ($(MAKE) -C $$d $@ ); done
 	$(MAKE) -j $(MAKE_NPROC) -C ../../extra/external clean
 	rm -rf build
 

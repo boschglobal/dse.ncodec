@@ -27,6 +27,7 @@ static void initialize_stream(ABCodecInstance* nc)
     flatcc_builder_t* B = &nc->fbs_builder;
     flatcc_builder_reset(B);
     ns(Stream_start_as_root_with_size(B));
+    ns(Stream_simulation_time_add(B, nc->simulation_time));
     ns(Stream_pdus_start(B));
     nc->fbs_stream_initalized = true;
 }
@@ -295,6 +296,7 @@ int32_t pdu_write(NCODEC* nc, NCodecPdu* pdu)
         ns(Pdu_transport_Flexray_add(B, flexray_metadata));
     }
     ns(Stream_pdus_push_end(B));
+
     return _pdu->payload_len;
 }
 
@@ -514,7 +516,7 @@ int32_t _reader_get_pdu(ABCodecReader* reader, NCodecPdu* pdu)
     if (reader->state.vector == NULL) get_vector_from_stream(reader);
     while (reader->state.msg_ptr && reader->state.vector) {
         for (uint32_t _vi = reader->state.vector_idx;
-             _vi < reader->state.vector_len; _vi++) {
+            _vi < reader->state.vector_len; _vi++) {
             ns(Pdu_table_t) p = ns(Pdu_vec_at(reader->state.vector, _vi));
 
             /* Return the message. */
@@ -570,10 +572,24 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
                     continue; /* The Bus Model consumed this PDU. */
                 }
             }
+
             /* Filter: sender==receiver. */
-            if ((nc->swc_id) && (nc->swc_id == pdu->swc_id)) continue;
+            if ((nc->swc_id) && (nc->swc_id == pdu->swc_id)) {
+                if (nc->loopback == false) continue;
+            }
 
             return rc; /* PDU available, return length (i.e. rc). */
+        }
+
+        /* Trace - if no bus_model. */
+        if (reader->bus_model.vtable.progress == NULL) {
+            ncodec_seek((NCODEC*)nc, 0, NCODEC_SEEK_SET);
+            if (nc->trace_file) {
+                uint8_t* buf = NULL;
+                size_t   len = 0;
+                nc->c.stream->read((NCODEC*)nc, &buf, &len, NCODEC_POS_NC);
+                fwrite(buf, sizeof(buf[0]), len, nc->trace_file);
+            }
         }
 
         /* Done with NCodec, reset the reader. */
@@ -585,6 +601,7 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
     if (reader->stage.model_produced == false) {
         ncodec_truncate((NCODEC*)reader->bus_model.nc);
         if (reader->bus_model.vtable.progress) {
+            reader->bus_model.simulation_time = nc->simulation_time;
             reader->bus_model.vtable.progress(&reader->bus_model);
         }
         ncodec_flush((NCODEC*)reader->bus_model.nc);
@@ -601,6 +618,19 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
                 if (rc == -ENOMSG) break;
                 if (rc < 0) return rc; /* An error condition. */
                 return rc; /* PDU available, return length (i.e. rc). */
+            }
+
+            /* Trace - if no bus_model (progress rewrites the stream). */
+            if (reader->bus_model.vtable.progress != NULL) {
+                ncodec_seek((NCODEC*)nc, 0, NCODEC_SEEK_SET);
+                if (nc->trace_file) {
+                    uint8_t* buf = NULL;
+                    size_t   len = 0;
+                    reader->bus_model.nc->c.stream->read(
+                        (NCODEC*)reader->bus_model.nc, &buf, &len,
+                        NCODEC_POS_NC);
+                    fwrite(buf, sizeof(buf[0]), len, nc->trace_file);
+                }
             }
 
             /* Done with Model NCodec/Stream, reset the reader. */
@@ -655,5 +685,16 @@ int32_t pdu_truncate(NCODEC* nc)
     _nc->c.stream->seek(nc, 0, NCODEC_SEEK_RESET);
     _reader_reset(&_nc->reader);
     clear_free_list(_nc);
+
+    /* Advance the synthesised simulation_time.
+     * (same algo as SimBus)
+     * Increment via Kahan summation.
+     * simulation_time = simulation_time + step_size;
+     */
+    double y = _nc->step_size - _nc->step_size_correction;
+    double t = _nc->simulation_time + y;
+    _nc->step_size_correction = (t - _nc->simulation_time) - y;
+    _nc->simulation_time = t;
+
     return 0;
 }

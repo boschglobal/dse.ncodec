@@ -248,11 +248,11 @@ static void _push_frames(TestTxRx* test)
                     &(NCodecPdu){
                         .id = test->run.pdu_map.map[nc_idx].list[p_idx].slot_id,
                         .payload = (const uint8_t*)test->run.pdu_map.map[nc_idx]
-                                       .list[p_idx]
-                                       .payload,
+                            .list[p_idx]
+                            .payload,
                         .payload_len = test->run.pdu_map.map[nc_idx]
-                                           .list[p_idx]
-                                           .payload_len,
+                            .list[p_idx]
+                            .payload_len,
                         .transport_type = NCodecPduTransportTypeFlexray,
                         .transport.flexray = {
                             .metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
@@ -262,8 +262,8 @@ static void _push_frames(TestTxRx* test)
                                         .list[p_idx]
                                         .frame_config_index,
                                 .status = test->run.pdu_map.map[nc_idx]
-                                              .list[p_idx]
-                                              .lpdu_status,
+                                    .list[p_idx]
+                                    .lpdu_status,
                             } } });
                 assert_int_equal(
                     rc, test->run.pdu_map.map[nc_idx].list[p_idx].payload_len);
@@ -479,7 +479,7 @@ static void _run_pop(TestTxRx* test)
     size_t    cycle_steps = 0;
 
     for (size_t step = 0; (test->run.steps == 0) || (step < test->run.steps);
-         step++) {
+        step++) {
         cycle_steps += 1;
         if (test->run.push_at_cycle && test->run.push_at_cycle == cycle) {
             _push_frames(test);

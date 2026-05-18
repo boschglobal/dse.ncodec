@@ -160,7 +160,7 @@ int32_t can_read(NCODEC* nc, NCodecMessage* msg)
     if (_nc->reader.state.vector == NULL) get_vector_from_message(nc);
     while (_nc->reader.state.msg_ptr && _nc->reader.state.vector) {
         for (uint32_t _vi = _nc->reader.state.vector_idx;
-             _vi < _nc->reader.state.vector_len; _vi++) {
+            _vi < _nc->reader.state.vector_len; _vi++) {
             ns(Frame_table_t) frame =
                 ns(Frame_vec_at(_nc->reader.state.vector, _vi));
             if (!ns(Frame_f_is_present(frame))) continue;

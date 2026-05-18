@@ -33,9 +33,9 @@ bool flexray_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
             node_ident.node.ecu_id, node_ident.node.cc_id,
             node_ident.node.swc_id);
         for (size_t i = 0;
-             i < pdu->transport.flexray.metadata.config.vcn_count &&
-             i < NCODEC_PDU_MAX_VCN;
-             i++) {
+            i < pdu->transport.flexray.metadata.config.vcn_count &&
+            i < NCODEC_PDU_MAX_VCN;
+            i++) {
             register_vcn_node_state(
                 m, pdu->transport.flexray.metadata.config.vcn[i]);
         }
@@ -87,9 +87,7 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
         tcvr_state_string(m->state.bus_condition));
 
     if (m->state.bus_condition == NCodecPduFlexrayTransceiverStateFrameSync) {
-// TODO: use simulation time from pdu.simulation_time
-#define SIM_STEP_SIZE 0.0005
-        int rc = calculate_budget(m, SIM_STEP_SIZE);
+        int rc = calculate_budget(m, bm->step_size);
         if (rc == 0) {
             log_trace(bm->log_nc,
                 "FlexRay%s: Progress: Pos (cycle=%u, slot=%u, mt=%u) "
@@ -202,6 +200,9 @@ void flexray_bus_model_create(ABCodecInstance* nc)
 {
     /* Install the logging interface. */
     nc->reader.bus_model.log_nc = nc;
+
+    /* Set the step_size (initial value, may change in operation). */
+    nc->reader.bus_model.step_size = nc->step_size;
 
     /* Shallow copy the nc object. */
     ABCodecInstance* nc_copy = calloc(1, sizeof(ABCodecInstance));

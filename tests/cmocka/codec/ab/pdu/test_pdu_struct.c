@@ -28,7 +28,7 @@ typedef struct Mock {
 #define MIMETYPE                                                               \
     "application/x-automotive-bus; "                                           \
     "interface=stream;type=pdu;schema=fbs;"                                    \
-    "swc_id=4;ecu_id=5"
+    "swc_id=4;ecu_id=5;loopback=1"
 #define BUF_SWCID_OFFSET 40
 
 
@@ -92,15 +92,14 @@ void test_pdu_transport_struct(void** state)
     });
     assert_int_equal(rc, strlen(greeting));
     size_t len = ncodec_flush(nc);
-    assert_int_equal(len, 0xce);
+    assert_int_equal(len, 0xde);
 
-    // Seek to the start, keeping the content, modify the node_id.
+    // Seek to the start, keeping the content.
     ncodec_seek(nc, 0, NCODEC_SEEK_SET);
-    uint8_t* buffer;
-    size_t   buffer_len;
-    stream_read(nc, &buffer, &buffer_len, NCODEC_POS_NC);
-    buffer[BUF_SWCID_OFFSET] = 0x22;
     if (0) {
+        uint8_t* buffer;
+        size_t   buffer_len;
+        stream_read(nc, &buffer, &buffer_len, NCODEC_POS_NC);
         for (uint32_t i = 0; i < buffer_len; i += 8)
             printf("%p: %02x %02x %02x %02x %02x %02x %02x %02x\n",
                 &(buffer[i + 0]), buffer[i + 0], buffer[i + 1], buffer[i + 2],
@@ -115,7 +114,7 @@ void test_pdu_transport_struct(void** state)
     assert_int_equal(pdu.payload_len, strlen(greeting));
     assert_non_null(pdu.payload);
     assert_memory_equal(pdu.payload, greeting, strlen(greeting));
-    assert_int_equal(pdu.swc_id, 0x22);  // Note this value was modified.
+    assert_int_equal(pdu.swc_id, 0x04);
     assert_int_equal(pdu.ecu_id, 5);
 
     // Check the transport.

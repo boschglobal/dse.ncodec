@@ -29,92 +29,63 @@ __Integrations__:
 
 ```text
 dse.ncodec
-└── doc/content             <-- Content for documentation systems
-└── dse/ncodec
-    └── codec/ab            <-- Automotive-Bus (AB) Codec implementation
-        └── flexray/        <-- FlexRay Bus Model implementation
-        └── flexray_pop/    <-- FlexRay Point-of-Presence Bus Model implementation
-    └── interface
-        └── frame.h         <-- Frame based message interface
-        └── pdu.h           <-- PDU based message interface
-    └── stream
-        └── buffer.h        <-- Buffer stream implementation
-    └── codec.c             <-- NCodec API implementation
-    └── codec.h             <-- NCodec API headers
-└── extra                   <-- Build infrastructure
-└── licenses                <-- Third Party Licenses
-└── tests                   <-- Unit and E2E tests
+├── doc/content                 Documentation content
+├── dse/ncodec
+│   ├── codec/ab                Automotive-Bus (AB) Codec implementation
+│   │   ├── flexray/            FlexRay bus model implementation
+│   │   └── flexray_pop/        FlexRay point-of-presence bus model implementation
+│   ├── examples/               Examples for the AB Codec
+│   ├── interface
+│   │   ├── frame.h             Frame-based message interface
+│   │   └── pdu.h               PDU-based message interface
+│   ├── stream
+│   │   └── buffer.h            Buffer stream implementation
+│   ├── codec.c                 NCodec API implementation
+│   └── codec.h                 NCodec API headers
+├── extra/                      Build infrastructure
+├── licenses/                   Third-party licenses
+└── tests/                      Unit and end-to-end tests
 ```
 
 
 
 ## Usage
 
-### Code Sample
+### Code Sample with AB Codec
+
+> Note: Full example is available at [dse/ncodec/examples/ab-codec](dse/ncodec/examples/ab-codec)
 
 ```c
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/interface/pdu.h>
-#define greeting "hello world"
+#include <dse/ncodec/stream/stream.h>
 
-void network_rxtx(NCODEC* nc) {
-    /* Message RX. */
-    while (1) {
-        NCodecPdu pdu = {};
-        if (ncodec_read(nc, &pdu) < 0) break;
-        printf("(%u) message: %s", pdu.id, pdu.payload);
+int cosim_step(NCODEC* nc)
+{
+    int rc = 0;
+
+    /* Read PDUs from the NCodec. */
+    for (;;) {
+        NCodecPdu msg = {};
+        CHECK_RC(ncodec_read(nc, &msg));
+        if (rc == -ENOMSG) break;
+        printf("Message is: %s\n", (char*)msg.payload);
     }
-    ncodec_truncate(nc); /* Clear the stream. */
+    CHECK_RC(ncodec_truncate(nc)); /* Always call once per step. */
 
-    /* Message TX. */
-    ncodec_write(nc, &(struct NCodecPdu){
+    /* Write PDUs to the NCodec. */
+    CHECK_RC(ncodec_write(nc, &(struct NCodecPdu){
         .id = 42,
         .payload = (uint8_t*)greeting,
-        .payload_len = strlen(greeting) + 1,
-        .transport_type = NCodecPduTransportTypeCan,
-    });
-    ncodec_flush(nc); /* Flush messages to the stream. */
+        .payload_len = strlen(greeting),
+    }));
+    CHECK_RC(ncodec_flush(nc)); /* Call once after writing PDUs. */
+
+    return rc;
 }
 ```
 
-More information about the NCodec API, including a complete example, is available in the [Network Codec API Reference](https://boschglobal.github.io/dse.doc/apis/ncodec/). Useful developer documentation relating to the DSE ModelC integration is available in the [Developer Documentation](https://boschglobal.github.io/dse.doc/docs/devel/ncodec/).
-
-
-### CMake Build Integration
-
-__CMakeLists.txt__
-```cmake
-# Fetch the NCodec code.
-include(FetchContent)
-FetchContent_Declare(dse_ncodec
-    URL                 $ENV{DSE_NCODEC_URL}
-    SOURCE_SUBDIR       dse/ncodec
-)
-FetchContent_MakeAvailable(dse_ncodec)
-
-# Define a build target using the AB Codec (from the DSE NCodec library).
-add_library(some_lib)
-target_include_directories(some_lib
-    PRIVATE
-        ${dse_ncodec_SOURCE_DIR}
-)
-target_link_libraries(some_lib
-    PUBLIC
-        ab-codec
-)
-```
-
-__Makefile__
-```makefile
-DSE_NCODEC_REPO ?= https://github.com/boschglobal/dse.ncodec
-DSE_NCODEC_VERSION ?= 1.1.0
-export DSE_NCODEC_URL ?= $(DSE_NCODEC_REPO)/archive/refs/tags/v$(DSE_NCODEC_VERSION).zip
-
-.PHONY: build
-build:
-  $(MAKE) build-some_lib
-```
-
+For more information about the NCodec API, including a complete example, see the [Network Codec API Reference](https://boschglobal.github.io/dse.doc/apis/ncodec/). For developer documentation related to DSE ModelC integration, see the [Developer Documentation](https://boschglobal.github.io/dse.doc/docs/devel/ncodec/).
 
 
 ## Codecs
@@ -164,18 +135,19 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 #### MIME type - PDU Interface
 
-| Field             | Type                 | Value                  |  CAN             | FlexRay        | IP               | PDU              | Struct           |
-| :---              | :---:                | :---:                  | :---:            | :---:          | :---:            | :---:            | :---:            |
-| <var>ecu_id</var> | <code>uint8_t</code> | 0[^pop], 1..           | &check;&check;   | &check;&check; | &check;&check;   | &check;&check;   | &check;&check;   |
-| <var>cc_id</var>  | <code>uint8_t</code> | 0 \|1                  | -                | &check;        | -                | -                | -                |
-| <var>swc_id</var> | <code>uint8_t</code> | 0 ..                   | &check;[^swc_id] | &check;        | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
-| <var>name</var>   | <code>string</code>  |                        | -                | &check;        | -                | -                | -                |
-| <var>model</var>  | <code>string</code>  | `flexray`              | -                | &check;&check; | -                | -                | -                |
-| <var>mode</var>   | <code>string</code>  | `pop`                  | -                | &check;        | -                | -                | -                |
-| <var>pwr</var>    | <code>string</code>  | `on(default)\|off\|nc` | -                | &check;        | -                | -                | -                |
-| <var>vcn</var>    | <code>uint8_t</code> | 0,1,2                  | -                | &check;        | -                | -                | -                |
-| <var>poca</var>   | <code>uint8_t</code> | 1..9[^poc]             | -                | &check;        | -                | -                | -                |
-| <var>pocb</var>   | <code>uint8_t</code> | 1..9[^poc]             | -                | &check;        | -                | -                | -                |
+| Field               | Type                 | Value                  |  CAN             | FlexRay        | IP               | PDU              | Struct           |
+| :---                | :---:                | :---:                  | :---:            | :---:          | :---:            | :---:            | :---:            |
+| <var>ecu_id</var>   | <code>uint8_t</code> | 0[^pop], 1..           | &check;&check;   | &check;&check; | &check;&check;   | &check;&check;   | &check;&check;   |
+| <var>cc_id</var>    | <code>uint8_t</code> | 0 \|1                  | -                | &check;        | -                | -                | -                |
+| <var>swc_id</var>   | <code>uint8_t</code> | 0 ..                   | &check;[^swc_id] | &check;        | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
+| <var>name</var>     | <code>string</code>  |                        | -                | &check;        | -                | -                | -                |
+| <var>model</var>    | <code>string</code>  | `flexray`              | -                | &check;&check; | -                | -                | -                |
+| <var>mode</var>     | <code>string</code>  | `pop`                  | -                | &check;        | -                | -                | -                |
+| <var>pwr</var>      | <code>string</code>  | `on(default)\|off\|nc` | -                | &check;        | -                | -                | -                |
+| <var>vcn</var>      | <code>uint8_t</code> | 0,1,2                  | -                | &check;        | -                | -                | -                |
+| <var>poca</var>     | <code>uint8_t</code> | 1..9[^poc]             | -                | &check;        | -                | -                | -                |
+| <var>pocb</var>     | <code>uint8_t</code> | 1..9[^poc]             | -                | &check;        | -                | -                | -                |
+| <var>loopback</var> | <code>bool</code>    | 0(off),1(active)   | &check;          | &check;        | &check;          | &check;          | &check;           |
 
 
 > [!NOTE]

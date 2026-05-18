@@ -6,12 +6,14 @@
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 
 
-#define UNUSED(x) ((void)x)
-#define CODEC     "application/x-automotive-bus"
+#define UNUSED(x)             ((void)x)
+#define CODEC                 "application/x-automotive-bus"
+#define ENV_NCODEC_TRACE_FILE "NCODEC_TRACE_FILE"
 
 
 /* interface=stream; type=frame; bus=can; schema=fbs */
@@ -82,6 +84,7 @@ void free_codec(ABCodecInstance* _nc)
     if (_nc->vcn_count_str) free(_nc->vcn_count_str);
     if (_nc->poc_state_cha_str) free(_nc->poc_state_cha_str);
     if (_nc->poc_state_chb_str) free(_nc->poc_state_chb_str);
+    if (_nc->loopback_str) free(_nc->loopback_str);
 
     if (_nc->fbs_builder_initalized) flatcc_builder_clear(&_nc->fbs_builder);
 
@@ -226,6 +229,12 @@ int32_t codec_config(NCODEC* nc, NCodecConfigItem item)
         _nc->poc_state_chb = strtoul(item.value, NULL, 10);
         return 0;
     }
+    if (strcmp(item.name, "loopback") == 0) {
+        if (_nc->loopback_str) free(_nc->loopback_str);
+        _nc->loopback_str = strdup(item.value);
+        _nc->loopback = strtoul(item.value, NULL, 10);
+        return 0;
+    }
 
     return -EINVAL;
 }
@@ -309,6 +318,10 @@ NCodecConfigItem codec_stat(NCODEC* nc, int32_t* index)
         name = "pocb";
         value = _nc->poc_state_chb_str;
         break;
+    case 17:
+        name = "loopback";
+        value = _nc->loopback_str;
+        break;
     default:
         *index = -1;
     }
@@ -323,8 +336,12 @@ NCodecConfigItem codec_stat(NCODEC* nc, int32_t* index)
 void codec_close(NCODEC* nc)
 {
     if (nc == NULL) return;
-
-    free_codec((ABCodecInstance*)nc);
+    ABCodecInstance* _nc = (ABCodecInstance*)nc;
+    if (_nc->trace_file) {
+        fclose(_nc->trace_file);
+        _nc->trace_file = NULL;
+    }
+    free_codec(_nc);
     free(nc);
 }
 
@@ -346,6 +363,9 @@ NCODEC* ncodec_create(const char* mime_type)
     /* Allocate the codec object. */
     _nc = calloc(1, sizeof(ABCodecInstance));
     _nc->c.mime_type = mime_type;
+
+    /* Set the default simulation step size. */
+    _nc->step_size = SIM_STEP_SIZE;
 
     /* Parse out the remaining parameters from the MIMEtype. */
     char* _param;
@@ -417,6 +437,18 @@ NCODEC* ncodec_create(const char* mime_type)
 
     /* Create any Bus Model. */
     create_bus_model(_nc);
+
+    /* Trace file. */
+    if (getenv(ENV_NCODEC_TRACE_FILE)) {
+        char* _trace_file = getenv(ENV_NCODEC_TRACE_FILE);
+        log_notice(_nc, "Create trace file : %s", _trace_file);
+        errno = 0;
+        _nc->trace_file = fopen(_trace_file, "w");
+        if (errno) {
+            log_error(
+                _nc, "Unable to open NCodec trace file (%s)", _trace_file);
+        }
+    }
 
     return (void*)_nc;
 

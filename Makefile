@@ -103,6 +103,7 @@ format:
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/interface
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/stream
 	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/examples/ab-codec
 
 .PHONY: generate
 generate:
