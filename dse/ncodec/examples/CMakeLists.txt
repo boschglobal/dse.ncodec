@@ -9,6 +9,7 @@ project(NCodec_Examples
 )
 
 # Example Models.
-add_subdirectory(codec)
+add_subdirectory(ab-codec)
 add_subdirectory(ab-codec-fmi)
+add_subdirectory(codec)
 add_subdirectory(flexray)
