@@ -40,7 +40,7 @@ int step(NCODEC* nc)
         if (rc == -ENOMSG) break;
         printf("Message is: %s\n", (char*)msg.payload);
     }
-    CHECK_RC(ncodec_truncate(nc)); /* Always call once per step. */
+    CHECK_RC(ncodec_truncate(nc)); /* Always call _once_ per step. */
 
     /* Write PDUs to the NCodec. */
     CHECK_RC(ncodec_write(nc, &(struct NCodecPdu){
@@ -48,7 +48,7 @@ int step(NCODEC* nc)
                                   .payload = (uint8_t*)greeting,
                                   .payload_len = strlen(greeting),
                               }));
-    CHECK_RC(ncodec_flush(nc)); /* Call once after writing PDUs. */
+    CHECK_RC(ncodec_flush(nc)); /* Call after writing PDUs. */
 
     return rc;
 }
