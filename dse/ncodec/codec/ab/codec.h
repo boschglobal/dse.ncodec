@@ -121,6 +121,7 @@ typedef struct ABCodecInstance {
 
     /* Trace interface. */
     NCodecTraceLogLevel log_level;
+    const char*         trace_filename;
     FILE*               trace_file;
 
     /* Simulation metadata. */

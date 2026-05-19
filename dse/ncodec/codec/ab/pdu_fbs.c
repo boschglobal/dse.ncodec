@@ -622,13 +622,13 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
 
             /* Trace - if no bus_model (progress rewrites the stream). */
             if (reader->bus_model.vtable.progress != NULL) {
-                ncodec_seek((NCODEC*)nc, 0, NCODEC_SEEK_SET);
+                ABCodecInstance* _bm_nc = reader->bus_model.nc;
+                ncodec_seek((NCODEC*)_bm_nc, 0, NCODEC_SEEK_SET);
                 if (nc->trace_file) {
                     uint8_t* buf = NULL;
                     size_t   len = 0;
-                    reader->bus_model.nc->c.stream->read(
-                        (NCODEC*)reader->bus_model.nc, &buf, &len,
-                        NCODEC_POS_NC);
+                    _bm_nc->c.stream->read(
+                        (NCODEC*)_bm_nc, &buf, &len, NCODEC_POS_NC);
                     fwrite(buf, sizeof(buf[0]), len, nc->trace_file);
                 }
             }

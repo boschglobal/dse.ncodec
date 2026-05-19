@@ -338,6 +338,7 @@ void codec_close(NCODEC* nc)
     if (nc == NULL) return;
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
     if (_nc->trace_file) {
+        log_notice(_nc, "Close trace file : %s", _nc->trace_filename);
         fclose(_nc->trace_file);
         _nc->trace_file = NULL;
     }
@@ -440,13 +441,13 @@ NCODEC* ncodec_create(const char* mime_type)
 
     /* Trace file. */
     if (getenv(ENV_NCODEC_TRACE_FILE)) {
-        char* _trace_file = getenv(ENV_NCODEC_TRACE_FILE);
-        log_notice(_nc, "Create trace file : %s", _trace_file);
+        _nc->trace_filename = getenv(ENV_NCODEC_TRACE_FILE);
+        log_notice(_nc, "Create trace file : %s", _nc->trace_filename);
         errno = 0;
-        _nc->trace_file = fopen(_trace_file, "w");
+        _nc->trace_file = fopen(_nc->trace_filename, "w");
         if (errno) {
-            log_error(
-                _nc, "Unable to open NCodec trace file (%s)", _trace_file);
+            log_error(_nc, "Unable to open NCodec trace file (%s)",
+                _nc->trace_filename);
         }
     }
 
