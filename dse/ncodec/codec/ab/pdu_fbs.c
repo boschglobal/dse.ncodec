@@ -581,15 +581,13 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
             return rc; /* PDU available, return length (i.e. rc). */
         }
 
-        /* Trace - if no bus_model. */
-        if (reader->bus_model.vtable.progress == NULL) {
-            ncodec_seek((NCODEC*)nc, 0, NCODEC_SEEK_SET);
-            if (nc->trace_file) {
-                uint8_t* buf = NULL;
-                size_t   len = 0;
-                nc->c.stream->read((NCODEC*)nc, &buf, &len, NCODEC_POS_NC);
-                fwrite(buf, sizeof(buf[0]), len, nc->trace_file);
-            }
+        /* Trace - stream from SimBus. */
+        ncodec_seek((NCODEC*)nc, 0, NCODEC_SEEK_SET);
+        if (nc->trace_file) {
+            uint8_t* buf = NULL;
+            size_t   len = 0;
+            nc->c.stream->read((NCODEC*)nc, &buf, &len, NCODEC_POS_NC);
+            fwrite(buf, sizeof(buf[0]), len, nc->trace_file);
         }
 
         /* Done with NCodec, reset the reader. */
@@ -620,17 +618,15 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
                 return rc; /* PDU available, return length (i.e. rc). */
             }
 
-            /* Trace - if no bus_model (progress rewrites the stream). */
-            if (reader->bus_model.vtable.progress != NULL) {
-                ABCodecInstance* _bm_nc = reader->bus_model.nc;
-                ncodec_seek((NCODEC*)_bm_nc, 0, NCODEC_SEEK_SET);
-                if (nc->trace_file) {
-                    uint8_t* buf = NULL;
-                    size_t   len = 0;
-                    _bm_nc->c.stream->read(
-                        (NCODEC*)_bm_nc, &buf, &len, NCODEC_POS_NC);
-                    fwrite(buf, sizeof(buf[0]), len, nc->trace_file);
-                }
+            /* Trace - stream from BusModel. */
+            ABCodecInstance* _bm_nc = reader->bus_model.nc;
+            ncodec_seek((NCODEC*)_bm_nc, 0, NCODEC_SEEK_SET);
+            if (nc->trace_file) {
+                uint8_t* buf = NULL;
+                size_t   len = 0;
+                _bm_nc->c.stream->read(
+                    (NCODEC*)_bm_nc, &buf, &len, NCODEC_POS_NC);
+                fwrite(buf, sizeof(buf[0]), len, nc->trace_file);
             }
 
             /* Done with Model NCodec/Stream, reset the reader. */

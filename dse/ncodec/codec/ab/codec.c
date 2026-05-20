@@ -440,8 +440,8 @@ NCODEC* ncodec_create(const char* mime_type)
     create_bus_model(_nc);
 
     /* Trace file. */
-    if (getenv(ENV_NCODEC_TRACE_FILE)) {
-        _nc->trace_filename = getenv(ENV_NCODEC_TRACE_FILE);
+    _nc->trace_filename = getenv(ENV_NCODEC_TRACE_FILE);
+    if (_nc->trace_filename) {
         log_notice(_nc, "Create trace file : %s", _nc->trace_filename);
         errno = 0;
         _nc->trace_file = fopen(_nc->trace_filename, "w");
