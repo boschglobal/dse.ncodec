@@ -43,7 +43,7 @@ TRACE TX: 42 (length=11)
 
 
 # Run an example and write a trace file.
-$ export NCODEC_TRACE_FILE=ncodec-trace.bin
+$ NCODEC_TRACE_PATH=.
 $ dse/ncodec/build/_out/examples/ab-codec/ab-cosim
 ...
 $ ls *.bin

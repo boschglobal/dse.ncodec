@@ -106,6 +106,7 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 | MIME type        | `type=pdu; schema=fbs`                           | `type=frame; schema=fbs`                                                         |
 | Language Support | C/C++ <br> Go <br> Python                        | C/C++                                                                            |
 | Intergrations    | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] <br> [DSE Network][dse_network] |
+| Trace File       | enabled by env <br> `NCODEC_TRACE_PATH`[^trace]  |                                                                                  |
 
 
 #### Network Support
@@ -140,7 +141,7 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 | <var>ecu_id</var>   | <code>uint8_t</code> | 0[^pop], 1..           | &check;&check;   | &check;&check; | &check;&check;   | &check;&check;   | &check;&check;   |
 | <var>cc_id</var>    | <code>uint8_t</code> | 0 \|1                  | -                | &check;        | -                | -                | -                |
 | <var>swc_id</var>   | <code>uint8_t</code> | 0 ..                   | &check;[^swc_id] | &check;        | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
-| <var>name</var>     | <code>string</code>  |                        | -                | &check;        | -                | -                | -                |
+| <var>name</var>     | <code>string</code>  |                        | &check;[^name]   | &check;[^name] | &check;[^name]   | &check;[^name]   | &check;[^name]   |
 | <var>model</var>    | <code>string</code>  | `flexray`              | -                | &check;&check; | -                | -                | -                |
 | <var>mode</var>     | <code>string</code>  | `pop`                  | -                | &check;        | -                | -                | -                |
 | <var>pwr</var>      | <code>string</code>  | `on(default)\|off\|nc` | -                | &check;        | -                | -                | -                |
@@ -231,3 +232,7 @@ only enabled when this parameter is set.
 
 [^node_id]: Message filtering on `node_id` (i.e. filter if Tx Node = Rx Node) is
 only enabled when this parameter is set.
+
+[^name]: Name of the NCodec (optional). Used in logging and trace files.
+
+[^trace]: Trace files are named `ncodec.<name>.bin`. If `name` is not set in the MIME type then `<ecu_id>-<cc_id>-<swc_id>` is used.

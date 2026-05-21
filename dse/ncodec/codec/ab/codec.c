@@ -13,7 +13,7 @@
 
 #define UNUSED(x)             ((void)x)
 #define CODEC                 "application/x-automotive-bus"
-#define ENV_NCODEC_TRACE_FILE "NCODEC_TRACE_FILE"
+#define ENV_NCODEC_TRACE_PATH "NCODEC_TRACE_PATH"
 
 
 /* interface=stream; type=frame; bus=can; schema=fbs */
@@ -342,6 +342,7 @@ void codec_close(NCODEC* nc)
         fclose(_nc->trace_file);
         _nc->trace_file = NULL;
     }
+    free(_nc->trace_filename);
     free_codec(_nc);
     free(nc);
 }
@@ -440,15 +441,42 @@ NCODEC* ncodec_create(const char* mime_type)
     create_bus_model(_nc);
 
     /* Trace file. */
-    _nc->trace_filename = getenv(ENV_NCODEC_TRACE_FILE);
-    if (_nc->trace_filename) {
-        log_notice(_nc, "Create trace file : %s", _nc->trace_filename);
-        errno = 0;
-        _nc->trace_file = fopen(_nc->trace_filename, "w");
-        if (errno) {
-            log_error(_nc, "Unable to open NCodec trace file (%s)",
-                _nc->trace_filename);
+#ifdef _WIN32
+#define PATH_SEP "\\"
+#else
+#define PATH_SEP "/"
+#endif
+#define TRACE_FILE_FMT "%s" PATH_SEP "ncodec.%s.bin"
+#define TRACE_NAME_FMT "%d-%d-%d"
+    const char* trace_path = getenv(ENV_NCODEC_TRACE_PATH);
+    if (trace_path) {
+        char* trace_name = NULL;
+        if (_nc->name == NULL) {
+            int len = snprintf(
+                NULL, 0, TRACE_NAME_FMT, _nc->ecu_id, _nc->cc_id, _nc->swc_id);
+            trace_name = malloc((size_t)len + 1);
+            snprintf(trace_name, (size_t)len + 1, TRACE_NAME_FMT, _nc->ecu_id,
+                _nc->cc_id, _nc->swc_id);
+        } else {
+            trace_name = strdup(_nc->name);
         }
+
+        int len = snprintf(NULL, 0, TRACE_FILE_FMT, trace_path, trace_name);
+        if (len > 0) {
+            _nc->trace_filename = malloc((size_t)len + 1);
+            snprintf(_nc->trace_filename, (size_t)len + 1, TRACE_FILE_FMT,
+                trace_path, trace_name);
+            log_notice(_nc, "Create trace file : %s", _nc->trace_filename);
+            _nc->trace_file = fopen(_nc->trace_filename, "wb");
+            if (_nc->trace_file == NULL) {
+                log_error(_nc, "Unable to open NCodec trace file (%s)",
+                    _nc->trace_filename);
+            }
+        } else {
+            _nc->trace_filename = NULL;
+        }
+
+        free(trace_name);
     }
 
     return (void*)_nc;

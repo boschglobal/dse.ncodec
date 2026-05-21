@@ -15,7 +15,7 @@
 #define MIMETYPE                                                               \
     "application/x-automotive-bus; "                                           \
     "interface=stream;type=pdu;schema=fbs;"                                    \
-    "swc_id=1;ecu_id=1;loopback=1"
+    "name=example;swc_id=1;ecu_id=1;loopback=1"
 #define BUFFER_LEN 1024  // Initial buffer size, will grow as needed.
 
 #define CHECK_RC(call)                                                         \
