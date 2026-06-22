@@ -27,7 +27,7 @@ static void initialize_stream(ABCodecInstance* nc)
     flatcc_builder_t* B = &nc->fbs_builder;
     flatcc_builder_reset(B);
     ns(Stream_start_as_root_with_size(B));
-    ns(Stream_simulation_time_add(B, nc->simulation_time));
+    ns(Stream_simulation_time_add(B, nc->write_simulation_time));
     ns(Stream_pdus_start(B));
     nc->fbs_stream_initalized = true;
 }
@@ -451,6 +451,22 @@ void _reader_reset(ABCodecReader* reader)
     // clear_free_list();
 }
 
+static void _advance_simulation_time(NCODEC* nc)
+{
+    ABCodecInstance* _nc = (ABCodecInstance*)nc;
+    if (_nc == NULL) return;
+
+    /* Advance the synthesised simulation_time.
+     * (same algo as SimBus)
+     * Increment via Kahan summation.
+     * simulation_time = simulation_time + step_size;
+     */
+    double y = _nc->step_size - _nc->step_size_correction;
+    double t = _nc->simulation_time + y;
+    _nc->step_size_correction = (t - _nc->simulation_time) - y;
+    _nc->simulation_time = t;
+}
+
 
 static void get_stream_from_buffer(ABCodecReader* reader)
 {
@@ -635,6 +651,12 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
     }
     reader->stage.model_consumed = true;
 
+    /* Increment the Simulation Time. */
+    nc->write_simulation_time =
+        nc->simulation_time; /* Calls to pdu_write use this value and not
+                                simulation_time (which will be advanced). */
+    _advance_simulation_time(nc);
+
     /* No more PDUs. */
     return -ENOMSG;
 }
@@ -681,16 +703,6 @@ int32_t pdu_truncate(NCODEC* nc)
     _nc->c.stream->seek(nc, 0, NCODEC_SEEK_RESET);
     _reader_reset(&_nc->reader);
     clear_free_list(_nc);
-
-    /* Advance the synthesised simulation_time.
-     * (same algo as SimBus)
-     * Increment via Kahan summation.
-     * simulation_time = simulation_time + step_size;
-     */
-    double y = _nc->step_size - _nc->step_size_correction;
-    double t = _nc->simulation_time + y;
-    _nc->step_size_correction = (t - _nc->simulation_time) - y;
-    _nc->simulation_time = t;
 
     return 0;
 }

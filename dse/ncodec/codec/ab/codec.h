@@ -124,10 +124,11 @@ typedef struct ABCodecInstance {
     char*               trace_filename;
     FILE*               trace_file;
 
-    /* Simulation metadata. */
-    double simulation_time;
+    /* Simulation Time. */
+    double simulation_time; /* Updated after read (but before write). */
     double step_size;
     double step_size_correction;
+    double write_simulation_time; /* Set after read, use for writes. */
 } ABCodecInstance;
 
 

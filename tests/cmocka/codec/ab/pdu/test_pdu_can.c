@@ -118,10 +118,9 @@ void test_pdu_transport_can(void** state)
                             });
         assert_int_equal(rc, strlen(greeting));
         size_t len = ncodec_flush(nc);
-        size_t adj =
-            4;  //(tc[i].frame_format ? 0 : 2) + (tc[i].frame_type ? 0: 2);
-        if (tc[i].frame_format || tc[i].frame_type) adj = 4;
-        assert_int_equal(len, 0x8a - adj);
+        size_t adj = 4;
+        if (tc[i].frame_format || tc[i].frame_type) adj = 0;
+        assert_int_equal(len, 0x7a - adj);
 
         // Seek to the start, keeping the content, modify the node_id.
         ncodec_seek(nc, 0, NCODEC_SEEK_SET);

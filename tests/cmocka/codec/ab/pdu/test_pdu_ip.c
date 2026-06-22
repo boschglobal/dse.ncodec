@@ -82,7 +82,7 @@ void test_pdu_transport_ip__eth(void** state)
     });
     assert_int_equal(rc, strlen(greeting));
     size_t len = ncodec_flush(nc);
-    assert_int_equal(len, 0x9a);
+    assert_int_equal(len, 0x8e);
 
     // Seek to the start, keeping the content.
     ncodec_seek(nc, 0, NCODEC_SEEK_SET);

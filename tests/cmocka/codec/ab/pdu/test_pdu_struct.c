@@ -92,7 +92,7 @@ void test_pdu_transport_struct(void** state)
     });
     assert_int_equal(rc, strlen(greeting));
     size_t len = ncodec_flush(nc);
-    assert_int_equal(len, 0xde);
+    assert_int_equal(len, 0xce);
 
     // Seek to the start, keeping the content.
     ncodec_seek(nc, 0, NCODEC_SEEK_SET);
