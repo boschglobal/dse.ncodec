@@ -72,8 +72,8 @@ int main(void)
     if (rc) return _ncodec_fault("ncodec_seek", rc);
     stream->read(nc, &buffer, &buffer_len, NCODEC_POS_NC);
     fmi_string = ncodec_ascii85_encode((char*)buffer, buffer_len);
-    _log("BUFFER TX", "(%ul)", buffer_len);
-    _log("ASCII85 TX", "(%ul) %s", strlen(fmi_string), fmi_string);
+    _log("BUFFER TX", "(%zu)", buffer_len);
+    _log("ASCII85 TX", "(%zu) %s", strlen(fmi_string), fmi_string);
 
     /* Interact with the FMU for a single Co-Simulation step. */
     rc = ncodec_truncate(nc);
@@ -88,9 +88,9 @@ int main(void)
     if (v[0] == NULL) return _ncodec_fault("fmi2GetString - no data", -ENODATA);
 
     /* Decode the FMI 2 String Variable and inject into the stream buffer. */
-    _log("ASCII85 RX", "(%ul) %s", strlen(v[0]), v[0]);
+    _log("ASCII85 RX", "(%zu) %s", strlen(v[0]), v[0]);
     buffer = (uint8_t*)ncodec_ascii85_decode(v[0], &buffer_len);
-    _log("BUFFER RX", "(%ul)", buffer_len);
+    _log("BUFFER RX", "(%zu)", buffer_len);
     stream->write(nc, buffer, buffer_len);
     free(buffer);
     buffer = NULL;

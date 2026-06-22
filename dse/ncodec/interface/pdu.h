@@ -415,10 +415,6 @@ typedef struct NCodecPdu {
         NCodecPduStructMetadata     struct_object;
         NCodecPduFlexrayTransport   flexray;
     } transport;
-
-    /* Simulation Metadata. */
-    double simulation_time;
-    double pdu_time;
 } NCodecPdu;
 
 #endif  // DSE_NCODEC_INTERFACE_PDU_H_
