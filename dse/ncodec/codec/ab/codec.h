@@ -125,10 +125,16 @@ typedef struct ABCodecInstance {
     FILE*               trace_file;
 
     /* Simulation Time. */
-    double simulation_time; /* Updated after read (but before write). */
-    double step_size;
-    double step_size_correction;
-    double write_simulation_time; /* Set after read, use for writes. */
+    struct {
+        double value; /* Updated after read (but before write). */
+        double step_size;
+        double step_size_correction;
+        double write_value; /* Set after read, use for writes. */
+        struct {
+            bool request; /* Indicates broadcast request. */
+            bool force;   /* Broadcast request with force (bypass checks). */
+        } broadcast;
+    } simulation_time;
 } ABCodecInstance;
 
 

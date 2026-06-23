@@ -27,6 +27,7 @@ extern int32_t pdu_write(NCODEC* nc, NCodecMessage* msg);
 extern int32_t pdu_read(NCODEC* nc, NCodecMessage* msg);
 extern int32_t pdu_flush(NCODEC* nc);
 extern int32_t pdu_truncate(NCODEC* nc);
+extern int32_t pdu_utime(NCODEC* nc, NCodecUtimeOperation op);
 
 extern void flexray_bus_model_create(ABCodecInstance* nc);
 extern void flexray_pop_bus_model_create(ABCodecInstance* nc);
@@ -367,7 +368,7 @@ NCODEC* ncodec_create(const char* mime_type)
     _nc->c.mime_type = mime_type;
 
     /* Set the default simulation step size. */
-    _nc->step_size = SIM_STEP_SIZE;
+    _nc->simulation_time.step_size = SIM_STEP_SIZE;
 
     /* Parse out the remaining parameters from the MIMEtype. */
     char* _param;
@@ -425,6 +426,7 @@ NCODEC* ncodec_create(const char* mime_type)
             .read = pdu_read,
             .flush = pdu_flush,
             .truncate = pdu_truncate,
+            .utime = pdu_utime,
             .close = codec_close,
         };
     } else {

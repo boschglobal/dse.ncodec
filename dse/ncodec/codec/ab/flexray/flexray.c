@@ -202,7 +202,7 @@ void flexray_bus_model_create(ABCodecInstance* nc)
     nc->reader.bus_model.log_nc = nc;
 
     /* Set the step_size (initial value, may change in operation). */
-    nc->reader.bus_model.step_size = nc->step_size;
+    nc->reader.bus_model.step_size = nc->simulation_time.step_size;
 
     /* Shallow copy the nc object. */
     ABCodecInstance* nc_copy = calloc(1, sizeof(ABCodecInstance));

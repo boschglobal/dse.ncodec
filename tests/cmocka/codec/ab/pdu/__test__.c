@@ -11,6 +11,7 @@ extern int run_pdu_tests(void);
 extern int run_pdu_can_tests(void);
 extern int run_pdu_ip_tests(void);
 extern int run_pdu_struct_tests(void);
+extern int run_pdu_flexray_tests(void);
 extern int run_pdu_flexray_engine_tests(void);
 extern int run_pdu_flexray_state_tests(void);
 extern int run_pdu_flexray_startup_tests(void);
@@ -27,6 +28,7 @@ int main()
     rc |= run_pdu_can_tests();
     rc |= run_pdu_ip_tests();
     rc |= run_pdu_struct_tests();
+    rc |= run_pdu_flexray_tests();
     rc |= run_pdu_flexray_engine_tests();
     rc |= run_pdu_flexray_state_tests();
     rc |= run_pdu_flexray_startup_tests();

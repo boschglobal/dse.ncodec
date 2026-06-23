@@ -140,6 +140,12 @@ typedef struct NCodecConfigItem {
 
 typedef void NCodecMessage; /* Generic message container. */
 
+typedef struct NCodecUtimeOperation {
+    double simulation_time;
+    double step_size;
+    bool   broadcast; /* Push change to all nodes. */
+    bool   force; /* Force the change, ignore checks. Also applies to broadcast. */
+} NCodecUtimeOperation;
 
 typedef int32_t NCodecLoad(const char* filename, const char* hint);
 typedef NCODEC* NCodecOpen(const char* mime_type, NCodecStreamVTable* stream);
@@ -151,6 +157,7 @@ typedef int32_t (*NCodecWrite)(NCODEC* nc, NCodecMessage* msg);
 typedef int32_t (*NCodecRead)(NCODEC* nc, NCodecMessage* msg);
 typedef int32_t (*NCodecFlush)(NCODEC* nc);
 typedef int32_t (*NCodecTruncate)(NCODEC* nc);
+typedef int32_t (*NCodecUtime)(NCODEC* nc, NCodecUtimeOperation op);
 typedef void (*NCodecClose)(NCODEC* nc);
 
 typedef struct NCodecVTable {
@@ -160,6 +167,7 @@ typedef struct NCodecVTable {
     NCodecRead     read;
     NCodecFlush    flush;
     NCodecTruncate truncate;
+    NCodecUtime    utime;
     NCodecClose    close;
 } NCodecVTable;
 
@@ -216,5 +224,6 @@ DLL_PUBLIC int32_t          ncodec_truncate(NCODEC* nc);
 DLL_PUBLIC void             ncodec_close(NCODEC* nc);
 DLL_PUBLIC int64_t          ncodec_seek(NCODEC* nc, size_t pos, int32_t op);
 DLL_PUBLIC int64_t          ncodec_tell(NCODEC* nc);
+DLL_PUBLIC int32_t          ncodec_utime(NCODEC* nc, NCodecUtimeOperation op);
 
 #endif  // DSE_NCODEC_CODEC_H_
