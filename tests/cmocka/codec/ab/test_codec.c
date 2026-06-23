@@ -29,6 +29,7 @@ extern int32_t          pdu_write(NCODEC* nc, NCodecMessage* msg);
 extern int32_t          pdu_read(NCODEC* nc, NCodecMessage* msg);
 extern int32_t          pdu_flush(NCODEC* nc);
 extern int32_t          pdu_truncate(NCODEC* nc);
+extern int32_t          pdu_utime(NCODEC* nc, NCodecUtimeOperation op);
 
 
 NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream)
@@ -374,6 +375,7 @@ void test_ncodec_can_create_close(void** state)
     assert_ptr_equal(nc->codec.read, can_read);
     assert_ptr_equal(nc->codec.flush, can_flush);
     assert_ptr_equal(nc->codec.truncate, can_truncate);
+    assert_ptr_equal(nc->codec.utime, NULL);
     assert_ptr_equal(nc->codec.close, codec_close);
 
     /* Check the values. */
@@ -427,6 +429,7 @@ void test_ncodec_pdu_create_close(void** state)
     assert_ptr_equal(nc->codec.read, pdu_read);
     assert_ptr_equal(nc->codec.flush, pdu_flush);
     assert_ptr_equal(nc->codec.truncate, pdu_truncate);
+    assert_ptr_equal(nc->codec.utime, pdu_utime);
     assert_ptr_equal(nc->codec.close, codec_close);
 
     /* Check the values. */
@@ -521,6 +524,9 @@ void test_ncodec_call_sequence(void** state)
     _adjust_node_id(nc, "2");
 #define EXPECT_POS 0x66
     assert_int_equal(EXPECT_POS, ncodec_tell(nc));
+    assert_int_equal(
+        -ENOSYS, ncodec_utime(nc, (struct NCodecUtimeOperation){}));
+
 
     /* Read then Write. */
     for (int i = 0; i < 5; i++) {

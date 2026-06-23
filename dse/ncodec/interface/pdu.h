@@ -10,6 +10,15 @@
 #include <stdlib.h>
 
 
+#if defined(__GNUC__) || defined(__clang__)
+#define NCODEC_DEPRECATED(msg) __attribute__((deprecated(msg)))
+#elif defined(_MSC_VER)
+#define NCODEC_DEPRECATED(msg) __declspec(deprecated(msg))
+#else
+#define NCODEC_DEPRECATED(msg)
+#endif
+
+
 /** NCODEC API - PDU/Stream
     =======================
 
@@ -415,6 +424,10 @@ typedef struct NCodecPdu {
         NCodecPduStructMetadata     struct_object;
         NCodecPduFlexrayTransport   flexray;
     } transport;
+
+    /* Simulation Metadata. */
+    double simulation_time NCODEC_DEPRECATED("this field is deprecated");
+    double pdu_time        NCODEC_DEPRECATED("this field is deprecated");
 } NCodecPdu;
 
 #endif  // DSE_NCODEC_INTERFACE_PDU_H_

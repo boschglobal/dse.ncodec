@@ -13,6 +13,7 @@ add_executable(test_codec_ab_pdu
     test_pdu_can.c
     test_pdu_ip.c
     test_pdu_struct.c
+    test_pdu_flexray.c
     test_pdu_flexray__engine.c
     test_pdu_flexray__state.c
     test_pdu_flexray__startup.c

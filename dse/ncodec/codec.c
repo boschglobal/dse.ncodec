@@ -381,6 +381,50 @@ inline int64_t ncodec_tell(NCODEC* nc)
 
 
 /**
+ncodec_utime
+============
+
+Parameters
+----------
+nc (NCODEC*)
+: Network Codec object.
+
+op (NCodecUtimeOperation)
+: The UTime operation, default/zero values are ignored.
+
+Returns
+-------
+0
+: The operation was performed.
+
+-ENOSYS (-38)
+: This function is not implemented by the codec.
+
+-ENOSTR (-60)
+: The object represented by `nc` does not represent a valid stream.
+
+-ENODATA (-61)
+: Operation did not include a valid request.
+
+-ENOSR (-63)
+: No stream resource has been configured.
+*/
+inline int32_t ncodec_utime(NCODEC* nc, NCodecUtimeOperation op)
+{
+    NCodecInstance* _nc = (NCodecInstance*)nc;
+    if (_nc) {
+        if (_nc->codec.utime) {
+            return _nc->codec.utime(nc, op);
+        } else {
+            return -ENOSYS;
+        }
+    } else {
+        return -ENOSTR;
+    }
+}
+
+
+/**
 ncodec_close
 ============
 

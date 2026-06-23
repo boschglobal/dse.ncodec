@@ -27,7 +27,7 @@ static void initialize_stream(ABCodecInstance* nc)
     flatcc_builder_t* B = &nc->fbs_builder;
     flatcc_builder_reset(B);
     ns(Stream_start_as_root_with_size(B));
-    ns(Stream_simulation_time_add(B, nc->write_simulation_time));
+    ns(Stream_simulation_time_add(B, nc->simulation_time.write_value));
     ns(Stream_pdus_start(B));
     nc->fbs_stream_initalized = true;
 }
@@ -456,15 +456,19 @@ static void _advance_simulation_time(NCODEC* nc)
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
     if (_nc == NULL) return;
 
+    /* Called after reading is complete, but before truncate/write. */
+
     /* Advance the synthesised simulation_time.
      * (same algo as SimBus)
      * Increment via Kahan summation.
      * simulation_time = simulation_time + step_size;
      */
-    double y = _nc->step_size - _nc->step_size_correction;
-    double t = _nc->simulation_time + y;
-    _nc->step_size_correction = (t - _nc->simulation_time) - y;
-    _nc->simulation_time = t;
+    double y = _nc->simulation_time.step_size -
+               _nc->simulation_time.step_size_correction;
+    double t = _nc->simulation_time.value + y;
+    _nc->simulation_time.step_size_correction =
+        (t - _nc->simulation_time.value) - y;
+    _nc->simulation_time.value = t;
 }
 
 
@@ -615,7 +619,8 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
     if (reader->stage.model_produced == false) {
         ncodec_truncate((NCODEC*)reader->bus_model.nc);
         if (reader->bus_model.vtable.progress) {
-            reader->bus_model.simulation_time = nc->simulation_time;
+            reader->bus_model.simulation_time = nc->simulation_time.value;
+            reader->bus_model.step_size = nc->simulation_time.step_size;
             reader->bus_model.vtable.progress(&reader->bus_model);
         }
         ncodec_flush((NCODEC*)reader->bus_model.nc);
@@ -651,10 +656,9 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
     }
     reader->stage.model_consumed = true;
 
-    /* Increment the Simulation Time. */
-    nc->write_simulation_time =
-        nc->simulation_time; /* Calls to pdu_write use this value and not
-                                simulation_time (which will be advanced). */
+    /* Increment the Simulation Time.
+    Calls to pdu_write use this value and not simulation_time.value. */
+    nc->simulation_time.write_value = nc->simulation_time.value;
     _advance_simulation_time(nc);
 
     /* No more PDUs. */
@@ -704,5 +708,37 @@ int32_t pdu_truncate(NCODEC* nc)
     _reader_reset(&_nc->reader);
     clear_free_list(_nc);
 
+    if (_nc->simulation_time.broadcast.request) {
+        // TODO inject utime message to PDU stream.
+    }
+
     return 0;
+}
+
+
+int32_t pdu_utime(NCODEC* nc, NCodecUtimeOperation op)
+{
+    ABCodecInstance* _nc = (ABCodecInstance*)nc;
+    if (_nc == NULL) return -ENOSTR;
+    if (_nc->c.stream == NULL) return -ENOSR;
+    if (op.simulation_time < 0.0) return -EINVAL;
+    if (op.step_size < 0.0) return -EINVAL;
+
+    int rc = -ENODATA; /* Default return, no action taken. */
+
+    if (op.simulation_time > _nc->simulation_time.value || op.force) {
+        _nc->simulation_time.value = op.simulation_time;
+        _nc->simulation_time.step_size_correction = 0.0;
+        rc = 0;
+    }
+    if (op.step_size > 0) {
+        _nc->simulation_time.step_size = op.step_size;
+        rc = 0;
+    }
+    if (op.broadcast) {
+        _nc->simulation_time.broadcast.request = op.broadcast;
+        _nc->simulation_time.broadcast.force = op.force;
+        rc = 0;
+    }
+    return rc;
 }
