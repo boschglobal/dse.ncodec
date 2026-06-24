@@ -166,3 +166,11 @@ super-linter:
 		--env VALIDATE_MARKDOWN=true \
 		--env VALIDATE_YAML=true \
 		ghcr.io/super-linter/super-linter:slim-v8
+
+.PHONY: arch
+arch:
+	PACKAGE_ARCH=linux-x86 $(MAKE) cleanall build
+	PACKAGE_ARCH=linux-i386 $(MAKE) cleanall build
+	PACKAGE_ARCH=windows-x64 $(MAKE) cleanall build
+	PACKAGE_ARCH=windows-x86 $(MAKE) cleanall build
+	$(MAKE) cleanall build
