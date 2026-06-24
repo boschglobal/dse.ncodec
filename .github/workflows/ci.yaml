@@ -19,7 +19,7 @@ env:
   IMAGE_BASE_NAME: ${{ github.repository_owner }}/dse
   PACKAGE_VERSION: 0.0.2
   package_name: NCodec
-  build_dir: null  # Disables package generation (code only repo).
+  build_dir: dse/ncodec/build
   CCACHE_SECONDARY_STORAGE: ${{ secrets.CCACHE_SECONDARY_STORAGE }}
 
 jobs:
@@ -30,6 +30,10 @@ jobs:
       matrix:
         package_arch:
           - linux-amd64
+          - linux-x86
+          - linux-i386
+          - windows-x64
+          - windows-x86
     container:
       image: ghcr.io/boschglobal/dse-gcc-builder:latest
     steps:
@@ -56,6 +60,7 @@ jobs:
           PACKAGE_ARCH: ${{ matrix.package_arch }}
         run: |
           make
+          make examples
 
       - name: Test
         if: ${{ matrix.package_arch == 'linux-amd64' }}
@@ -64,12 +69,25 @@ jobs:
         run: |
           make test_cmocka
 
-      - name: Examples
-        if: ${{ matrix.package_arch == 'linux-amd64' }}
+      - name: Set package extension
+        run: |
+          case "${{ matrix.package_arch }}" in
+            windows-*) echo "PACKAGE_EXT=zip" >> $GITHUB_ENV ;;
+            *)         echo "PACKAGE_EXT=tar.gz" >> $GITHUB_ENV ;;
+          esac
+
+      - name: Package
         env:
           PACKAGE_ARCH: ${{ matrix.package_arch }}
         run: |
-          make examples
+          make package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.package_name }}-${{ matrix.package_arch }}-package
+          path: |
+            ${{ env.build_dir }}/_dist/${{ env.package_name }}-${{ env.PACKAGE_VERSION }}-${{ matrix.package_arch }}.${{ env.PACKAGE_EXT }}
+          retention-days: 1
 
   release:
     if: startsWith(github.ref, 'refs/tags/')
@@ -88,3 +106,56 @@ jobs:
         run: |
           gh release create "$tag" \
             --notes-from-tag
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    needs: [release]
+    strategy:
+      matrix:
+        package_arch:
+          - linux-amd64
+          - linux-x86
+          - linux-i386
+          - windows-x64
+          - windows-x86
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build package metadata
+        id: package_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: dse/ncodec
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: Get package version
+        if: startsWith(github.ref, 'refs/tags/')
+        id: package
+        run: |
+          echo "PACKAGE_VERSION=${{ fromJSON(steps.package_meta.outputs.json).labels['org.opencontainers.image.version'] }}" >> $GITHUB_ENV
+
+      - name: Set package extension
+        run: |
+          case "${{ matrix.package_arch }}" in
+            windows-*) echo "PACKAGE_EXT=zip" >> $GITHUB_ENV ;;
+            *)         echo "PACKAGE_EXT=tar.gz" >> $GITHUB_ENV ;;
+          esac
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: ${{ env.package_name }}-${{ matrix.package_arch }}-package
+          path: ${{ github.workspace }}/_dist
+
+      - name: Upload Release Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+        run: |
+          gh release upload "$tag" \
+            "${{ github.workspace }}/_dist/${{ env.package_name }}-${{ env.PACKAGE_VERSION }}-${{ matrix.package_arch }}.${{ env.PACKAGE_EXT }}"

@@ -80,6 +80,12 @@ examples:
 do-examples:
 	@for d in $(SUBDIRS); do ($(MAKE) -C $$d examples ); done
 
+.PHONY: package
+package: build
+	@${DOCKER_BUILDER_CMD} $(MAKE) do-package
+do-package:
+	@for d in $(SUBDIRS); do ($(MAKE) -C $$d package ); done
+
 .PHONY: test
 test: test_cmocka
 

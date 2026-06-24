@@ -51,7 +51,7 @@ examples: build
 	! -path './*LICENSE*' \
 	-printf '%s %P\n' | numfmt --to=iec --suffix=B --padding=6
 
-package:
+package: build
 	@echo "Package parameters:"
 	@echo "-------------------"
 	@echo "NAMESPACE : $(NAMESPACE)"

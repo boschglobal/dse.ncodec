@@ -15,38 +15,52 @@ SPDX-License-Identifier: Apache-2.0
 
 Network Codec Library (NCodec) of the Dynamic Simulation Environment (DSE) Core Platform.
 
-![NCodec Simple Arch](doc/static/ncodec-simple-arch.png)
+NCodec provides C-based codecs and interfaces for exchanging network messages in simulations. It uses
+a simple stream-based data exchange and can be configured with bus models to create high-fidelity
+bus simulations. NCodec can be integrated directly from source code or loaded via a shared library.
 
-__Codecs__: [AB Codec](#ab-codec)
+
+__Codecs__: [AB Codec](#ab-codec) _(CAN/FlexRay/IP and PDU based networks)_
+<br/>
+__Bus Models__: [FlexRay](#mime-type---pdu-interface)
 <br/>
 __Integrations__:
-[DSE ModelC][dse_modelc] ([trace][dse_modelc_trace] code)
-/ [DSE FMI][dse_fmi] (esp. FMI 2)
+[DSE ModelC][dse_modelc]
+/ [DSE FMI][dse_fmi]
 / [DSE Network][dse_network]
+
+
+### Contents
+
+- [Usage](#usage)
+  - [Code Sample](#code-sample-with-ab-codec)
+  - [CMake Build Integration](#cmake-build-integration)
+- [Codecs](#codecs)
+  - [AB Codec](#ab-codec)
+- [Build](#build)
+  - [Package Layout](#package-layout)
 
 
 ### Project Structure
 
 ```text
 dse.ncodec
-├── doc/content                 Documentation content
+├── doc/content             # Content for documentation systems
 ├── dse/ncodec
-│   ├── codec/ab                Automotive-Bus (AB) Codec implementation
-│   │   ├── flexray/            FlexRay bus model implementation
-│   │   └── flexray_pop/        FlexRay point-of-presence bus model implementation
-│   ├── examples/               Examples for the AB Codec
+│   ├── codec/ab            # Automotive Bus (AB) codec implementation
+│   │   ├── flexray/        # FlexRay bus model implementation
+│   │   └── flexray_pop/    # FlexRay point-of-presence bus model implementation
 │   ├── interface
-│   │   ├── frame.h             Frame-based message interface
-│   │   └── pdu.h               PDU-based message interface
+│   │   ├── frame.h         # Frame-based message interface
+│   │   └── pdu.h           # PDU-based message interface
 │   ├── stream
-│   │   └── buffer.h            Buffer stream implementation
-│   ├── codec.c                 NCodec API implementation
-│   └── codec.h                 NCodec API headers
-├── extra/                      Build infrastructure
-├── licenses/                   Third-party licenses
-└── tests/                      Unit and end-to-end tests
+│   │   └── buffer.h        # Buffer stream implementation
+│   ├── codec.c             # NCodec API implementation
+│   └── codec.h             # NCodec API headers
+├── extra                   # Build infrastructure
+├── licenses                # Third-party licenses
+└── tests                   # Unit and end-to-end tests
 ```
-
 
 
 ## Usage
@@ -85,7 +99,45 @@ int cosim_step(NCODEC* nc)
 }
 ```
 
-For more information about the NCodec API, including a complete example, see the [Network Codec API Reference](https://boschglobal.github.io/dse.doc/apis/ncodec/). For developer documentation related to DSE ModelC integration, see the [Developer Documentation](https://boschglobal.github.io/dse.doc/docs/devel/ncodec/).
+More information about the NCodec API, including a complete example, is available in the [Network Codec API Reference](https://boschglobal.github.io/dse.doc/apis/ncodec/). Useful developer documentation relating to the DSE ModelC integration is available in the [Developer Documentation](https://boschglobal.github.io/dse.doc/docs/devel/ncodec/).
+
+
+### CMake Build Integration
+
+__CMakeLists.txt__
+```cmake
+include(FetchContent)
+FetchContent_Declare(dse_ncodec
+    URL           $ENV{DSE_NCODEC_URL}
+    SOURCE_SUBDIR dse/ncodec
+)
+FetchContent_MakeAvailable(dse_ncodec)
+
+add_library(some_lib)
+target_include_directories(some_lib
+    PRIVATE
+        ${dse_ncodec_SOURCE_DIR}
+)
+target_link_libraries(some_lib
+    PUBLIC
+        ab-codec
+)
+```
+
+__Makefile__
+```makefile
+DSE_NCODEC_REPO ?= https://github.com/boschglobal/dse.ncodec
+DSE_NCODEC_VERSION ?= 1.1.0
+export DSE_NCODEC_URL ?= $(DSE_NCODEC_REPO)/archive/refs/tags/v$(DSE_NCODEC_VERSION).zip
+
+.PHONY: build
+build:
+    $(MAKE) build-some_lib
+```
+
+## Architecture
+
+![NCodec Simple Arch](doc/static/ncodec-simple-arch.png)
 
 
 ## Codecs
@@ -139,8 +191,8 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 | Field               | Type                 | Value                  |  CAN             | FlexRay        | IP               | PDU              | Struct           |
 | :---                | :---:                | :---:                  | :---:            | :---:          | :---:            | :---:            | :---:            |
 | <var>ecu_id</var>   | <code>uint8_t</code> | 0[^pop], 1..           | &check;&check;   | &check;&check; | &check;&check;   | &check;&check;   | &check;&check;   |
-| <var>cc_id</var>    | <code>uint8_t</code> | 0 \|1                  | -                | &check;        | -                | -                | -                |
-| <var>swc_id</var>   | <code>uint8_t</code> | 0 ..                   | &check;[^swc_id] | &check;        | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
+| <var>cc_id</var>    | <code>uint8_t</code> | 0 \| 1                 | -                | &check;        | -                | -                | -                |
+| <var>swc_id</var>   | <code>uint8_t</code> | 0..                    | &check;[^swc_id] | &check;        | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
 | <var>name</var>     | <code>string</code>  |                        | &check;[^name]   | &check;[^name] | &check;[^name]   | &check;[^name]   | &check;[^name]   |
 | <var>model</var>    | <code>string</code>  | `flexray`              | -                | &check;&check; | -                | -                | -                |
 | <var>mode</var>     | <code>string</code>  | `pop`                  | -                | &check;        | -                | -                | -                |
@@ -158,35 +210,49 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 ## Build
 
 ```bash
-# Get the repo.
-$ git clone https://github.com/boschglobal/dse.ncodec.git
-$ cd dse.ncodec
+# Clone the repository.
+git clone https://github.com/boschglobal/dse.ncodec.git
+cd dse.ncodec
 
 # Optionally set builder images.
-$ export GCC_BUILDER_IMAGE=ghcr.io/boschglobal/dse-gcc-builder:latest
+export GCC_BUILDER_IMAGE=ghcr.io/boschglobal/dse-gcc-builder:latest
 
 # Build.
-$ make
+make
 
 # Run tests.
-$ make test
+make test
 
-# Update source files (pull in changes).
-$ make update
+# Update source files.
+make update
 
 # Generate documentation.
-$ make generate
+make generate
 
-# Remove (clean) temporary build artifacts.
-$ make clean
-$ make cleanall
+# Clean build artifacts.
+make clean
+make cleanall
+```
+
+
+### Package Layout
+
+The AB Codec install target is packaged under the following directory layout:
+
+```text
+build/_out/
+├── abcodec/
+│   ├── lib/
+│   │   └── libabcodec.so   # AB Codec shared library
+│   └── include/            # AB Codec headers
+├── licenses/               # License files
+└── doc/                    # Documentation.
 ```
 
 
 ## Contribute
 
 Please refer to the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
-
 
 
 ## License
@@ -214,18 +280,17 @@ See the [LICENSE](LICENSE) and [NOTICE](./NOTICE) files for details.
 
 <!--- Integration Links --->
 [dse_modelc]: https://github.com/boschglobal/dse.modelc/blob/main/dse/modelc/model/ncodec.c
-[dse_modelc_trace]: https://github.com/boschglobal/dse.modelc/blob/main/dse/modelc/model/trace.c
 [dse_fmi]: https://github.com/boschglobal/dse.fmi/blob/main/dse/fmu/ncodec.c
 [dse_network]: https://github.com/boschglobal/dse.network/blob/main/dse/network/encoder.c
 
 <!--- Footnotes --->
-[^lin]: LIN Support planned.
+[^lin]: LIN Support is planned.
 
 [^fmi2]: Via FMI 2 String Variables using ASCII85 encoding ([ascii85.c][stream_ascii85]).
 
-[^poc]: Sets the initial POC State, e.g. 5 = NormalActive (see `NCodecPduFlexrayPocState` in [interface/pdu.h][pdu_h] for all POC states). Otherwise POC State is set by the FlexRay model according to its mode-of-operation.
+[^poc]: Sets the initial POC State, e.g. 5 = NormalActive (see `NCodecPduFlexrayPocState` in [interface/pdu.h][pdu_h] for all POC states). Otherwise POC State is set by the FlexRay model according to its mode of operation.
 
-[^pop]: A value of 0 may only configured for a Point of Presence (PoP) node (i.e. a Gateway model connecting a NCodec network to an external Virtual Bus).
+[^pop]: A value of 0 may only be configured for a Point of Presence (PoP) node (i.e. a Gateway model connecting a NCodec network to an external Virtual Bus).
 
 [^swc_id]: Message filtering on `swc_id` (i.e. filter if Tx Node = Rx Node) is
 only enabled when this parameter is set.

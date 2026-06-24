@@ -67,10 +67,40 @@ install(
         ${REPO_DIR}/licenses/
     DESTINATION
         licenses
+    COMPONENT
+        licenses
 )
 install(
     FILES
         ${CMAKE_BINARY_DIR}/compile_commands.json
     DESTINATION
         doc
+    COMPONENT
+        doc
 )
+
+
+# Package
+# =======
+set(CPACK_SYSTEM_NAME "$ENV{PACKAGE_ARCH}")
+set(CPACK_PACKAGE_VENDOR "Robert Bosch GmbH")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "DSE Network Codec")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_OUTPUT_FILE_PREFIX "${CMAKE_BINARY_DIR}/_dist")
+set(CPACK_PACKAGE_CHECKSUM "SHA256")
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
+if(WIN32)
+    set(CPACK_GENERATOR "ZIP")
+else()
+    set(CPACK_GENERATOR "TGZ")
+endif()
+set(CPACK_PACKAGE_FILE_NAME
+    "NCodec-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}"
+)
+set(CPACK_COMPONENTS_ALL
+    abcodec
+    licenses
+    doc
+)
+
+include(CPack)
