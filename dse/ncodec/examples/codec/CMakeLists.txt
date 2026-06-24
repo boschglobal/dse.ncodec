@@ -8,6 +8,28 @@ project(Codec_Example)
 set(EXAMPLE_PATH "examples/codec")
 
 
+# External Project - dlfcn-win32
+# ------------------------------
+if(WIN32)
+set(DLFCNWIN32_SOURCE_DIR "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32/src")
+set(DLFCNWIN32_BINARY_DIR "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32-build/lib")
+find_library(DLFCNWIN32_LIB
+    NAMES
+        libdl.a
+    PATHS
+        ${DLFCNWIN32_BINARY_DIR}
+    REQUIRED
+    NO_DEFAULT_PATH
+)
+add_library(dl STATIC IMPORTED GLOBAL)
+set_target_properties(dl
+    PROPERTIES
+        IMPORTED_LOCATION "${DLFCNWIN32_LIB}"
+        INTERFACE_INCLUDE_DIRECTORIES "${DLFCNWIN32_SOURCE_DIR}"
+)
+endif()
+
+
 # Targets
 # =======
 add_library(codec

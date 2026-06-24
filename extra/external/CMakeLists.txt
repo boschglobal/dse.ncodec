@@ -54,6 +54,25 @@ FetchContent_Declare(dse_clib
 FetchContent_MakeAvailable(dse_clib)
 
 
+# dlfcn-win32
+# -----------
+if(NOT WIN32)
+    set(DLFCNWIN32_BUILD_COMMAND "")
+endif()
+ExternalProject_Add(dlfcnwin32
+    URL                 ${ExternalProject__DLFCNWIN32__URL}
+    HTTP_USERNAME       ${ExternalProject__DLFCNWIN32__USERNAME}
+    HTTP_PASSWORD       ${ExternalProject__DLFCNWIN32__PASSWORD}
+    SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32"
+    BINARY_DIR          "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32-build"
+    CMAKE_ARGS
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DBUILD_SHARED_LIBS=OFF
+        -DBUILD_TESTS=OFF
+    BUILD_COMMAND       ${DLFCNWIN32_BUILD_COMMAND}
+    INSTALL_COMMAND     ""
+)
+
 
 # OSS Target
 # ==========
@@ -68,3 +87,4 @@ endfunction()
 # add_dependencies(oss)
 oss_copy(${dse_clib_SOURCE_DIR} boschglobal/automotive-bus-schema)
 oss_copy(${dse_clib_SOURCE_DIR} boschglobal/dse.clib)
+oss_copy($ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32    dlfcn-win32/dlfcn-win32)

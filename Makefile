@@ -169,8 +169,8 @@ super-linter:
 
 .PHONY: arch
 arch:
-	PACKAGE_ARCH=linux-x86 $(MAKE) cleanall build
-	PACKAGE_ARCH=linux-i386 $(MAKE) cleanall build
-	PACKAGE_ARCH=windows-x64 $(MAKE) cleanall build
-	PACKAGE_ARCH=windows-x86 $(MAKE) cleanall build
+	PACKAGE_ARCH=linux-x86 $(MAKE) cleanall build examples package
+	PACKAGE_ARCH=linux-i386 $(MAKE) cleanall build examples package
+	PACKAGE_ARCH=windows-x64 $(MAKE) cleanall build examples package
+	PACKAGE_ARCH=windows-x86 $(MAKE) cleanall build examples package
 	$(MAKE) cleanall build

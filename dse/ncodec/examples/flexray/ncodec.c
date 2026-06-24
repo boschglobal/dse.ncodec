@@ -15,14 +15,14 @@ static void trace_read(NCODEC* nc, NCodecMessage* m)
 {
     UNUSED(nc);
     NCodecPdu* msg = m;
-    printf("TRACE RX: %02d (length=%lu)\n", msg->id, msg->payload_len);
+    printf("TRACE RX: %02d (length=%zu)\n", msg->id, msg->payload_len);
 }
 
 static void trace_write(NCODEC* nc, NCodecMessage* m)
 {
     UNUSED(nc);
     NCodecPdu* msg = m;
-    printf("TRACE TX: %02d (length=%lu)\n", msg->id, msg->payload_len);
+    printf("TRACE TX: %02d (length=%zu)\n", msg->id, msg->payload_len);
 }
 
 NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream)

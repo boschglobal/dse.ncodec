@@ -20,14 +20,14 @@ static void trace_read(NCODEC* nc, NCodecMessage* m)
 {
     UNUSED(nc);
     NCodecCanMessage* msg = m;
-    printf("TRACE RX: %02d (length=%lu)\n", msg->frame_id, msg->len);
+    printf("TRACE RX: %02d (length=%zu)\n", msg->frame_id, msg->len);
 }
 
 static void trace_write(NCODEC* nc, NCodecMessage* m)
 {
     UNUSED(nc);
     NCodecCanMessage* msg = m;
-    printf("TRACE TX: %02d (length=%lu)\n", msg->frame_id, msg->len);
+    printf("TRACE TX: %02d (length=%zu)\n", msg->frame_id, msg->len);
 }
 
 
