@@ -50,7 +50,7 @@ int step(NCODEC* nc)
                               }));
     CHECK_RC(ncodec_flush(nc)); /* Call after writing PDUs. */
 
-    return rc;
+    return 0;
 }
 
 int main(int argc, char* argv[])
@@ -63,22 +63,16 @@ int main(int argc, char* argv[])
     NCodecStreamVTable* stream = ncodec_buffer_stream_create(BUFFER_LEN);
     NCODEC*             nc = ncodec_open(MIMETYPE, stream);
 
-    /* Push a PDU onto the stream (note operating in loopback mode). */
-    CHECK_RC(ncodec_write(nc, &(struct NCodecPdu){
-                                  .id = 42,
-                                  .payload = (uint8_t*)greeting,
-                                  .payload_len = strlen(greeting),
-                              }));
-    CHECK_RC(ncodec_flush(nc));
-    CHECK_RC(ncodec_seek(nc, 0, NCODEC_SEEK_SET));
-
     /* Complete a typical Co-Simulation step. */
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 5; i++) {
         if ((rc = step(nc)) != 0) break;
+
+        /* Effect SimBus exchange, seek to start of stream. */
+        CHECK_RC(ncodec_seek(nc, 0, NCODEC_SEEK_SET));
     }
 
     /* Close the NCodec. */
     ncodec_close(nc);
 
-    return rc;
+    return 0;
 }
