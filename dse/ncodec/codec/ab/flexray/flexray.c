@@ -22,9 +22,12 @@ ABCodecInstance* _ab_nc_copy(ABCodecInstance* nc)
     nc_copy->fbs_builder_initalized = false;
     nc_copy->fbs_stream_initalized = false;
     nc_copy->reader = (ABCodecReader){ 0 };
+    nc_copy->free_list = (Vector){ 0 };
+    nc_copy->trace.filename = NULL;
+    nc_copy->trace.file = NULL;
 
 /* Rebuild various objects in the model NC. */
-#define BUFFER_LEN 1024
+    enum { BUFFER_LEN = 1024 };
     flatcc_builder_init(&nc_copy->fbs_builder);
     nc_copy->fbs_builder.buffer_flags |= flatcc_builder_with_size;
     nc_copy->fbs_stream_initalized = false;
@@ -248,7 +251,7 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
 
     /* Write the TX PDUs. */
     _write_vector_lpdus(
-        bm, (NCODEC*)bm->nc, &m->engine.txrx_list, (NCODEC*)bm->nc);
+        bm, (NCODEC*)bm->nc, &m->engine.txrx_list, (NCODEC*)bm->log_nc);
     if (bm->trace.nc != NULL) {
         _write_vector_lpdus(
             bm, (NCODEC*)bm->trace.nc, &bm->trace.tx_list, NULL);
