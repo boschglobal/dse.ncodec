@@ -98,6 +98,9 @@ typedef struct FlexrayBusModel {
 
     /* Logging interface, duplicated from ABCodecBusModel. */
     ABCodecInstance* log_nc;
+
+    /* Trace interface, duplicated from ABCodecBusModel. */
+    Vector* trace_tx_list;
 } FlexrayBusModel;
 
 
