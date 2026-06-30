@@ -457,9 +457,21 @@ NCODEC* ncodec_create(const char* mime_type)
 #else
 #define PATH_SEP "/"
 #endif
-#define TRACE_FILE_FMT "%s" PATH_SEP "ncodec.%s.bin"
-#define TRACE_NAME_FMT "%d-%d-%d"
+#define TRACE_FILE_FMT            "%s" PATH_SEP "ncodec.%s.bin"
+#define TRACE_NAME_FMT            "%d-%d-%d"
+#define ENV_NCODEC_TRACE_PATH_ALT "%s_%d_%d_%d"
     const char* trace_path = getenv(ENV_NCODEC_TRACE_PATH);
+    if (trace_path == NULL) {
+        /* Alternative focused ENV_NCODEC_TRACE_PATH. */
+        int   len = snprintf(NULL, 0, ENV_NCODEC_TRACE_PATH_ALT,
+              ENV_NCODEC_TRACE_PATH, _nc->ecu_id, _nc->cc_id, _nc->swc_id);
+        char* env_name = malloc((size_t)len + 1);
+        snprintf(env_name, (size_t)len + 1, ENV_NCODEC_TRACE_PATH_ALT,
+            ENV_NCODEC_TRACE_PATH, _nc->ecu_id, _nc->cc_id, _nc->swc_id);
+        trace_path = getenv(env_name);
+        free(env_name);
+    }
+
     if (trace_path) {
         char* trace_name = NULL;
         if (_nc->name == NULL) {

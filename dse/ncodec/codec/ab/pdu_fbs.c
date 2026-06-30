@@ -644,14 +644,17 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
             }
 
             /* Trace - stream from BusModel (_all_ Tx messages). */
-            if (nc->trace.file && reader->bus_model.trace.nc) {
+            if (reader->bus_model.trace.nc) {
                 ABCodecInstance* trace_nc = reader->bus_model.trace.nc;
-                uint8_t*         buf = NULL;
-                size_t           len = 0;
+                ncodec_flush((NCODEC*)trace_nc);
                 ncodec_seek((NCODEC*)trace_nc, 0, NCODEC_SEEK_SET);
-                trace_nc->c.stream->read(
-                    (NCODEC*)trace_nc, &buf, &len, NCODEC_POS_NC);
-                fwrite(buf, sizeof(buf[0]), len, nc->trace.file);
+                if (nc->trace.file) {
+                    uint8_t* buf = NULL;
+                    size_t   len = 0;
+                    trace_nc->c.stream->read(
+                        (NCODEC*)trace_nc, &buf, &len, NCODEC_POS_NC);
+                    fwrite(buf, sizeof(buf[0]), len, nc->trace.file);
+                }
             }
 
             /* Done with Model NCodec/Stream, reset the reader. */
@@ -661,9 +664,18 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
     reader->stage.model_consumed = true;
 
     /* Increment the Simulation Time.
-    Calls to pdu_write use this value and not simulation_time.value. */
+    Calls to pdu_write() use this value and not simulation_time.value. */
     nc->simulation_time.write_value = nc->simulation_time.value;
     _advance_simulation_time(nc);
+
+    /* Propagate the simulation time to other NCodec objects.
+    These may also receive calls to pdu_write(). */
+    if (reader->bus_model.nc != NULL) {
+        reader->bus_model.nc->simulation_time = nc->simulation_time;
+    }
+    if (reader->bus_model.trace.nc != NULL) {
+        reader->bus_model.trace.nc->simulation_time = nc->simulation_time;
+    }
 
     /* No more PDUs. */
     return -ENOMSG;

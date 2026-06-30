@@ -95,7 +95,7 @@ int cosim_step(NCODEC* nc)
     }));
     CHECK_RC(ncodec_flush(nc)); /* Call after writing PDUs. */
 
-    return rc;
+    return 0;
 }
 ```
 
@@ -158,7 +158,7 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 | MIME type        | `type=pdu; schema=fbs`                           | `type=frame; schema=fbs`                                                         |
 | Language Support | C/C++ <br> Go <br> Python                        | C/C++                                                                            |
 | Intergrations    | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] <br> [DSE Network][dse_network] |
-| Trace File       | enabled by env <br> `NCODEC_TRACE_PATH`[^trace]  |                                                                                  |
+| Trace File       | enabled by env <br> `NCODEC_TRACE_PATH`[^trace] <br> `NCODEC_TRACE_PATH_<ecu>_<cc>_<swc>_`[^trace2]  |                                                                                  |
 
 
 #### Network Support
@@ -301,3 +301,5 @@ only enabled when this parameter is set.
 [^name]: Name of the NCodec (optional). Used in logging and trace files.
 
 [^trace]: Trace files are named `ncodec.<name>.bin`. If `name` is not set in the MIME type then `<ecu_id>-<cc_id>-<swc_id>` is used.
+
+[^trace2]: When several NCodec objects operate in the same process use a targeted trace envar to enable a specific trace. Use `name`[^name] to adjust the trace file name.

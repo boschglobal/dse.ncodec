@@ -6,23 +6,34 @@ cmake_minimum_required(VERSION 3.21)
 
 project(AB_Codec_Examples)
 
-set(TARGET_NAME "ab-cosim")
+set(TARGET_AB_PDU "ab-pdu-cosim")
 set(EXAMPLE_PATH "examples/ab-codec")
-add_executable(${TARGET_NAME}
-    cosim.c
+add_executable(${TARGET_AB_PDU}
+    pdu_cosim.c
     ncodec.c
 )
-target_link_libraries(${TARGET_NAME}
+target_link_libraries(${TARGET_AB_PDU}
     PUBLIC
         ab-codec
 )
-target_include_directories(${TARGET_NAME}
-    PRIVATE
-        ${DSE_NCODEC_INCLUDE_DIR}
-        ${DSE_CLIB_INCLUDE_DIR}
-        ${FLATCC_INCLUDE_DIR}
+install(TARGETS ${TARGET_AB_PDU}
+    RUNTIME DESTINATION
+        ${EXAMPLE_PATH}/
 )
-install(TARGETS ${TARGET_NAME}
+
+set(TARGET_AB_FRAY "ab-fray-cosim")
+set(EXAMPLE_PATH "examples/ab-codec")
+add_executable(${TARGET_AB_FRAY}
+    fray_cosim.c
+    fray_config.c
+    ncodec.c
+    simbus.c
+)
+target_link_libraries(${TARGET_AB_FRAY}
+    PUBLIC
+        ab-codec
+)
+install(TARGETS ${TARGET_AB_FRAY}
     RUNTIME DESTINATION
         ${EXAMPLE_PATH}/
 )

@@ -1,13 +1,13 @@
 cd $REPODIR
-env abcosim=dse/ncodec/build/_out/examples/ab-codec/ab-cosim
+env abcosim=dse/ncodec/build/_out/examples/ab-codec/ab-pdu-cosim
 
-# TEST: ab-codec example
+# TEST: ab-pdu-cosim example
 exec valgrind -q --leak-check=yes --error-exitcode=88 $abcosim
 stdout 'TRACE TX: 42 \(length=11\)'
 stdout 'TRACE RX: 42 \(length=11\)'
 stdout 'Message is: Hello World'
 
-# TEST: ab-codec with trace
+# TEST: ab-pdu-cosim with trace
 env NCODEC_TRACE_PATH=$WORKDIR
 exec valgrind -q --leak-check=yes --error-exitcode=88 $abcosim
 exists $WORKDIR/ncodec.example.bin

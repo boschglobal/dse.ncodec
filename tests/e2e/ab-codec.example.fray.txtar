@@ -1,0 +1,47 @@
+cd $REPODIR
+env abcosim=dse/ncodec/build/_out/examples/ab-codec/ab-fray-cosim
+
+# TEST: ab-fray-cosim example
+exec valgrind -q --leak-check=yes --error-exitcode=88 $abcosim
+! stdout 'ECU 1 \(@0.0055\) -> Message is: Hello World from ECU 1'
+stdout 'ECU 1 \(@0.0055\) -> Message is: Hello World from ECU 2'
+stdout 'ECU 1 \(@0.0055\) -> Message is: Hello World from ECU 3'
+stdout 'ECU 2 \(@0.0055\) -> Message is: Hello World from ECU 1'
+! stdout 'ECU 2 \(@0.0055\) -> Message is: Hello World from ECU 2'
+stdout 'ECU 2 \(@0.0055\) -> Message is: Hello World from ECU 3'
+stdout 'ECU 3 \(@0.0055\) -> Message is: Hello World from ECU 1'
+stdout 'ECU 3 \(@0.0055\) -> Message is: Hello World from ECU 2'
+! stdout 'ECU 3 \(@0.0055\) -> Message is: Hello World from ECU 3'
+
+# TEST: ab-fray-cosim with trace
+env NCODEC_TRACE_PATH_2_0_0=$WORKDIR
+exec valgrind -q --leak-check=yes --error-exitcode=88 $abcosim
+exists $WORKDIR/ncodec.fray.bin
+
+# TEST: Print the Trace
+exec sh -e $WORK/trace.sh
+exists $WORKDIR/ncodec.fray.ECU2.asc
+exec sed -i -E 's/[A-Za-z]{3} [A-Za-z]{3} [0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3} [a-z]{2} [0-9]{4}/DATETIME/g' $WORKDIR/ncodec.fray.ECU2.asc
+cmp $WORKDIR/ncodec.fray.ECU2.asc $WORK/expect.trace
+
+
+-- trace.sh --
+SIMER="${SIMER:-ghcr.io/boschglobal/dse-simer:latest}"
+docker run --name simer -i --rm \
+    -v $ENTRYWORKDIR:/sim \
+    --entrypoint /usr/local/bin/trace \
+    $SIMER convert --asc --name ECU2 --tx 2 ncodec.fray.bin
+
+-- expect.trace --
+date DATETIME
+base hex  timestamps absolute
+internal events logged
+Begin Triggerblock DATETIME
+        0.0000 Start of measurement
+        0.0000  Fr  0 Rx  0    7  0  1  40 0x00 0x0000 0 0x00 48 65 6c 6c 6f 20 57 6f 72 6c 64 20 66 72 6f 6d 20 45 43 55 20 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        0.0000  Fr  0 Tx  0    8  0  1  40 0x00 0x0000 0 0x00 48 65 6c 6c 6f 20 57 6f 72 6c 64 20 66 72 6f 6d 20 45 43 55 20 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        0.0050  Fr  0 Rx  1    7  0  1  40 0x00 0x0000 0 0x00 48 65 6c 6c 6f 20 57 6f 72 6c 64 20 66 72 6f 6d 20 45 43 55 20 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        0.0050  Fr  0 Tx  1    8  0  1  40 0x00 0x0000 0 0x00 48 65 6c 6c 6f 20 57 6f 72 6c 64 20 66 72 6f 6d 20 45 43 55 20 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        0.0050  Fr  0 Rx  1    9  1  2  40 0x00 0x0000 0 0x00 48 65 6c 6c 6f 20 57 6f 72 6c 64 20 66 72 6f 6d 20 45 43 55 20 33 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+End Triggerblock
+

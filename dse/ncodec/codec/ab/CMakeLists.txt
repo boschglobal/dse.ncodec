@@ -40,7 +40,7 @@ add_library(ab-codec OBJECT
         ${FLATCC_SOURCE_DIR}/refmap.c
 )
 target_include_directories(ab-codec
-    PRIVATE
+    PUBLIC
         ${FLATCC_INCLUDE_DIR}
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}

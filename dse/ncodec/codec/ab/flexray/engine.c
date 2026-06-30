@@ -313,8 +313,8 @@ static void process_slot(FlexrayBusModel* m)
             vector_push(&m->engine.txrx_list, &tx_lpdu);
         }
 
-        /* Push Tx to the trace. */
         if (m->trace_tx_list != NULL) {
+            /* Push _all_ Tx to the trace. */
             vector_push(m->trace_tx_list, &tx_lpdu);
         }
     }

@@ -26,7 +26,7 @@ ABCodecInstance* _ab_nc_copy(ABCodecInstance* nc)
     nc_copy->trace.filename = NULL;
     nc_copy->trace.file = NULL;
 
-/* Rebuild various objects in the model NC. */
+    /* Rebuild various objects in the model NC. */
     enum { BUFFER_LEN = 1024 };
     flatcc_builder_init(&nc_copy->fbs_builder);
     nc_copy->fbs_builder.buffer_flags |= flatcc_builder_with_size;
@@ -123,68 +123,6 @@ bool flexray_bus_model_consume(ABCodecBusModel* bm, NCodecPdu* pdu)
     return true;
 }
 
-static void _write_vector_lpdus(
-    ABCodecBusModel* bm, NCODEC* nc, Vector* list, NCODEC* log_nc)
-{
-    FlexrayBusModel*               m = (FlexrayBusModel*)bm->model;
-    NCodecPduFlexrayNodeIdentifier node_ident = m->node_ident;
-
-    for (size_t i = 0; i < vector_len(list); i++) {
-        FlexrayLpdu* lpdu = NULL;
-        vector_at(list, i, &lpdu);
-        const uint8_t* payload = NULL;
-        uint8_t        payload_len = 0;
-        if (lpdu->lpdu_config.direction == NCodecPduFlexrayDirectionRx &&
-            lpdu->null_frame == false) {
-            payload = lpdu->payload;
-            payload_len = lpdu->lpdu_config.payload_length;
-        }
-        NCodecPduFlexrayLpduStatus status = NCodecPduFlexrayLpduStatusNone;
-        switch (lpdu->lpdu_config.status) {
-        case NCodecPduFlexrayLpduStatusTransmitted:
-        case NCodecPduFlexrayLpduStatusNotTransmitted:
-            status = NCodecPduFlexrayLpduStatusTransmitted;
-            break;
-        case NCodecPduFlexrayLpduStatusReceived:
-        case NCodecPduFlexrayLpduStatusNotReceived:
-            if (lpdu->null_frame) {
-                status = NCodecPduFlexrayLpduStatusNotReceived;
-            } else {
-                status = NCodecPduFlexrayLpduStatusReceived;
-            }
-            break;
-        default:
-            continue;
-        }
-        if (log_nc != NULL) {
-            log_info(log_nc,
-                "FlexRay%s: Progress: (%u:%u:%u) LPDU %04x (len=%u) "
-                "frame_index=%u "
-                "status=%u, null=%u",
-                m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
-                node_ident.node.swc_id, lpdu->lpdu_config.slot_id, payload_len,
-                lpdu->lpdu_config.index.frame_table, status, lpdu->null_frame);
-        }
-        ncodec_write(
-            nc, &(NCodecPdu){ .ecu_id = m->node_ident.node.ecu_id,
-                    .swc_id = m->node_ident.node.swc_id,
-                    .id = lpdu->lpdu_config.slot_id,
-                    .payload_len = payload_len,
-                    .payload = payload,
-                    .transport_type = NCodecPduTransportTypeFlexray,
-                    .transport.flexray = { .node_ident = m->node_ident,
-                        .metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
-                        .metadata.lpdu = {
-                            .cycle = lpdu->cycle,
-                            .macrotick = lpdu->macrotick,
-                            .frame_config_index =
-                                lpdu->lpdu_config.index.frame_table,
-                            .status = status,
-                            .null_frame = lpdu->null_frame,
-                        } } });
-    }
-}
-
 void flexray_bus_model_progress(ABCodecBusModel* bm)
 {
     FlexrayBusModel*               m = (FlexrayBusModel*)bm->model;
@@ -245,16 +183,90 @@ void flexray_bus_model_progress(ABCodecBusModel* bm)
                 .channel[0].tcvr_state = ns.tcvr_state,
             } } };
     ncodec_write((NCODEC*)bm->nc, &status_pdu);
-    if (bm->trace.nc != NULL) {
-        ncodec_write((NCODEC*)bm->trace.nc, &status_pdu);
-    }
 
     /* Write the TX PDUs. */
-    _write_vector_lpdus(
-        bm, (NCODEC*)bm->nc, &m->engine.txrx_list, (NCODEC*)bm->log_nc);
+    for (size_t i = 0; i < vector_len(&m->engine.txrx_list); i++) {
+        FlexrayLpdu* lpdu = NULL;
+        vector_at(&m->engine.txrx_list, i, &lpdu);
+        const uint8_t* payload = NULL;
+        uint8_t        payload_len = 0;
+        if (lpdu->lpdu_config.direction == NCodecPduFlexrayDirectionRx &&
+            lpdu->null_frame == false) {
+            payload = lpdu->payload;
+            payload_len = lpdu->lpdu_config.payload_length;
+        }
+        NCodecPduFlexrayLpduStatus status = NCodecPduFlexrayLpduStatusNone;
+        switch (lpdu->lpdu_config.status) {
+        case NCodecPduFlexrayLpduStatusTransmitted:
+        case NCodecPduFlexrayLpduStatusNotTransmitted:
+            status = NCodecPduFlexrayLpduStatusTransmitted;
+            break;
+        case NCodecPduFlexrayLpduStatusReceived:
+        case NCodecPduFlexrayLpduStatusNotReceived:
+            if (lpdu->null_frame) {
+                status = NCodecPduFlexrayLpduStatusNotReceived;
+            } else {
+                status = NCodecPduFlexrayLpduStatusReceived;
+            }
+            break;
+        default:
+            continue;
+        }
+        log_info(bm->log_nc,
+            "FlexRay%s: Progress: (%u:%u:%u) LPDU %04x (len=%u) frame_index=%u "
+            "status=%u, null=%u",
+            m->log_id, node_ident.node.ecu_id, node_ident.node.cc_id,
+            node_ident.node.swc_id, lpdu->lpdu_config.slot_id, payload_len,
+            lpdu->lpdu_config.index.frame_table, status, lpdu->null_frame);
+        ncodec_write((NCODEC*)bm->nc,
+            &(NCodecPdu){ .ecu_id = m->node_ident.node.ecu_id,
+                .swc_id = m->node_ident.node.swc_id,
+                .id = lpdu->lpdu_config.slot_id,
+                .payload_len = payload_len,
+                .payload = payload,
+                .transport_type = NCodecPduTransportTypeFlexray,
+                .transport.flexray = { .node_ident = m->node_ident,
+                    .metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
+                    .metadata.lpdu = {
+                        .cycle = lpdu->cycle,
+                        .macrotick = lpdu->macrotick,
+                        .frame_config_index =
+                            lpdu->lpdu_config.index.frame_table,
+                        .status = status,
+                        .null_frame = lpdu->null_frame,
+                    } } });
+    }
     if (bm->trace.nc != NULL) {
-        _write_vector_lpdus(
-            bm, (NCODEC*)bm->trace.nc, &bm->trace.tx_list, NULL);
+        for (size_t i = 0; i < vector_len(&bm->trace.tx_list); i++) {
+            FlexrayLpdu* lpdu = NULL;
+            vector_at(&bm->trace.tx_list, i, &lpdu);
+            const uint8_t* payload = NULL;
+            uint8_t        payload_len = 0;
+            /* All PDUs on the trace are Tx PDUs. */
+            if (lpdu->lpdu_config.direction == NCodecPduFlexrayDirectionTx &&
+                lpdu->null_frame == false) {
+                payload = lpdu->payload;
+                payload_len = lpdu->lpdu_config.payload_length;
+            }
+            /* Build a PDU based on the Tx PDU metadata (i.e. node_ident). */
+            ncodec_write((NCODEC*)bm->trace.nc,
+                &(NCodecPdu){ .ecu_id = lpdu->node_ident.node.ecu_id,
+                    .swc_id = lpdu->node_ident.node.swc_id,
+                    .id = lpdu->lpdu_config.slot_id,
+                    .payload_len = payload_len,
+                    .payload = payload,
+                    .transport_type = NCodecPduTransportTypeFlexray,
+                    .transport.flexray = { .node_ident = lpdu->node_ident,
+                        .metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
+                        .metadata.lpdu = {
+                            .cycle = lpdu->cycle,
+                            .macrotick = lpdu->macrotick,
+                            .frame_config_index =
+                                lpdu->lpdu_config.index.frame_table,
+                            .status = NCodecPduFlexrayLpduStatusTransmitted,
+                            .null_frame = lpdu->null_frame,
+                        } } });
+        }
     }
 }
 
