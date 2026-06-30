@@ -229,6 +229,11 @@ int calculate_budget(FlexrayBusModel* m, double step_size)
 
     /* Clear the TxRx list from previous step. */
     vector_clear(&m->engine.txrx_list, NULL, NULL);
+
+    /* Clear the trace objects. */
+    if (m->trace_tx_list != NULL) {
+        vector_clear(m->trace_tx_list, NULL, NULL);
+    }
     return 0;
 }
 
@@ -306,6 +311,11 @@ static void process_slot(FlexrayBusModel* m)
         tx_lpdu->macrotick = m->engine.pos_mt;
         if (tx_lpdu->node_ident.node_id == m->engine.node_ident.node_id) {
             vector_push(&m->engine.txrx_list, &tx_lpdu);
+        }
+
+        if (m->trace_tx_list != NULL) {
+            /* Push _all_ Tx to the trace. */
+            vector_push(m->trace_tx_list, &tx_lpdu);
         }
     }
 

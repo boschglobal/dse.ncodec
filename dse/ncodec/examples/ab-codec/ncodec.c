@@ -11,6 +11,7 @@
 
 #define UNUSED(x) ((void)x)
 
+bool trace_off = false;
 
 static void trace_payload(const uint8_t* payload, size_t len)
 {
@@ -37,7 +38,9 @@ static void trace_payload(const uint8_t* payload, size_t len)
 static void trace_read(NCODEC* nc, NCodecMessage* m)
 {
     UNUSED(nc);
+    if (trace_off) return;
     NCodecPdu* msg = m;
+    if (msg->id == 0) return; /* Non payload carrying PDU. */
     printf("TRACE RX: %02d (length=%zu)\n", msg->id, msg->payload_len);
     trace_payload(msg->payload, msg->payload_len);
 }
@@ -45,7 +48,9 @@ static void trace_read(NCODEC* nc, NCodecMessage* m)
 static void trace_write(NCODEC* nc, NCodecMessage* m)
 {
     UNUSED(nc);
+    if (trace_off) return;
     NCodecPdu* msg = m;
+    if (msg->id == 0) return; /* Non payload carrying PDU. */
     printf("TRACE TX: %02d (length=%zu)\n", msg->id, msg->payload_len);
     trace_payload(msg->payload, msg->payload_len);
 }

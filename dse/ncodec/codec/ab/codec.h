@@ -23,6 +23,7 @@ typedef struct ABCodecInstance ABCodecInstance;
 typedef struct ABCodecBusModel ABCodecBusModel;
 
 // typedef struct {} BUSMODEL;
+typedef void (*NCodecBusModelSetup)(ABCodecBusModel* bm);
 typedef bool (*NCodecBusModelConsume)(ABCodecBusModel* bm, NCodecPdu* pdu);
 typedef void (*NCodecBusModelProgress)(ABCodecBusModel* bm);
 typedef void (*NCodecBusModelClose)(ABCodecBusModel* bm);
@@ -33,6 +34,7 @@ typedef struct ABCodecBusModel {
     BUSMODEL*        model;
     ABCodecInstance* nc; /* Stream (via NC). */
     struct {
+        NCodecBusModelSetup    setup;
         NCodecBusModelConsume  consume;
         NCodecBusModelProgress progress;
         NCodecBusModelClose    close;
@@ -42,6 +44,11 @@ typedef struct ABCodecBusModel {
     /* Time properties - may be updated between calls. */
     double           simulation_time;
     double           step_size;
+    /* Trace interface (enabled when `trace.nc` is set). */
+    struct {
+        ABCodecInstance* nc; /* Stream (via NC). */
+        Vector           tx_list;
+    } trace;
 } ABCodecBusModel;
 
 
@@ -119,10 +126,14 @@ typedef struct ABCodecInstance {
     /* Free list (free called on truncate). */
     Vector free_list; /* void* references */
 
-    /* Trace interface. */
+    /* Trace Log interface (NCodecTraceVTable). */
     NCodecTraceLogLevel log_level;
-    char*               trace_filename;
-    FILE*               trace_file;
+
+    /* Trace File interface (NCODEC_TRACE_PATH). */
+    struct {
+        char* filename;
+        FILE* file;
+    } trace;
 
     /* Simulation Time. */
     struct {

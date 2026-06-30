@@ -33,6 +33,21 @@ SUBDIRS = extra/external $(NAMESPACE)/$(MODULE)
 
 
 ###############
+## Test Parameters.
+TESTSCRIPT_IMAGE       ?= ghcr.io/boschglobal/dse-testscript:latest
+TESTSCRIPT_E2E_FILES = $(shell find tests/e2e -type f -name "*.txtar" | sort)
+ifdef TEST
+TESTSCRIPT_E2E_FILES := $(TEST)
+endif
+ifdef SAVE
+TESTSCRIPT_E2E_SAVE := -work
+endif
+ifdef LOG
+TESTSCRIPT_E2E_LOG := -v
+endif
+
+
+###############
 ## Package parameters.
 export PACKAGE_VERSION ?= 0.0.1
 DIST_DIR := $(shell pwd -P)/$(NAMESPACE)/$(MODULE)/build/_dist
@@ -87,7 +102,7 @@ do-package:
 	@for d in $(SUBDIRS); do ($(MAKE) -C $$d package ); done
 
 .PHONY: test
-test: test_cmocka
+test: test_cmocka test_e2e
 
 .PHONY: update
 update:
@@ -133,6 +148,29 @@ oss:
 	cd $(OSS_DIR)/fmi3; rm -r $$(ls -A | grep -v headers)
 do-oss:
 	$(MAKE) -C extra/external oss
+
+.PHONY: test_e2e
+test_e2e:
+	@set -eu; \
+	for t in $(TESTSCRIPT_E2E_FILES); do \
+		echo "Running E2E Test: $$t"; \
+		export HOST_DOCKER_WORKSPACE=$$(pwd -P) ;\
+		export ENTRYWORKDIR=$$(mktemp -d) ;\
+		docker run -i --rm \
+			--network=host \
+			-e ENTRYHOSTDIR=$${HOST_DOCKER_WORKSPACE} \
+			-e ENTRYWORKDIR=$${ENTRYWORKDIR} \
+			-v /var/run/docker.sock:/var/run/docker.sock \
+			-v $${HOST_DOCKER_WORKSPACE}:/repo \
+			-v $${ENTRYWORKDIR}:/workdir \
+			$(TESTSCRIPT_IMAGE) $(TESTSCRIPT_E2E_LOG) $(TESTSCRIPT_E2E_SAVE) \
+				-e ENTRYHOSTDIR=$${HOST_DOCKER_WORKSPACE} \
+				-e ENTRYWORKDIR=$${ENTRYWORKDIR} \
+				-e REPODIR=/repo \
+				-e WORKDIR=/workdir \
+				-e PACKAGE_VERSION=$(PACKAGE_VERSION) \
+				$$t ;\
+	done;
 
 test_cmocka:
 ifeq ($(PACKAGE_ARCH), linux-amd64)

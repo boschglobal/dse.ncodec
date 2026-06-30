@@ -100,6 +100,15 @@ void free_codec(ABCodecInstance* _nc)
             (NCODEC*)_nc->reader.bus_model.nc);
         free(_nc->reader.bus_model.nc);
     }
+    if (_nc->reader.bus_model.trace.nc != NULL) {
+        destroy_free_list(_nc->reader.bus_model.trace.nc);
+        if (_nc->reader.bus_model.trace.nc->fbs_builder_initalized) {
+            flatcc_builder_clear(&_nc->reader.bus_model.trace.nc->fbs_builder);
+        }
+        _nc->reader.bus_model.trace.nc->c.stream->close(
+            (NCODEC*)_nc->reader.bus_model.trace.nc);
+        free(_nc->reader.bus_model.trace.nc);
+    }
     if (_nc->reader.bus_model.model != NULL) {
         if (_nc->reader.bus_model.vtable.close) {
             _nc->reader.bus_model.vtable.close(&_nc->reader.bus_model);
@@ -338,12 +347,12 @@ void codec_close(NCODEC* nc)
 {
     if (nc == NULL) return;
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
-    if (_nc->trace_file) {
-        log_notice(_nc, "Close trace file : %s", _nc->trace_filename);
-        fclose(_nc->trace_file);
-        _nc->trace_file = NULL;
+    if (_nc->trace.file) {
+        log_notice(_nc, "Close trace file : %s", _nc->trace.filename);
+        fclose(_nc->trace.file);
+        _nc->trace.file = NULL;
     }
-    free(_nc->trace_filename);
+    free(_nc->trace.filename);
     free_codec(_nc);
     free(nc);
 }
@@ -448,9 +457,21 @@ NCODEC* ncodec_create(const char* mime_type)
 #else
 #define PATH_SEP "/"
 #endif
-#define TRACE_FILE_FMT "%s" PATH_SEP "ncodec.%s.bin"
-#define TRACE_NAME_FMT "%d-%d-%d"
+#define TRACE_FILE_FMT            "%s" PATH_SEP "ncodec.%s.bin"
+#define TRACE_NAME_FMT            "%d-%d-%d"
+#define ENV_NCODEC_TRACE_PATH_ALT "%s_%d_%d_%d"
     const char* trace_path = getenv(ENV_NCODEC_TRACE_PATH);
+    if (trace_path == NULL) {
+        /* Alternative focused ENV_NCODEC_TRACE_PATH. */
+        int   len = snprintf(NULL, 0, ENV_NCODEC_TRACE_PATH_ALT,
+              ENV_NCODEC_TRACE_PATH, _nc->ecu_id, _nc->cc_id, _nc->swc_id);
+        char* env_name = malloc((size_t)len + 1);
+        snprintf(env_name, (size_t)len + 1, ENV_NCODEC_TRACE_PATH_ALT,
+            ENV_NCODEC_TRACE_PATH, _nc->ecu_id, _nc->cc_id, _nc->swc_id);
+        trace_path = getenv(env_name);
+        free(env_name);
+    }
+
     if (trace_path) {
         char* trace_name = NULL;
         if (_nc->name == NULL) {
@@ -465,17 +486,22 @@ NCODEC* ncodec_create(const char* mime_type)
 
         int len = snprintf(NULL, 0, TRACE_FILE_FMT, trace_path, trace_name);
         if (len > 0) {
-            _nc->trace_filename = malloc((size_t)len + 1);
-            snprintf(_nc->trace_filename, (size_t)len + 1, TRACE_FILE_FMT,
+            _nc->trace.filename = malloc((size_t)len + 1);
+            snprintf(_nc->trace.filename, (size_t)len + 1, TRACE_FILE_FMT,
                 trace_path, trace_name);
-            log_notice(_nc, "Create trace file : %s", _nc->trace_filename);
-            _nc->trace_file = fopen(_nc->trace_filename, "wb");
-            if (_nc->trace_file == NULL) {
+            log_notice(_nc, "Create trace file : %s", _nc->trace.filename);
+            _nc->trace.file = fopen(_nc->trace.filename, "wb");
+            if (_nc->trace.file == NULL) {
                 log_error(_nc, "Unable to open NCodec trace file (%s)",
-                    _nc->trace_filename);
+                    _nc->trace.filename);
+            }
+
+            /* Setup the Bus Model. */
+            if (_nc->reader.bus_model.vtable.setup != NULL) {
+                _nc->reader.bus_model.vtable.setup(&_nc->reader.bus_model);
             }
         } else {
-            _nc->trace_filename = NULL;
+            _nc->trace.filename = NULL;
         }
 
         free(trace_name);

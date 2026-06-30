@@ -1,0 +1,40 @@
+cd $REPODIR
+env abcosim=dse/ncodec/build/_out/examples/ab-codec/ab-pdu-cosim
+
+# TEST: ab-pdu-cosim example
+exec valgrind -q --leak-check=yes --error-exitcode=88 $abcosim
+stdout 'TRACE TX: 42 \(length=11\)'
+stdout 'TRACE RX: 42 \(length=11\)'
+stdout 'Message is: Hello World'
+
+# TEST: ab-pdu-cosim with trace
+env NCODEC_TRACE_PATH=$WORKDIR
+exec valgrind -q --leak-check=yes --error-exitcode=88 $abcosim
+exists $WORKDIR/ncodec.example.bin
+
+# TEST: Print the Trace
+exec sh -e $WORK/trace.sh
+exists $WORKDIR/ncodec.example.pdu.asc
+exec sed -i -E 's/[A-Za-z]{3} [A-Za-z]{3} [0-9]{1,2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3} [a-z]{2} [0-9]{4}/DATETIME/g' $WORKDIR/ncodec.example.pdu.asc
+cmp $WORKDIR/ncodec.example.pdu.asc $WORK/expect.trace
+
+
+-- trace.sh --
+SIMER="${SIMER:-ghcr.io/boschglobal/dse-simer:latest}"
+docker run --name simer -i --rm \
+    -v $ENTRYWORKDIR:/sim \
+    --entrypoint /usr/local/bin/trace \
+    $SIMER convert --asc --name pdu ncodec.example.bin
+
+-- expect.trace --
+date DATETIME
+base hex  timestamps absolute
+internal events logged
+Begin Triggerblock DATETIME
+        0.0000 Start of measurement
+        0.0000 PDU   2A  11 48 65 6c 6c 6f 20 57 6f 72 6c 64
+        0.0005 PDU   2A  11 48 65 6c 6c 6f 20 57 6f 72 6c 64
+        0.0010 PDU   2A  11 48 65 6c 6c 6f 20 57 6f 72 6c 64
+        0.0015 PDU   2A  11 48 65 6c 6c 6f 20 57 6f 72 6c 64
+End Triggerblock
+

@@ -426,8 +426,8 @@ typedef struct NCodecPdu {
     } transport;
 
     /* Simulation Metadata. */
-    double simulation_time NCODEC_DEPRECATED("this field is deprecated");
-    double pdu_time        NCODEC_DEPRECATED("this field is deprecated");
+    double          simulation_time; /* Used for tracing support. */
+    double pdu_time NCODEC_DEPRECATED("this field is deprecated");
 } NCodecPdu;
 
 #endif  // DSE_NCODEC_INTERFACE_PDU_H_

@@ -12,4 +12,3 @@ project(NCodec_Examples
 add_subdirectory(ab-codec)
 add_subdirectory(ab-codec-fmi)
 add_subdirectory(codec)
-add_subdirectory(flexray)
