@@ -149,6 +149,7 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 #### Feature Matrix
 
+<!-- markdownlint-disable MD060 -->
 |                  | PDU Interface                                    | Frame Interface                                                                  |
 | :---             | :---:                                            | :---:                                                                            |
 | Header           | [interface/pdu.h][pdu_h]                         | [interface/frame.h][frame_h]                                                     |
@@ -158,7 +159,8 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 | MIME type        | `type=pdu; schema=fbs`                           | `type=frame; schema=fbs`                                                         |
 | Language Support | C/C++ <br> Go <br> Python                        | C/C++                                                                            |
 | Intergrations    | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] | [DSE ModelC][dse_modelc] <br> [DSE FMI][dse_fmi] <br> [DSE Network][dse_network] |
-| Trace File       | enabled by env <br> `NCODEC_TRACE_PATH`[^trace] <br> `NCODEC_TRACE_PATH_<ecu>_<cc>_<swc>_`[^trace2]  |                                                                                  |
+| Trace File       | enabled by env <br> `NCODEC_TRACE_PATH`[^trace] <br> `NCODEC_TRACE_PATH_<ecu>_<cc>_<swc>_`[^trace2]  |                              |
+<!-- markdownlint-enable MD060 -->
 
 
 #### Network Support
