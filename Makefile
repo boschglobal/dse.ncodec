@@ -34,6 +34,7 @@ SUBDIRS = extra/external $(NAMESPACE)/$(MODULE)
 
 ###############
 ## Test Parameters.
+export HOST_DOCKER_WORKSPACE ?= $(shell pwd -P)
 TESTSCRIPT_IMAGE       ?= ghcr.io/boschglobal/dse-testscript:latest
 TESTSCRIPT_E2E_FILES = $(shell find tests/e2e -type f -name "*.txtar" | sort)
 ifdef TEST
@@ -154,7 +155,6 @@ test_e2e:
 	@set -eu; \
 	for t in $(TESTSCRIPT_E2E_FILES); do \
 		echo "Running E2E Test: $$t"; \
-		export HOST_DOCKER_WORKSPACE=$$(pwd -P) ;\
 		export ENTRYWORKDIR=$$(mktemp -d) ;\
 		docker run -i --rm \
 			--network=host \
