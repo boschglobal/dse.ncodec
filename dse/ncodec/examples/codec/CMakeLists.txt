@@ -10,7 +10,7 @@ set(EXAMPLE_PATH "examples/codec")
 
 # External Project - dlfcn-win32
 # ------------------------------
-if(WIN32)
+if(WIN32 AND NOT TARGET ncodec_dlfcn_win32)
 set(DLFCNWIN32_SOURCE_DIR "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32/src")
 set(DLFCNWIN32_BINARY_DIR "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32-build/lib")
 find_library(DLFCNWIN32_LIB
@@ -21,8 +21,8 @@ find_library(DLFCNWIN32_LIB
     REQUIRED
     NO_DEFAULT_PATH
 )
-add_library(dl STATIC IMPORTED GLOBAL)
-set_target_properties(dl
+add_library(ncodec_dlfcn_win32 STATIC IMPORTED)
+set_target_properties(ncodec_dlfcn_win32
     PROPERTIES
         IMPORTED_LOCATION "${DLFCNWIN32_LIB}"
         INTERFACE_INCLUDE_DIRECTORIES "${DLFCNWIN32_SOURCE_DIR}"
@@ -60,7 +60,8 @@ target_include_directories(example_dynamic
 )
 target_link_libraries(example_dynamic
     PRIVATE
-        dl
+        $<$<BOOL:${WIN32}>:ncodec_dlfcn_win32>
+        $<$<NOT:$<BOOL:${WIN32}>>:dl>
 )
 set_target_properties(example_dynamic PROPERTIES
     INSTALL_RPATH "$ORIGIN"
