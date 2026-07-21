@@ -50,6 +50,10 @@ dse.ncodec
 │   ├── codec/ab            # Automotive Bus (AB) codec implementation
 │   │   ├── flexray/        # FlexRay bus model implementation
 │   │   └── flexray_pop/    # FlexRay point-of-presence bus model implementation
+│   ├── examples
+│   │   ├── ab-codec/       # Examples of PDU and FlexRay using AB Codec
+│   │   ├── ab-codec-fmi/   # Minimal FMU integration examples
+│   │   └── codec/          # Example of the generic NCodec API interfaces
 │   ├── interface
 │   │   ├── frame.h         # Frame-based message interface
 │   │   └── pdu.h           # PDU-based message interface
@@ -221,9 +225,13 @@ export GCC_BUILDER_IMAGE=ghcr.io/boschglobal/dse-gcc-builder:latest
 
 # Build.
 make
+make examples
 
 # Run tests.
 make test
+
+# Package.
+make package
 
 # Update source files.
 make update
@@ -242,13 +250,21 @@ make cleanall
 The AB Codec install target is packaged under the following directory layout:
 
 ```text
-build/_out/
+dse/ncodec/build/_out/
 ├── abcodec/
 │   ├── lib/
 │   │   └── libabcodec.so   # AB Codec shared library
 │   └── include/            # AB Codec headers
 ├── licenses/               # License files
-└── doc/                    # Documentation.
+└── doc/                    # Documentation
+```
+
+And packaged to the following location:
+
+```text
+dse/ncodec/build/_dist/
+├── NCodec-0.0.1-linux-amd64.tar.gz         # Versioned package
+└── NCodec-0.0.1-linux-amd64.tar.gz.sha256  # Checksum file
 ```
 
 
