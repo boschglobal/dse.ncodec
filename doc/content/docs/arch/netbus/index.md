@@ -81,10 +81,11 @@ sequenceDiagram
     Note over Importer: F1 (rx)
     Importer->>FMU: set (F1)
     Note over FMU: F1 (rx)
+
 ```
 
 
-### Data Class Diagram
+### Class Diagram
 
 ```mermaid
 ---
@@ -95,31 +96,54 @@ config:
 classDiagram
     class NetbusTerminalVTable {
         <<struct>>
-        +read(NetbusTerminal* t, uint8_t** data, size_t* len) int*
-        +write(NetbusTerminal* t, const uint8_t* data, size_t len) int*
-        +append(NetbusTerminal* t, const uint8_t* data, size_t len) int*
-        -item_size(void) size_t*
+        -size_t size
+
+        -find(net, t) *NetbusTerminal
+        -read(t, data, len) int32_t
+        -write(t, data, len) int32_t
+        -append(t, data, len) int32_t
     }
 
     class NetbusDesc {
         <<struct>>
-        -SignalVector simbus
-        +NetbusTerminalVTable vtable
         +vector~NetbusNetwork~ networks
+
+        +netbus_create(void) *NetBusDesc
+        +netbus_step(nb) int32_t "@simbus step"
+        +netbus_destroy(nb) void
     }
 
     class NetbusNetwork {
         <<struct>>
-        -uint8_t** data
-        -size_t* len
-        -size_t* alloc_len
+        %% vtable methods are network/implementation specific (i.e. FlexRay+FMU)
+        -NetbusTerminalVTable vtable
+        +const char* name
+        -NCodecStream simbus
+        %% tx from terminals, buffered before merge with simbus
+        -NCodecStream buffer
         +vector~NetbusTerminal~ terminals
+
+        +netbus_add_network(nb, network, simbus, vtable) *NetbusNetwork
+        +netbus_find_network(nb, network) *NetbusNetwork
     }
 
     class NetbusTerminal {
         <<struct>>
+        %% push/pull acts upon instance data
+        -void* instance
+        -NetbusNetwork* net
         -const char* mimetype
+        %% codec receives write/append
         -NCODEC* codec
+        %% tx_acc stream is appended by codec read, and reset on terminal read
+        +NCodecStream tx_accum
+
+        %% Provide (derived type) stack var cast to NetbusTerminal
+        +netbus_connect_terminal(net, inst, terminal) *NetbusTerminal
+        +netbus_find_terminal(net, terminal) *NetbusTerminal
+        %% push/pull call implementation specific vtable methods
+        +netbus_push(nb, t) int32_t
+        +netbus_pull(nb, t) int32_t
     }
 
     class NetbusFmuTerminal {
@@ -133,7 +157,60 @@ classDiagram
 
     NetbusDesc *-- NetbusNetwork : networks vector
     NetbusNetwork *-- NetbusTerminal : terminals vector
-    NetbusFmuTerminal --> NetbusTerminalVTable
-    NetbusDesc *-- NetbusTerminalVTable
+    %% NetbusFmuTerminal --> NetbusTerminalVTable
+    NetbusNetwork *-- NetbusTerminalVTable
     NetbusTerminal <|-- NetbusFmuTerminal
+    NetbusTerminal --> NetbusTerminalVTable
+
 ```
+
+
+### Data Flowchart
+
+```mermaid
+---
+config:
+  flowchart:
+    defaultRenderer: "elk"
+---
+flowchart TB
+    S_pullpush -.-> NCodec
+    S_append -.-> Accum
+    %% SimBus Time Domain
+    subgraph SimbusDomain ["SimBus Time Domain"]
+        direction TB
+        %%R_pull["netbus_pull()<br>pull rx from all terminals"]
+        S_step["netbus_step()"]
+        --> S_pullpush["Pull/Push SimBus<->Codec"]
+        --> S_read["Codec Read"]
+        --> S_append["Append to Accumulator"]
+    end
+
+    %% Central Shared Buffer State
+    subgraph State
+        subgraph Network ["Network"]
+            Buffer["Buffer"]
+        end
+        subgraph Terminal ["Terminal"]
+            NCodec["NCodec"]
+            Accum["Accumulator"]
+        end
+    end
+
+    %% Terminal Domain
+    subgraph TerminalDomain ["Terminal Time Domain"]
+        direction TB
+        T_step["step()"]
+        --> T_pull["netbus_pull() -> NCodec<br>(Rx) read Tx from node"]
+        --> T_push["netbus_push() -> Tx<br>(Tx) write Rx (accum) to node"]
+        --> T_clear["Reset Accumlator"]
+    end
+
+    %% Inter-subgraph connections
+    Buffer -.-> S_pullpush
+    NCodec -.-> S_read
+    Accum -.-> T_push
+    T_pull -.-> Buffer
+
+```
+
