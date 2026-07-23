@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    NCodecStreamVTable* stream = ncodec_buffer_stream_create(BUFFER_LEN);
+    NSTREAM* stream = ncodec_buffer_stream_create(BUFFER_LEN);
 
     NCODEC* nc = ncodec_open(MIMETYPE, stream);
     if (nc == NULL) {

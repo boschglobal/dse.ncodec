@@ -87,6 +87,7 @@ int32_t can_write(NCODEC* nc, NCodecMessage* msg)
 static void get_msg_from_stream(NCODEC* nc)
 {
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     /* Reset the message (and frame) parsing state. */
     _nc->reader.state.msg_ptr = NULL;
@@ -98,7 +99,7 @@ static void get_msg_from_stream(NCODEC* nc)
     /* Next message? */
     uint8_t* buffer;
     size_t   length;
-    _nc->c.stream->read(nc, &buffer, &length, NCODEC_POS_NC);
+    stream->read(nc, &buffer, &length, NCODEC_POS_NC);
 
     uint8_t*       msg_ptr = buffer;
     uint8_t* const buffer_ptr = buffer;
@@ -108,7 +109,7 @@ static void get_msg_from_stream(NCODEC* nc)
         msg_ptr = flatbuffers_read_size_prefix(msg_ptr, &msg_len);
         if (msg_len == 0) break;
         /* Advance the stream pos (+4 for size prefix). */
-        _nc->c.stream->seek(nc, msg_len + 4, NCODEC_SEEK_CUR);
+        stream->seek(nc, msg_len + 4, NCODEC_SEEK_CUR);
         /* Set the parsing state. */
         if (flatbuffers_has_identifier(msg_ptr, flatbuffers_identifier)) {
             _nc->reader.state.msg_ptr = msg_ptr;
@@ -120,7 +121,7 @@ static void get_msg_from_stream(NCODEC* nc)
     }
 
     /* No message in stream. */
-    _nc->c.stream->seek(nc, 0, NCODEC_SEEK_END);
+    stream->seek(nc, 0, NCODEC_SEEK_END);
 }
 
 static void get_vector_from_message(NCODEC* nc)
@@ -146,6 +147,7 @@ int32_t can_read(NCODEC* nc, NCodecMessage* msg)
 {
     ABCodecInstance*  _nc = (ABCodecInstance*)nc;
     NCodecCanMessage* _msg = (NCodecCanMessage*)msg;
+    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->c.stream : NULL;
     if (_nc == NULL) return -ENOSTR;
     if (_msg == NULL) return -EINVAL;
     if (_nc->c.stream == NULL) return -ENOSR;
@@ -196,7 +198,7 @@ int32_t can_read(NCODEC* nc, NCodecMessage* msg)
         if (_nc->reader.state.msg_ptr) get_vector_from_message(nc);
     }
     /* No messages in stream. */
-    _nc->c.stream->seek(nc, 0, NCODEC_SEEK_END);
+    stream->seek(nc, 0, NCODEC_SEEK_END);
     return -ENOMSG;
 }
 
@@ -204,6 +206,7 @@ int32_t can_read(NCODEC* nc, NCodecMessage* msg)
 int32_t can_flush(NCODEC* nc)
 {
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
+    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->c.stream : NULL;
     if (_nc == NULL) return -ENOSTR;
     if (_nc->c.stream == NULL) return -ENOSR;
 
@@ -212,7 +215,7 @@ int32_t can_flush(NCODEC* nc)
 
     finalize_stream(_nc, &buffer, &length);
     if (buffer) {
-        _nc->c.stream->write(nc, buffer, length);
+        stream->write(nc, buffer, length);
         free(buffer);
     }
     return length;
@@ -222,11 +225,12 @@ int32_t can_flush(NCODEC* nc)
 int32_t can_truncate(NCODEC* nc)
 {
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
+    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->c.stream : NULL;
     if (_nc == NULL) return -ENOSTR;
     if (_nc->c.stream == NULL) return -ENOSR;
 
     reset_stream(_nc);
-    _nc->c.stream->seek(nc, 0, NCODEC_SEEK_RESET);
+    stream->seek(nc, 0, NCODEC_SEEK_RESET);
 
     return 0;
 }

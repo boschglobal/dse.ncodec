@@ -25,7 +25,7 @@ static void trace_write(NCODEC* nc, NCodecMessage* m)
 }
 
 
-NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream)
+NCODEC* ncodec_open(const char* mime_type, NSTREAM* stream)
 {
     NCODEC* nc = ncodec_create(mime_type);
     if (nc == NULL || stream == NULL) {

@@ -51,7 +51,8 @@ int32_t codec_write(NCODEC* nc, NCodecMessage* msg)
     NCodecCanMessage* _msg = (NCodecCanMessage*)msg;
 
     __codec* _nc = (__codec*)nc;
-    _nc->c.stream->write(nc, _msg->buffer, _msg->len);
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
+    stream->write(nc, _msg->buffer, _msg->len);
     return _msg->len;
 }
 
@@ -62,15 +63,16 @@ int32_t codec_read(NCODEC* nc, NCodecMessage* msg)
     NCodecCanMessage* _msg = (NCodecCanMessage*)msg;
 
     __codec* _nc = (__codec*)nc;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     /* Read the stream. */
     char*  data = NULL;
     size_t len = 0;
-    _nc->c.stream->read(nc, (uint8_t**)&data, &len, NCODEC_POS_NC);
+    stream->read(nc, (uint8_t**)&data, &len, NCODEC_POS_NC);
     /* Sneak a peak at the stream buffer length. */
-    _nc->c.stream->seek(nc, 0, 42);
-    size_t buffer_len = _nc->c.stream->tell(nc);
-    _nc->c.stream->seek(nc, 0, NCODEC_SEEK_SET);
+    stream->seek(nc, 0, 42);
+    size_t buffer_len = stream->tell(nc);
+    stream->seek(nc, 0, NCODEC_SEEK_SET);
     /* Construct the response. */
     strncat(data, " says ", buffer_len - strlen(data));
     strncat(data, _nc->name, buffer_len);

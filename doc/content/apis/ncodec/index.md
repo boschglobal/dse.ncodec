@@ -82,13 +82,19 @@ typedef struct NCodecConfigItem {
 }
 ```
 
+### NSTREAM
+
+```c
+typedef void NSTREAM;
+```
+
 ### NCodecInstance
 
 ```c
 typedef struct NCodecInstance {
     const char* mime_type;
     NCodecVTable codec;
-    NCodecStreamVTable* stream;
+    NSTREAM* stream;
     NCodecTraceVTable trace;
     void* private;
 }
@@ -106,6 +112,9 @@ typedef struct NCodecStreamVTable {
     NCodecStreamClose close;
 }
 ```
+
+`NSTREAM*` is an opaque public stream handle. Implementations must provide an
+object whose initial layout starts with `NCodecStreamVTable`.
 
 ### NCodecTraceVTable
 
@@ -412,6 +421,5 @@ msg (NCodecMessage*)
 
 -EINVAL (-22)
 : Bad `msg` argument.
-
 
 

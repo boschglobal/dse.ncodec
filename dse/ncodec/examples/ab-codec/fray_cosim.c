@@ -37,7 +37,7 @@ typedef struct {
     const char*         mimetype;
     const char*         greeting;
     size_t              tx_frame_index;
-    NCodecStreamVTable* stream;
+    NSTREAM* stream;
     NCODEC*             nc;
 } Node;
 

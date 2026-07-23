@@ -96,8 +96,9 @@ void free_codec(ABCodecInstance* _nc)
         if (_nc->reader.bus_model.nc->fbs_builder_initalized) {
             flatcc_builder_clear(&_nc->reader.bus_model.nc->fbs_builder);
         }
-        _nc->reader.bus_model.nc->c.stream->close(
-            (NCODEC*)_nc->reader.bus_model.nc);
+        NCodecStreamVTable* stream =
+            (NCodecStreamVTable*)_nc->reader.bus_model.nc->c.stream;
+        stream->close((NCODEC*)_nc->reader.bus_model.nc);
         free(_nc->reader.bus_model.nc);
     }
     if (_nc->reader.bus_model.trace.nc != NULL) {
@@ -105,8 +106,9 @@ void free_codec(ABCodecInstance* _nc)
         if (_nc->reader.bus_model.trace.nc->fbs_builder_initalized) {
             flatcc_builder_clear(&_nc->reader.bus_model.trace.nc->fbs_builder);
         }
-        _nc->reader.bus_model.trace.nc->c.stream->close(
-            (NCODEC*)_nc->reader.bus_model.trace.nc);
+        NCodecStreamVTable* stream =
+            (NCodecStreamVTable*)_nc->reader.bus_model.trace.nc->c.stream;
+        stream->close((NCODEC*)_nc->reader.bus_model.trace.nc);
         free(_nc->reader.bus_model.trace.nc);
     }
     if (_nc->reader.bus_model.model != NULL) {

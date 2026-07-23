@@ -134,7 +134,7 @@ DLL_PRIVATE int32_t stream_close(NCODEC* nc)
 
 
 /* Public stream interface. */
-void* ncodec_buffer_stream_create(size_t buffer_size)
+NSTREAM* ncodec_buffer_stream_create(size_t buffer_size)
 {
     __stream* stream = calloc(1, sizeof(__stream));
     *stream = (__stream){
@@ -160,5 +160,5 @@ void* ncodec_buffer_stream_create(size_t buffer_size)
         stream->resizable = true;
     }
 
-    return stream;
+    return (NSTREAM*)stream;
 }

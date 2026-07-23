@@ -18,7 +18,7 @@
 extern NCODEC* ncodec_create(const char* mime_type);
 extern int32_t stream_read(NCODEC* nc, uint8_t** data, size_t* len, int pos_op);
 
-NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream)
+NCODEC* ncodec_open(const char* mime_type, NSTREAM* stream)
 {
     NCODEC* nc = ncodec_create(mime_type);
     if (nc) {
@@ -45,7 +45,7 @@ static int test_setup(void** state)
     Mock* mock = calloc(1, sizeof(Mock));
     assert_non_null(mock);
 
-    NCodecStreamVTable* stream = ncodec_buffer_stream_create(BUFFER_LEN);
+    NSTREAM* stream = ncodec_buffer_stream_create(BUFFER_LEN);
     mock->nc = (void*)ncodec_open(MIMETYPE, stream);
     assert_non_null(mock->nc);
 

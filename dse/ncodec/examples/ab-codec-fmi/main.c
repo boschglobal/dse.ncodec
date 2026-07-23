@@ -54,8 +54,9 @@ int main(void)
     char*       fmi_string;
 
     /* Create the NCODEC object with a simple buffer stream. */
-    NCodecStreamVTable* stream = ncodec_buffer_stream_create(BUFFER_LEN);
-    NCODEC*             nc = ncodec_open(MIMETYPE, stream);
+    NSTREAM* stream = ncodec_buffer_stream_create(BUFFER_LEN);
+    NCODEC*  nc = ncodec_open(MIMETYPE, stream);
+    NCodecStreamVTable* stream_vtable = (NCodecStreamVTable*)stream;
 
     /* Write some messages to the NCodec. */
     rc = ncodec_write(nc, &(struct NCodecPdu){ .id = 42,
@@ -70,7 +71,7 @@ int main(void)
     buffer_len = 0;
     rc = ncodec_seek(nc, 0, NCODEC_SEEK_SET);
     if (rc) return _ncodec_fault("ncodec_seek", rc);
-    stream->read(nc, &buffer, &buffer_len, NCODEC_POS_NC);
+    stream_vtable->read(nc, &buffer, &buffer_len, NCODEC_POS_NC);
     fmi_string = ncodec_ascii85_encode((char*)buffer, buffer_len);
     _log("BUFFER TX", "(%zu)", buffer_len);
     _log("ASCII85 TX", "(%zu) %s", strlen(fmi_string), fmi_string);
@@ -91,7 +92,7 @@ int main(void)
     _log("ASCII85 RX", "(%zu) %s", strlen(v[0]), v[0]);
     buffer = (uint8_t*)ncodec_ascii85_decode(v[0], &buffer_len);
     _log("BUFFER RX", "(%zu)", buffer_len);
-    stream->write(nc, buffer, buffer_len);
+    stream_vtable->write(nc, buffer, buffer_len);
     free(buffer);
     buffer = NULL;
     buffer_len = 0;

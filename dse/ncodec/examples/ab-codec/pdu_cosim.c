@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
     int rc = 0;
 
     /* Open NCodec with buffer stream. */
-    NCodecStreamVTable* stream = ncodec_buffer_stream_create(BUFFER_LEN);
+    NSTREAM* stream = ncodec_buffer_stream_create(BUFFER_LEN);
     NCODEC*             nc = ncodec_open(MIMETYPE, stream);
 
     /* Complete a typical Co-Simulation step. */
