@@ -204,7 +204,7 @@ typedef struct NCodecTraceVTable {
 typedef struct NCodecInstance {
     const char*         mime_type;
     NCodecVTable        codec;
-    NSTREAM*            stream;
+    NCodecStreamVTable* stream;
     /* Trace interface (optional). */
     NCodecTraceVTable   trace;
     /* Private reference data from API user (optional). */

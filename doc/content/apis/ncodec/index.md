@@ -94,7 +94,7 @@ typedef void NSTREAM;
 typedef struct NCodecInstance {
     const char* mime_type;
     NCodecVTable codec;
-    NSTREAM* stream;
+    NCodecStreamVTable* stream;
     NCodecTraceVTable trace;
     void* private;
 }
