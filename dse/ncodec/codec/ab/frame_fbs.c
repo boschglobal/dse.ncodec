@@ -147,10 +147,10 @@ int32_t can_read(NCODEC* nc, NCodecMessage* msg)
 {
     ABCodecInstance*  _nc = (ABCodecInstance*)nc;
     NCodecCanMessage* _msg = (NCodecCanMessage*)msg;
-    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->c.stream : NULL;
     if (_nc == NULL) return -ENOSTR;
     if (_msg == NULL) return -EINVAL;
     if (_nc->c.stream == NULL) return -ENOSR;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     /* Reset the message, in case caller ignores the return value. */
     _msg->len = 0;
@@ -206,9 +206,9 @@ int32_t can_read(NCODEC* nc, NCodecMessage* msg)
 int32_t can_flush(NCODEC* nc)
 {
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
-    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->c.stream : NULL;
     if (_nc == NULL) return -ENOSTR;
     if (_nc->c.stream == NULL) return -ENOSR;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     uint8_t* buffer = NULL;
     size_t   length = 0;
@@ -225,9 +225,9 @@ int32_t can_flush(NCODEC* nc)
 int32_t can_truncate(NCODEC* nc)
 {
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
-    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->c.stream : NULL;
     if (_nc == NULL) return -ENOSTR;
     if (_nc->c.stream == NULL) return -ENOSR;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     reset_stream(_nc);
     stream->seek(nc, 0, NCODEC_SEEK_RESET);

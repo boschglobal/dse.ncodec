@@ -702,9 +702,9 @@ int32_t pdu_read(NCODEC* _nc, NCodecPdu* pdu)
 int32_t pdu_flush(NCODEC* nc)
 {
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
-    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->c.stream : NULL;
     if (_nc == NULL) return -ENOSTR;
     if (_nc->c.stream == NULL) return -ENOSR;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     uint8_t* buffer = NULL;
     size_t   length = 0;
@@ -721,9 +721,9 @@ int32_t pdu_flush(NCODEC* nc)
 int32_t pdu_truncate(NCODEC* nc)
 {
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
-    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->c.stream : NULL;
     if (_nc == NULL) return -ENOSTR;
     if (_nc->c.stream == NULL) return -ENOSR;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     reset_stream(_nc);
     stream->seek(nc, 0, NCODEC_SEEK_RESET);
