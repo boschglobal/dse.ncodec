@@ -54,8 +54,9 @@ int fmi2DoStep(void* c, double currentCommunicationPoint,
     buffer = (uint8_t*)ncodec_ascii85_decode(_rx_tx_buffer, &buffer_len);
     free(_rx_tx_buffer);
     NCODEC* rx_nc = ncodec_open(MIMETYPE, ncodec_buffer_stream_create(0));
-    ((NCodecStreamVTable*)((NCodecInstance*)rx_nc)->stream)
-        ->write(rx_nc, buffer, buffer_len);
+    NCodecStreamVTable* rx_stream =
+        (NCodecStreamVTable*)((NCodecInstance*)rx_nc)->stream;
+    rx_stream->write(rx_nc, buffer, buffer_len);
     ncodec_seek(rx_nc, 0, NCODEC_SEEK_SET);
 
     /* TX Codec - note `swc_id` is different from main.c to avoid filtering. */
@@ -76,8 +77,9 @@ int fmi2DoStep(void* c, double currentCommunicationPoint,
 
     /* TX - extract buffer and encode. */
     ncodec_seek(tx_nc, 0, NCODEC_SEEK_SET);
-    ((NCodecStreamVTable*)((NCodecInstance*)tx_nc)->stream)
-        ->read(tx_nc, &buffer, &buffer_len, NCODEC_POS_NC);
+    NCodecStreamVTable* tx_stream =
+        (NCodecStreamVTable*)((NCodecInstance*)tx_nc)->stream;
+    tx_stream->read(tx_nc, &buffer, &buffer_len, NCODEC_POS_NC);
     _rx_tx_buffer = ncodec_ascii85_encode((char*)buffer, buffer_len);
 
     /* Destroy the NCodec objects. */
