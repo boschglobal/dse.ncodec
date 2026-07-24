@@ -70,7 +70,7 @@ ENODATA
 ENOENT
 : The `ncodec_create` was not found in any loaded static library.
 */
-extern NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream);
+extern NCODEC* ncodec_open(const char* mime_type, NSTREAM* stream);
 
 
 /**
@@ -341,8 +341,9 @@ Returns
 inline int64_t ncodec_seek(NCODEC* nc, size_t pos, int32_t op)
 {
     NCodecInstance* _nc = (NCodecInstance*)nc;
-    if (_nc && _nc->stream && _nc->stream->seek) {
-        return _nc->stream->seek((NCODEC*)nc, pos, op);
+    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->stream : NULL;
+    if (_nc && stream && stream->seek) {
+        return stream->seek(nc, pos, op);
     } else {
         return -ENOSTR;
     }
@@ -372,8 +373,9 @@ Returns
 inline int64_t ncodec_tell(NCODEC* nc)
 {
     NCodecInstance* _nc = (NCodecInstance*)nc;
-    if (_nc && _nc->stream && _nc->stream->tell) {
-        return _nc->stream->tell((NCODEC*)nc);
+    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->stream : NULL;
+    if (_nc && stream && stream->tell) {
+        return stream->tell(nc);
     } else {
         return -ENOSTR;
     }
@@ -436,8 +438,9 @@ nc (NCODEC*)
 inline void ncodec_close(NCODEC* nc)
 {
     NCodecInstance* _nc = (NCodecInstance*)nc;
-    if (_nc && _nc->stream && _nc->stream->close) {
-        _nc->stream->close(nc);
+    NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->stream : NULL;
+    if (_nc && stream && stream->close) {
+        stream->close(nc);
     }
     if (_nc && _nc->codec.close) {
         _nc->codec.close(nc);

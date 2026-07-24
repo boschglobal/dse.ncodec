@@ -21,8 +21,8 @@ typedef struct {
     NCodecPduFlexrayConfig         config;
     NCodecPduFlexrayNodeIdentifier node_ident;
 
-    NCodecStreamVTable* stream;
-    NCODEC*             nc;
+    NSTREAM* stream;
+    NCODEC*  nc;
 } TestNode;
 
 typedef struct {

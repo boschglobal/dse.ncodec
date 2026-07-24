@@ -113,6 +113,18 @@ typedef struct NCodecStreamVTable {
 typedef struct NCodecTraceVTable {
     NCodecTraceWrite write;
     NCodecTraceRead read;
+    NCodecTraceLog log;
+}
+```
+
+### NCodecUtimeOperation
+
+```c
+typedef struct NCodecUtimeOperation {
+    double simulation_time;
+    double step_size;
+    _Bool broadcast;
+    _Bool force;
 }
 ```
 
@@ -126,6 +138,7 @@ typedef struct NCodecVTable {
     NCodecRead read;
     NCodecFlush flush;
     NCodecTruncate truncate;
+    NCodecUtime utime;
     NCodecClose close;
 }
 ```
@@ -380,6 +393,35 @@ nc (NCODEC*)
 : The object represented by `nc` does not represent a valid stream.
 
 -ENOSR
+: No stream resource has been configured.
+
+
+
+### ncodec_utime
+
+#### Parameters
+
+nc (NCODEC*)
+: Network Codec object.
+
+op (NCodecUtimeOperation)
+: The UTime operation, default/zero values are ignored.
+
+#### Returns
+
+0
+: The operation was performed.
+
+-ENOSYS (-38)
+: This function is not implemented by the codec.
+
+-ENOSTR (-60)
+: The object represented by `nc` does not represent a valid stream.
+
+-ENODATA (-61)
+: Operation did not include a valid request.
+
+-ENOSR (-63)
 : No stream resource has been configured.
 
 

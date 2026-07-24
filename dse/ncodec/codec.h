@@ -95,9 +95,16 @@ Example
 */
 
 typedef void NCODEC;
+typedef void NSTREAM;
 
 
-/* Stream Interface */
+/*
+Stream Interface
+
+Stream objects passed as NSTREAM* must start with NCodecStreamVTable.
+This allows implementations to extend the stream object by embedding
+NCodecStreamVTable as the first field.
+*/
 
 #define NCODEC_EOF true
 
@@ -131,7 +138,13 @@ typedef struct NCodecStreamVTable {
 } NCodecStreamVTable;
 
 
-/** CODEC Interface */
+/*
+CODEC Interface
+
+Codec objects passed as NCODEC* must start with NCodecInstance.
+This allows implementations to extend the code object by embedding
+NCodecInstance as the first field.
+*/
 
 typedef struct NCodecConfigItem {
     const char* name;
@@ -148,7 +161,7 @@ typedef struct NCodecUtimeOperation {
 } NCodecUtimeOperation;
 
 typedef int32_t NCodecLoad(const char* filename, const char* hint);
-typedef NCODEC* NCodecOpen(const char* mime_type, NCodecStreamVTable* stream);
+typedef NCODEC* NCodecOpen(const char* mime_type, NSTREAM* stream);
 typedef NCODEC* NCodecCreate(const char* mime_type);
 
 typedef int32_t (*NCodecConfig)(NCODEC* nc, NCodecConfigItem item);
@@ -211,8 +224,7 @@ DLL_PUBLIC NCodecCreate ncodec_create;
 
 /* Implemented by integrator. */
 DLL_PUBLIC int32_t ncodec_load(const char* filename, const char* hint);
-DLL_PUBLIC NCODEC* ncodec_open(
-    const char* mime_type, NCodecStreamVTable* stream);
+DLL_PUBLIC NCODEC* ncodec_open(const char* mime_type, NSTREAM* stream);
 
 /* Provided by codec.c (in this package). */
 DLL_PUBLIC void             ncodec_config(NCODEC* nc, NCodecConfigItem item);

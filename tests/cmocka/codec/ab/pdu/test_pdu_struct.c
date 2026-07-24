@@ -37,7 +37,7 @@ static int test_setup(void** state)
     Mock* mock = calloc(1, sizeof(Mock));
     assert_non_null(mock);
 
-    NCodecStreamVTable* stream = ncodec_buffer_stream_create(BUFFER_LEN);
+    NSTREAM* stream = ncodec_buffer_stream_create(BUFFER_LEN);
     mock->nc = (void*)ncodec_open(MIMETYPE, stream);
     assert_non_null(mock->nc);
 

@@ -477,6 +477,7 @@ static void get_stream_from_buffer(ABCodecReader* reader)
     assert(reader);
     ABCodecInstance* nc = reader->state.nc;
     assert(nc);
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)nc->c.stream;
 
     /* Reset the message (and frame) parsing state. */
     _reader_reset_state(reader, false);
@@ -484,7 +485,7 @@ static void get_stream_from_buffer(ABCodecReader* reader)
     /* Next message? */
     uint8_t* buffer;
     size_t   length;
-    nc->c.stream->read((NCODEC*)nc, &buffer, &length, NCODEC_POS_NC);
+    stream->read((NCODEC*)nc, &buffer, &length, NCODEC_POS_NC);
 
     uint8_t*       msg_ptr = buffer;
     uint8_t* const buffer_ptr = buffer;
@@ -494,7 +495,7 @@ static void get_stream_from_buffer(ABCodecReader* reader)
         msg_ptr = flatbuffers_read_size_prefix(msg_ptr, &msg_len);
         if (msg_len == 0) break;
         /* Advance the stream pos (+4 for size prefix). */
-        nc->c.stream->seek((NCODEC*)nc, msg_len + 4, NCODEC_SEEK_CUR);
+        stream->seek((NCODEC*)nc, msg_len + 4, NCODEC_SEEK_CUR);
         /* Set the parsing state. */
         if (flatbuffers_has_identifier(msg_ptr, flatbuffers_identifier)) {
             reader->state.msg_ptr = msg_ptr;
@@ -506,7 +507,7 @@ static void get_stream_from_buffer(ABCodecReader* reader)
     }
 
     /* No message in stream. */
-    nc->c.stream->seek((NCODEC*)nc, 0, NCODEC_SEEK_END);
+    stream->seek((NCODEC*)nc, 0, NCODEC_SEEK_END);
 }
 
 
@@ -530,6 +531,7 @@ int32_t _reader_get_pdu(ABCodecReader* reader, NCodecPdu* pdu)
     assert(reader);
     ABCodecInstance* nc = reader->state.nc;
     assert(nc);
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)nc->c.stream;
 
     /* Process the stream/frames. */
     if (reader->state.msg_ptr == NULL) get_stream_from_buffer(reader);
@@ -572,7 +574,7 @@ int32_t _reader_get_pdu(ABCodecReader* reader, NCodecPdu* pdu)
     }
     /* No messages in stream. */
 
-    nc->c.stream->seek((NCODEC*)nc, 0, NCODEC_SEEK_END);
+    stream->seek((NCODEC*)nc, 0, NCODEC_SEEK_END);
     return -ENOMSG;
 }
 
@@ -604,9 +606,10 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
         /* Trace - stream from SimBus. */
         ncodec_seek((NCODEC*)nc, 0, NCODEC_SEEK_SET);
         if (nc->trace.file) {
-            uint8_t* buf = NULL;
-            size_t   len = 0;
-            nc->c.stream->read((NCODEC*)nc, &buf, &len, NCODEC_POS_NC);
+            uint8_t*            buf = NULL;
+            size_t              len = 0;
+            NCodecStreamVTable* stream = (NCodecStreamVTable*)nc->c.stream;
+            stream->read((NCODEC*)nc, &buf, &len, NCODEC_POS_NC);
             fwrite(buf, sizeof(buf[0]), len, nc->trace.file);
         }
 
@@ -649,10 +652,11 @@ int32_t _next_pdu(ABCodecInstance* nc, NCodecPdu* pdu)
                 ncodec_flush((NCODEC*)trace_nc);
                 ncodec_seek((NCODEC*)trace_nc, 0, NCODEC_SEEK_SET);
                 if (nc->trace.file) {
-                    uint8_t* buf = NULL;
-                    size_t   len = 0;
-                    trace_nc->c.stream->read(
-                        (NCODEC*)trace_nc, &buf, &len, NCODEC_POS_NC);
+                    uint8_t*            buf = NULL;
+                    size_t              len = 0;
+                    NCodecStreamVTable* stream =
+                        (NCodecStreamVTable*)trace_nc->c.stream;
+                    stream->read((NCODEC*)trace_nc, &buf, &len, NCODEC_POS_NC);
                     fwrite(buf, sizeof(buf[0]), len, nc->trace.file);
                 }
             }
@@ -700,13 +704,14 @@ int32_t pdu_flush(NCODEC* nc)
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
     if (_nc == NULL) return -ENOSTR;
     if (_nc->c.stream == NULL) return -ENOSR;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     uint8_t* buffer = NULL;
     size_t   length = 0;
 
     finalize_stream(_nc, &buffer, &length);
     if (buffer) {
-        _nc->c.stream->write(nc, buffer, length);
+        stream->write(nc, buffer, length);
         free(buffer);
     }
     return length;
@@ -718,9 +723,10 @@ int32_t pdu_truncate(NCODEC* nc)
     ABCodecInstance* _nc = (ABCodecInstance*)nc;
     if (_nc == NULL) return -ENOSTR;
     if (_nc->c.stream == NULL) return -ENOSR;
+    NCodecStreamVTable* stream = (NCodecStreamVTable*)_nc->c.stream;
 
     reset_stream(_nc);
-    _nc->c.stream->seek(nc, 0, NCODEC_SEEK_RESET);
+    stream->seek(nc, 0, NCODEC_SEEK_RESET);
     _reader_reset(&_nc->reader);
     clear_free_list(_nc);
 

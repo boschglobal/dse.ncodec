@@ -55,7 +55,7 @@ static void trace_write(NCODEC* nc, NCodecMessage* m)
     trace_payload(msg->payload, msg->payload_len);
 }
 
-NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream)
+NCODEC* ncodec_open(const char* mime_type, NSTREAM* stream)
 {
     if (stream == NULL) {
         errno = EINVAL;

@@ -32,7 +32,7 @@ extern int32_t          pdu_truncate(NCODEC* nc);
 extern int32_t          pdu_utime(NCODEC* nc, NCodecUtimeOperation op);
 
 
-NCODEC* ncodec_open(const char* mime_type, NCodecStreamVTable* stream)
+NCODEC* ncodec_open(const char* mime_type, NSTREAM* stream)
 {
     NCODEC* nc = ncodec_create(mime_type);
     if (nc) {
@@ -499,16 +499,16 @@ void test_ncodec_call_sequence(void** state)
     UNUSED(state);
 
     /* Create the codec instance. */
-    const char*         mime_type = "application/x-automotive-bus; "
-                                    "interface=stream;type=frame;bus=can;schema=fbs;"
-                                    "bus_id=1;node_id=2;interface_id=3";
-    NCodecStreamVTable* stream = ncodec_buffer_stream_create(0);
-    NCODEC*             nc = ncodec_open(mime_type, stream);
+    const char* mime_type = "application/x-automotive-bus; "
+                            "interface=stream;type=frame;bus=can;schema=fbs;"
+                            "bus_id=1;node_id=2;interface_id=3";
+    NSTREAM*    stream = ncodec_buffer_stream_create(0);
+    NCODEC*     nc = ncodec_open(mime_type, stream);
     assert_non_null(nc);
     NCodecInstance* _nc = (NCodecInstance*)nc;
     assert_non_null(_nc);
     assert_non_null(_nc->stream);
-    assert_non_null(_nc->stream->seek);
+    assert_non_null(((NCodecStreamVTable*)_nc->stream)->seek);
     assert_string_equal(_nc->mime_type, mime_type);
 
     /* Initial conditions. */
