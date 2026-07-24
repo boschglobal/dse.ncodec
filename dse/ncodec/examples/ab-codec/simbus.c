@@ -20,12 +20,11 @@ int simbus(void* nodes, size_t node_size, size_t nc_offset, size_t count)
         NCODEC**         nc_ptr = (NCODEC**)(node + nc_offset);
         NCODEC*          ncodec = *nc_ptr;
         ABCodecInstance* nc = (ABCodecInstance*)ncodec;
-        NCodecStreamVTable* stream = (NCodecStreamVTable*)nc->c.stream;
 
         ncodec_seek(ncodec, 0, NCODEC_SEEK_SET);
         uint8_t* data = NULL;
         size_t   len = 0;
-        stream->read(ncodec, &data, &len, NCODEC_POS_NC);
+        nc->c.stream->read(ncodec, &data, &len, NCODEC_POS_NC);
         if (len == 0) continue;
 
         buffer = realloc(buffer, buffer_len + len);
@@ -39,10 +38,9 @@ int simbus(void* nodes, size_t node_size, size_t nc_offset, size_t count)
         NCODEC**         nc_ptr = (NCODEC**)(node + nc_offset);
         NCODEC*          ncodec = *nc_ptr;
         ABCodecInstance* nc = (ABCodecInstance*)ncodec;
-        NCodecStreamVTable* stream = (NCodecStreamVTable*)nc->c.stream;
 
         ncodec_seek(ncodec, 0, NCODEC_SEEK_RESET);
-        stream->write(ncodec, buffer, buffer_len);
+        nc->c.stream->write(ncodec, buffer, buffer_len);
         ncodec_seek(ncodec, 0, NCODEC_SEEK_SET);
     }
 
