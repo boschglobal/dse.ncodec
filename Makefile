@@ -83,6 +83,20 @@ DSE_CLANG_FORMAT_CMD := docker run -it --rm \
 
 default: build
 
+help:
+	@echo "Available targets:"
+	@echo "  build         Build all project subdirectories and copy example outputs to out/examples."
+	@echo "  examples      Build examples (used by tests)."
+	@echo "  test          Run tests in all project subdirectories."
+	@echo "  arch          Build each supported architecture."
+	@echo "  generate      Build documentation and other generated content."
+	@echo "  clean         Clean build artifacts in all subdirectories and remove out/."
+	@echo "  cleanall      Run clean, then also clean all subdirectories and remove build/."
+	@echo "  super-linter  Run super-linter against the repository."
+	@echo "Local development commands:"
+	@echo "  make build examples"
+	@echo "  make test_cmocka"
+	@echo "  make test TEST=tests/e2e/ab-codec.example.pdu.txtar"
 
 .PHONY: build
 build:

@@ -104,6 +104,18 @@ typedef struct FlexrayBusModel {
 } FlexrayBusModel;
 
 
+typedef struct VectorSlotMapItem {
+    uint32_t slot_id;
+    Vector   lpdus; /* FlexrayLpdu */
+} VectorSlotMapItem;
+
+
+typedef struct VectorFlexrayLpduConfigTableItem {
+    NCodecPduFlexrayNodeIdentifier node_ident;
+    NCodecPduFlexrayLpduConfig*    table;
+} VectorFlexrayLpduConfigTableItem;
+
+
 int  process_config(FlexrayBusModel* m, NCodecPdu* pdu);
 int  calculate_budget(FlexrayBusModel* m, double step_size);
 int  consume_slot(FlexrayBusModel* m);
