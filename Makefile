@@ -15,7 +15,7 @@ ABS_VERSION ?= 1.0.16
 export ABS_URL ?= $(ABS_REPO)/releases/download/v$(ABS_VERSION)/automotive-bus-schema.tar.gz
 
 DSE_CLIB_REPO ?= https://github.com/boschglobal/dse.clib
-DSE_CLIB_VERSION ?= 1.0.43
+DSE_CLIB_VERSION ?= 1.1.0
 export DSE_CLIB_URL ?= $(DSE_CLIB_REPO)/archive/refs/tags/v$(DSE_CLIB_VERSION).zip
 
 
@@ -29,7 +29,7 @@ export PACKAGE_ARCH ?= linux-amd64
 export PACKAGE_ARCH_LIST ?= $(PACKAGE_ARCH)
 export CMAKE_TOOLCHAIN_FILE ?= $(shell pwd -P)/extra/cmake/$(PACKAGE_ARCH).cmake
 export SRC_DIR = $(NAMESPACE)/$(MODULE)
-SUBDIRS = extra/external $(NAMESPACE)/$(MODULE)
+SUBDIRS = extra/external $(NAMESPACE)/$(MODULE) $(NAMESPACE)/pdunet
 
 
 ###############
@@ -124,8 +124,9 @@ format:
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/ab
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/interface
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/stream
-	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
+	@${DSE_CLANG_FORMAT_CMD} dse/pdunet
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/examples/ab-codec
+	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
 
 .PHONY: generate
 generate:
@@ -151,7 +152,7 @@ do-oss:
 	$(MAKE) -C extra/external oss
 
 .PHONY: test_e2e
-test_e2e:
+test_e2e: build examples
 	@set -eu; \
 	for t in $(TESTSCRIPT_E2E_FILES); do \
 		echo "Running E2E Test: $$t"; \

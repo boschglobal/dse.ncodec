@@ -41,6 +41,5 @@ install(TARGETS test_codec_ab)
 
 # Targets
 # =======
-
 add_subdirectory(frame)
 add_subdirectory(pdu)

@@ -30,6 +30,7 @@ run:
 	cd build/_out; $(GDB_CMD) bin/test_codec_ab
 	cd build/_out; $(GDB_CMD) bin/test_codec_ab_frame
 	cd build/_out; $(GDB_CMD) bin/test_codec_ab_pdu
+	cd build/_out; $(GDB_CMD) bin/test_pdunet
 
 clean:
 	rm -rf build

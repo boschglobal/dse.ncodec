@@ -18,14 +18,23 @@ DOC_LINKTITLE_ncodec := NCodec
 DOC_TITLE_ncodec := "Network Codec API Reference"
 DOC_STATIC_ncodec := doc/static/dse.ncodec
 
+# Module "pdunet"
+DOC_INPUT_pdunet := dse/pdunet/pdunet.h
+DOC_OUTPUT_pdunet := doc/content/apis/pdunet/index.md
+DOC_LINKTITLE_pdunet := PDUNet
+DOC_TITLE_pdunet := "PDU Network API Reference"
+DOC_STATIC_pdunet := doc/static/dse.pdunet
+
 
 # Targets
-DOC_C_MODULES := ncodec
+DOC_C_MODULES := ncodec pdunet
 
 .PHONY: examples
 examples:
 	cd ..;mkdir -p doc/content/apis/ncodec/examples
 	cd ..;cp dse/ncodec/examples/codec/example.c doc/content/apis/ncodec/examples/ncodec_api.c
+	cd ..;mkdir -p doc/content/apis/pdunet/examples
+	cd ..;cp dse/pdunet/examples/pdunet/example.c doc/content/apis/pdunet/examples/pdunet_api.c
 
 
 .PHONY: $(DOC_C_MODULES)

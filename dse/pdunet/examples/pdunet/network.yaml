@@ -1,0 +1,61 @@
+---
+kind: Network
+metadata:
+  name: Example
+  annotations:
+    bus_id: 1
+    node_id: 1
+    interface_id: 1
+
+spec:
+  metadata:
+    flexray:
+      vcn:
+        - ecu_id: 0
+          cc_id: 0
+          swc_id: 0
+      macrotick_per_cycle: 3361
+      microtick_per_cycle: 200000
+      network_idle_start: 3355
+      static_slot_length: 55
+      static_slot_count: 38
+      minislot_length: 6
+      minislot_count: 211
+      static_slot_payload_length: 64
+      bit_rate: BR10Mbps
+      channel_enable: A
+      wakeup_channel_select: A
+      single_slot_enabled: false
+
+  pdus:
+    - pdu: VehicleState
+      id: 1
+      length: 8
+      dir: Tx
+      schedule:
+        phase: 0.0
+        interval: 0.001
+        trigger: Periodic
+      metadata:
+        flexray:
+          slot_id: 7
+          payload_length: 8
+          base_cycle: 0
+          cycle_repetition: 1
+          direction: Tx
+          channel: A
+          transmit_mode: Continuous
+      signals:
+        - signal: Vehicle.Speed
+          encoding:
+            start: 0
+            length: 32
+            factor: 0.01
+            offset: 0
+
+        - signal: Vehicle.Acceleration
+          encoding:
+            start: 32
+            length: 32
+            factor: 0.01
+            offset: 0
