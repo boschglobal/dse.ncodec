@@ -26,7 +26,7 @@ static const char* _poc_state_str(NCodecPduFlexrayPocState v)
         [NCodecPduFlexrayPocStateFreeze] = "Freeze",
         [NCodecPduFlexrayPocStateUndefined] = "Undefined",
     };
-    if (v > ARRAY_SIZE(_t)) {
+    if ((size_t)v >= ARRAY_SIZE(_t)) {
         return NULL;
     } else {
         return _t[v];
@@ -44,7 +44,7 @@ static const char* _tcvr_state_str(NCodecPduFlexrayTransceiverState v)
         [NCodecPduFlexrayTransceiverStateFrameSync] = "FrameSync",
         [NCodecPduFlexrayTransceiverStateFrameError] = "FrameError",
     };
-    if (v > ARRAY_SIZE(_t)) {
+    if ((size_t)v >= ARRAY_SIZE(_t)) {
         return NULL;
     } else {
         return _t[v];

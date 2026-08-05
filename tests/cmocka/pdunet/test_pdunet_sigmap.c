@@ -92,7 +92,7 @@ void test_pdunet_sigmap(void** state)
     };
     for (size_t i = 0; i < ARRAY_SIZE(in_checks); i++) {
         map_check c = in_checks[i];
-        log_info(&dlog, "Check IN[%u] name=%s, sig=%u, src=%u", i, c.sig_name,
+        log_info(&dlog, "Check IN[%u] name=%s, sig=%zu, src=%zu", i, c.sig_name,
             c.sig_idx, c.src_idx);
         assert_string_equal(signal[net->msm.in->signal.index[i]], c.sig_name);
         assert_int_equal(net->msm.in->signal.index[i], c.sig_idx);
@@ -112,8 +112,8 @@ void test_pdunet_sigmap(void** state)
     };
     for (size_t i = 0; i < ARRAY_SIZE(out_checks); i++) {
         map_check c = out_checks[i];
-        log_info(&dlog, "Check OUT[%u] name=%s, sig=%u, src=%u", i, c.sig_name,
-            c.sig_idx, c.src_idx);
+        log_info(&dlog, "Check OUT[%u] name=%s, sig=%zu, src=%zu", i,
+            c.sig_name, c.sig_idx, c.src_idx);
         assert_string_equal(signal[net->msm.out->signal.index[i]], c.sig_name);
         assert_int_equal(net->msm.out->signal.index[i], c.sig_idx);
         assert_int_equal(

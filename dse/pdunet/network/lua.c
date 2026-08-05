@@ -41,8 +41,9 @@ static int _payload_index(lua_State* L)
     lua_Integer idx = luaL_checkinteger(L, 2);
 
     if (idx < 1 || idx > pw->len) {
-        return luaL_error(
-            L, "payload index %d out of bounds (1..%d)", idx, pw->len);
+        return luaL_error(L,
+            "payload index " LUA_INTEGER_FMT " out of bounds (1..%u)", idx,
+            (unsigned)pw->len);
     }
 
     lua_pushinteger(L, pw->data[idx - 1]);

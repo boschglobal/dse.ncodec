@@ -181,7 +181,7 @@ void pdunet_parse_pdus(PduNetworkDesc* net, PdunetSchemaObject* object)
 
 PduItem pdunet_pdu_generator(PduNetworkDesc* net, YamlNode* n)
 {
-    PduItem pdu = { id : 0 };
+    PduItem pdu = { .id = 0 };
 
     static const PdunetSchemaFieldMapSpec dir_map[] = {
         { "Rx", PduDirectionRx },

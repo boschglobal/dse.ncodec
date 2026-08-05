@@ -97,19 +97,28 @@ PDUNET* pdunet_create(
         rc = pdunet_configure(net);
         if (rc != 0) {
             log_error(net->log, "Configure fail: rc=%d", rc);
-            return net;
+            errno = (rc < 0) ? -rc : EINVAL;
+            pdunet_destroy(net);
+            return NULL;
         }
         rc = pdunet_transform(net, NULL);
         if (rc != 0) {
             log_error(net->log, "Transform fail: rc=%d", rc);
-            return net;
+            errno = (rc < 0) ? -rc : EINVAL;
+            pdunet_destroy(net);
+            return NULL;
         }
     } else if (rc == -ENODATA) {
         log_fatal(net->log,
             "Parse fail: Network not found in YAML files (rc=%d)", rc);
+        errno = (rc < 0) ? -rc : EINVAL;
+        pdunet_destroy(net);
+        return NULL;
     } else {
         log_fatal(net->log, "Parse fail: rc=%d", rc);
-        return net;
+        errno = (rc < 0) ? -rc : EINVAL;
+        pdunet_destroy(net);
+        return NULL;
     }
 
     /* Set initial conditions for the network. */

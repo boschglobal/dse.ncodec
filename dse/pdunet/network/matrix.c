@@ -473,7 +473,7 @@ void pdunet_pdu_pack_range(PduNetworkDesc* net, PduRange* r)
             PduSignalItem* s = vector_at(&o->pdu->signals, signal_idx[i], NULL);
             log_trace(net->log,
                 "Write Payload[%u][%s]: start=%u, length=%u, value=%08x",
-                pdu_idx[i], s->name, start[i], length[i], value);
+                pdu_idx[i], s->name, start[i], length[i], (unsigned)value);
 
             if (start[i] % 8 != 0) {
                 // Write the first N bits at O bit offset.
@@ -486,7 +486,7 @@ void pdunet_pdu_pack_range(PduNetworkDesc* net, PduRange* r)
                 log_trace(net->log,
                     "  Write[%u]=%02x O=%u, N=%u, M_p=%02x, M_v=%02x, "
                     "value=%08x",
-                    byte_idx, V, O, N, M_p, M_v, value);
+                    byte_idx, V, O, N, M_p, M_v, (unsigned)value);
                 byte_idx++;
                 bit_count += N;
                 value = value >> N;
@@ -501,7 +501,7 @@ void pdunet_pdu_pack_range(PduNetworkDesc* net, PduRange* r)
                 log_trace(net->log,
                     "  Write[%u]=%02x O=%u, N=%u, M_p=%02x, M_v=%02x, "
                     "value=%08x",
-                    byte_idx, V, O, N, M_p, M_v, value);
+                    byte_idx, V, O, N, M_p, M_v, (unsigned)value);
                 byte_idx++;
                 bit_count += 8;
                 value = value >> 8;
@@ -517,7 +517,7 @@ void pdunet_pdu_pack_range(PduNetworkDesc* net, PduRange* r)
                 log_trace(net->log,
                     "  Write[%u]=%02x O=%u, N=%u, M_p=%02x, M_v=%02x, "
                     "value=%08x",
-                    byte_idx, V, O, N, M_p, M_v, value);
+                    byte_idx, V, O, N, M_p, M_v, (unsigned)value);
             }
         }
         /* Call Lua functions, modify payload. */
@@ -572,7 +572,7 @@ void pdunet_pdu_pack_range(PduNetworkDesc* net, PduRange* r)
                 log_trace(net->log,
                     "  Read[%u]=%02x O=%u, N=%u, M_v=%02x, payload=%02x, "
                     "value=%08x",
-                    byte_idx, V, O, N, M_v, payload[byte_idx], value);
+                    byte_idx, V, O, N, M_v, payload[byte_idx], (unsigned)value);
                 byte_idx++;
                 bit_count += N;
             }
@@ -585,7 +585,7 @@ void pdunet_pdu_pack_range(PduNetworkDesc* net, PduRange* r)
                 log_trace(net->log,
                     "  Read[%u]=%02x O=%u, N=%u, M_v=%02x, payload=%02x, "
                     "value=%08x",
-                    byte_idx, V, O, N, M_v, payload[byte_idx], value);
+                    byte_idx, V, O, N, M_v, payload[byte_idx], (unsigned)value);
                 byte_idx++;
                 bit_count += 8;
             }
@@ -599,7 +599,7 @@ void pdunet_pdu_pack_range(PduNetworkDesc* net, PduRange* r)
                 log_trace(net->log,
                     "  Read[%u]=%02x O=%u, N=%u, M_v=%02x, payload=%02x, "
                     "value=%08x",
-                    byte_idx, V, O, N, M_v, payload[byte_idx], value);
+                    byte_idx, V, O, N, M_v, payload[byte_idx], (unsigned)value);
             }
             raw[i] = value;
         }
