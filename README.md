@@ -35,6 +35,9 @@ __Integrations__:
 - [Usage](#usage)
   - [Code Sample](#code-sample-with-ab-codec)
   - [CMake Build Integration](#cmake-build-integration)
+- [Architecture](#architecture)
+  - [PDU base Virtual Networks](#pdu-based-virtual-networks)
+  - [Network Technology Stack](#network-technology-stack)
 - [Codecs](#codecs)
   - [AB Codec](#ab-codec)
 - [Build](#build)
@@ -61,6 +64,12 @@ dse.ncodec
 │   │   └── buffer.h        # Buffer stream implementation
 │   ├── codec.c             # NCodec API implementation
 │   └── codec.h             # NCodec API headers
+├── dse/pdunet
+│   ├── examples
+│   │   └── pdunet/         # Example of the generic PDUNet API interfaces
+│   ├── network/            # Network support (PDU based)
+│   ├── pdunet.c            # PDUNet API implementation
+│   └── pdunet.h            # PDUNet API headers
 ├── extra                   # Build infrastructure
 ├── licenses                # Third-party licenses
 └── tests                   # Unit and end-to-end tests
@@ -139,9 +148,16 @@ build:
     $(MAKE) build-some_lib
 ```
 
+
 ## Architecture
 
+### PDU based Virtual Networks
+
 ![NCodec Simple Arch](doc/static/ncodec-simple-arch.png)
+
+### Network Technology Stack
+
+![PDUNet Simple Arch](doc/static/pdunet-simple-arch.png)
 
 
 ## Codecs
