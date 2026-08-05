@@ -34,6 +34,8 @@ add_compile_options(${C_CXX_WARNING_FLAGS})
 set(REPO_DIR $ENV{REPO_DIR})
 set(DSE_NCODEC_SOURCE_DIR $ENV{REPO_DIR}/$ENV{SRC_DIR})
 set(DSE_NCODEC_INCLUDE_DIR ${REPO_DIR})
+set(DSE_PDUNET_SOURCE_DIR ${REPO_DIR}/dse/pdunet)
+set(DSE_PDUNET_INCLUDE_DIR ${REPO_DIR})
 
 
 # External Project - DSE C Lib
@@ -52,5 +54,5 @@ set(DSE_CLIB_INCLUDE_DIR "${DSE_CLIB_SOURCE_DIR}/..")
 
 # Targets
 # =======
-add_subdirectory(../../dse/ncodec/codec/ab ab-codec)
 add_subdirectory(codec/ab)
+add_subdirectory(pdunet)

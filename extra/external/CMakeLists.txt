@@ -54,6 +54,21 @@ FetchContent_Declare(dse_clib
 FetchContent_MakeAvailable(dse_clib)
 
 
+# Lib YAML
+# --------
+ExternalProject_Add(yaml
+    URL                 ${ExternalProject__YAML__URL}
+    HTTP_USERNAME       ${ExternalProject__YAML__USERNAME}
+    HTTP_PASSWORD       ${ExternalProject__YAML__PASSWORD}
+    SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/yaml"
+    BINARY_DIR          "$ENV{EXTERNAL_BUILD_DIR}/yaml"
+    CMAKE_ARGS
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DBUILD_SHARED_LIBS=OFF
+    INSTALL_COMMAND     ""
+)
+
+
 # dlfcn-win32
 # -----------
 if(NOT WIN32)
@@ -70,6 +85,23 @@ ExternalProject_Add(dlfcnwin32
         -DBUILD_SHARED_LIBS=OFF
         -DBUILD_TESTS=OFF
     BUILD_COMMAND       ${DLFCNWIN32_BUILD_COMMAND}
+    INSTALL_COMMAND     ""
+)
+
+
+# Lua
+# ---
+ExternalProject_Add(lua
+    URL                 ${ExternalProject__LUA__URL}
+    SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/lua"
+    BINARY_DIR          "$ENV{EXTERNAL_BUILD_DIR}/lua"
+    PATCH_COMMAND       ${CMAKE_COMMAND} -E copy
+                        ${CMAKE_CURRENT_SOURCE_DIR}/lua_makefile
+                        <SOURCE_DIR>/makefile
+    CONFIGURE_COMMAND   ""
+    BUILD_COMMAND       make
+                        CMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+                        CC=${CMAKE_C_COMPILER}
     INSTALL_COMMAND     ""
 )
 

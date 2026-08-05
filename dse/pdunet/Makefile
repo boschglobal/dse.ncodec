@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 export NAMESPACE = dse
-export MODULE = ncodec
+export MODULE = pdunet
 export EXTERNAL_BUILD_DIR ?= /tmp/$(NAMESPACE).$(MODULE)
 export REPO_MIRRORS ?= $(shell pwd -P)/../../repo_mirrors.cmake
 export PACKAGE_ARCH ?= linux-amd64
