@@ -136,7 +136,7 @@ void test_flexray__node_state_changes(void** _state)
     FlexrayNodeState* state = &mock->node_state;
     StateSequence checks[] = {
         {
-            .name = "DefautConfig --> Config --> Ready --> NormalActive",
+            .name = "DefaultConfig --> Config --> Ready --> NormalActive",
             .initial_poc_state = NCodecPduFlexrayPocStateDefaultConfig,
             .initial_tcvr_state = NCodecPduFlexrayTransceiverStateNoSignal,
             .length = 4,
@@ -159,7 +159,7 @@ void test_flexray__node_state_changes(void** _state)
             },
         },
         {
-            .name = "DefautConfig --> Config --> Ready --> Config",
+            .name = "DefaultConfig --> Config --> Ready --> Config",
             .initial_poc_state = NCodecPduFlexrayPocStateDefaultConfig,
             .initial_tcvr_state = NCodecPduFlexrayTransceiverStateNoSignal,
             .length = 4,

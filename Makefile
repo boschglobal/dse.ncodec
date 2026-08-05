@@ -83,6 +83,7 @@ DSE_CLANG_FORMAT_CMD := docker run -it --rm \
 
 default: build
 
+.PHONY: help
 help:
 	@echo "Available targets:"
 	@echo "  build         Build all project subdirectories and copy example outputs to out/examples."

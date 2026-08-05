@@ -419,7 +419,7 @@ static void __poc_state_defaultconfig(
     FlexrayBusModel* m, FlexrayNodeState* state)
 {
     NCodecPduFlexrayNodeIdentifier nid = state->node_ident;
-    log_debug(m->log_nc, "POC State DefaultConfig entry func, nid (%d:%d:%d))",
+    log_debug(m->log_nc, "POC State DefaultConfig entry func, nid (%d:%d:%d)",
         nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
 
     // Slotmap.
