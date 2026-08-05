@@ -27,9 +27,14 @@ Adjust POC Commands according to Bus Condition.
 
 */
 
+typedef void (*PocStateEntryFunc)(FlexrayBusModel* m, FlexrayNodeState* state);
+static void __poc_state_defaultconfig(
+    FlexrayBusModel* m, FlexrayNodeState* state);
+
+
 const char* poc_state_string(unsigned int state)
 {
-    const char* _t[] = {
+    static const char* _t[] = {
         [NCodecPduFlexrayPocStateDefaultConfig] = "DefaultConfig",
         [NCodecPduFlexrayPocStateConfig] = "Config",
         [NCodecPduFlexrayPocStateReady] = "Ready",
@@ -41,7 +46,7 @@ const char* poc_state_string(unsigned int state)
         [NCodecPduFlexrayPocStateFreeze] = "Freeze",
         [NCodecPduFlexrayPocStateUndefined] = "Undefined",
     };
-    if (state > ARRAY_SIZE(_t)) {
+    if (state >= ARRAY_SIZE(_t)) {
         return NULL;
     } else {
         return _t[state];
@@ -58,11 +63,19 @@ static void __poc_state_transition(FlexrayBusModel* m, FlexrayNodeState* state,
     log_debug(m->log_nc, "POC State Transition %s -> %s",
         poc_state_string(state->poc_state), poc_state_string(target));
     state->poc_state = target;
+
+    // Call POC state entry function (if configured).
+    static const PocStateEntryFunc _f[] = {
+        [NCodecPduFlexrayPocStateDefaultConfig] = __poc_state_defaultconfig,
+    };
+    if (target < ARRAY_SIZE(_f) && _f[target] != NULL) {
+        return _f[target](m, state);
+    }
 }
 
 const char* tcvr_state_string(unsigned int state)
 {
-    const char* _t[] = {
+    static const char* _t[] = {
         [NCodecPduFlexrayTransceiverStateNoPower] = "NoPower",
         [NCodecPduFlexrayTransceiverStateNoConnection] = "NoConnection",
         [NCodecPduFlexrayTransceiverStateNoSignal] = "NoSignal",
@@ -71,7 +84,7 @@ const char* tcvr_state_string(unsigned int state)
         [NCodecPduFlexrayTransceiverStateFrameSync] = "FrameSync",
         [NCodecPduFlexrayTransceiverStateFrameError] = "FrameError",
     };
-    if (state > ARRAY_SIZE(_t)) {
+    if (state >= ARRAY_SIZE(_t)) {
         return NULL;
     } else {
         return _t[state];
@@ -395,4 +408,47 @@ void release_state(FlexrayBusModel* m)
 {
     vector_reset(&m->state.node_state);
     vector_reset(&m->state.vcs_node);
+}
+
+
+/*
+POC State entry functions.
+*/
+
+static void __poc_state_defaultconfig(
+    FlexrayBusModel* m, FlexrayNodeState* state)
+{
+    NCodecPduFlexrayNodeIdentifier nid = state->node_ident;
+    log_debug(m->log_nc, "POC State DefaultConfig entry func, nid (%d:%d:%d)",
+        nid.node.ecu_id, nid.node.cc_id, nid.node.swc_id);
+
+    // Slotmap.
+    for (size_t i = 0; i < m->engine.slot_map.length; i++) {
+        VectorSlotMapItem* slot_item = vector_at(&m->engine.slot_map, i, NULL);
+        if (slot_item != NULL) {
+            // Reverse lookup as delete shifts items left.
+            for (size_t j = slot_item->lpdus.length; j > 0; j--) {
+                size_t idx = j - 1;
+
+                FlexrayLpdu* lpdu = vector_at(&slot_item->lpdus, idx, NULL);
+                if (lpdu != NULL) {
+                    if (lpdu->node_ident.node.ecu_id != nid.node.ecu_id)
+                        continue;
+                    free(lpdu->payload);
+                    vector_delete_at(&slot_item->lpdus, idx);
+                }
+            }
+        }
+    }
+    // Config list, reverse lookup as delete shifts items left.
+    for (size_t i = m->engine.config_list.length; i > 0; i--) {
+        size_t idx = i - 1;
+
+        VectorFlexrayLpduConfigTableItem config;
+        if (vector_at(&m->engine.config_list, idx, &config)) {
+            if (config.node_ident.node.ecu_id != nid.node.ecu_id) continue;
+            free(config.table);
+            vector_delete_at(&m->engine.config_list, idx);
+        }
+    }
 }

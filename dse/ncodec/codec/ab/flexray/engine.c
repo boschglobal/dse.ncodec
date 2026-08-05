@@ -14,11 +14,6 @@
 #define MAX_CYCLE 64 /* 0.. 63 */
 
 
-typedef struct VectorSlotMapItem {
-    uint32_t slot_id;
-    Vector   lpdus; /* FlexrayLpdu */
-} VectorSlotMapItem;
-
 int VectorSlotMapItemCompar(const void* left, const void* right)
 {
     const VectorSlotMapItem* l = left;
@@ -94,11 +89,13 @@ int process_config(FlexrayBusModel* m, NCodecPdu* pdu)
                                   flexray_bittime_ns[config->bit_rate];
 
     /* Configure the Slot Map. */
-    NCodecPduFlexrayLpduConfig* frame_config_table = NULL;
+    VectorFlexrayLpduConfigTableItem frame_config_table = {
+        .node_ident = config->node_ident,
+    };
     if (config->frame_config.count) {
-        frame_config_table = calloc(
+        frame_config_table.table = calloc(
             config->frame_config.count, sizeof(NCodecPduFlexrayLpduConfig));
-        memcpy(frame_config_table, config->frame_config.table,
+        memcpy(frame_config_table.table, config->frame_config.table,
             config->frame_config.count * sizeof(NCodecPduFlexrayLpduConfig));
     }
     if (m->engine.slot_map.capacity == 0) {
@@ -106,7 +103,7 @@ int process_config(FlexrayBusModel* m, NCodecPdu* pdu)
             vector_make(sizeof(VectorSlotMapItem), 0, VectorSlotMapItemCompar);
     }
     for (size_t i = 0; i < config->frame_config.count; i++) {
-        uint16_t           slot_id = frame_config_table[i].slot_id;
+        uint16_t           slot_id = frame_config_table.table[i].slot_id;
         /* Find the Slot Map entry. */
         VectorSlotMapItem* slot_map_item = NULL;
         slot_map_item = vector_find(&m->engine.slot_map,
@@ -126,7 +123,7 @@ int process_config(FlexrayBusModel* m, NCodecPdu* pdu)
         /* Add the LPDU config to the Slot Map. */
         vector_push(&slot_map_item->lpdus,
             &(FlexrayLpdu){ .node_ident = config->node_ident,
-                .lpdu_config = frame_config_table[i] });
+                .lpdu_config = frame_config_table.table[i] });
     }
 
     /* Configure TXRX Inform List (hold references to LPDUs). */
@@ -137,9 +134,9 @@ int process_config(FlexrayBusModel* m, NCodecPdu* pdu)
     /* Configure Config List. */
     if (m->engine.config_list.capacity == 0) {
         m->engine.config_list =
-            vector_make(sizeof(NCodecPduFlexrayLpduConfig*), 0, NULL);
+            vector_make(sizeof(VectorFlexrayLpduConfigTableItem), 0, NULL);
     }
-    if (frame_config_table != NULL) {
+    if (frame_config_table.table != NULL) {
         vector_push(&m->engine.config_list, &frame_config_table);
     }
 
@@ -503,8 +500,8 @@ static void __flexray_config_destroy(void* item, void* data)
 {
     UNUSED(data);
 
-    NCodecPduFlexrayLpduConfig** config = item;
-    free(*config);
+    VectorFlexrayLpduConfigTableItem* config = item;
+    free(config->table);
 }
 
 void release_config(FlexrayBusModel* m)

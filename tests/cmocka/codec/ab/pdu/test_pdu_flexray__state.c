@@ -20,6 +20,11 @@
     "interface=stream;type=pdu;schema=fbs;"                                    \
     "ecu_id=1;cc_id=0;swc_id=1;vcn=2;pon=off"
 
+#define MIMETYPE_2                                                             \
+    "application/x-automotive-bus; "                                           \
+    "interface=stream;type=pdu;schema=fbs;"                                    \
+    "ecu_id=1;cc_id=0;swc_id=1;vcn=2;model=flexray"
+
 extern uint8_t __log_level__;
 
 extern NCodecConfigItem codec_stat(NCODEC* nc, int* index);
@@ -28,14 +33,37 @@ extern int32_t stream_read(NCODEC* nc, uint8_t** data, size_t* len, int pos_op);
 
 
 typedef struct Mock {
-    NCODEC* nc;
+    NCODEC*         nc;
+    FlexrayBusModel model;
+    uint8_t         loglevel_save;
 
     /* Object for NodeState tests.*/
     FlexrayNodeState node_state;
-
-    /* */
-    FlexrayBusModel model;
 } Mock;
+
+
+static NCodecPduFlexrayConfig cc_config = {
+    .bit_rate = NCodecPduFlexrayBitrate10,
+    .channel_enable = NCodecPduFlexrayChannelA,
+    .macrotick_per_cycle = 3361u,
+    .microtick_per_cycle = 200000u,
+    .network_idle_start = (3361u - 5u - 1u),
+    .static_slot_length = 55u,
+    .static_slot_count = 38u,
+    .minislot_length = 6u,
+    .minislot_count = 211u,
+    .static_slot_payload_length = (32u * 2), /* Word to Byte */
+
+    .coldstart_node = false,
+    .sync_node = false,
+    .coldstart_attempts = 8u,
+    .wakeup_channel_select = 0, /* Channel A */
+    .single_slot_enabled = false,
+    .key_slot_id = 0u,
+
+    .inhibit_null_frames = true,
+};
+
 
 extern void __ncodec_trace_log__(
     void* nc, NCodecTraceLogLevel level, const char* msg);
@@ -51,6 +79,23 @@ static int test_setup(void** state)
     ((NCodecInstance*)mock->nc)->trace.log = __ncodec_trace_log__;
     mock->node_state = (FlexrayNodeState){ 0 };
     mock->model = (FlexrayBusModel){ .log_nc = mock->nc };
+    mock->loglevel_save = __log_level__;
+
+    *state = mock;
+    return 0;
+}
+
+static int test_setup2(void** state)
+{
+    Mock* mock = calloc(1, sizeof(Mock));
+    assert_non_null(mock);
+
+    NSTREAM* stream = ncodec_buffer_stream_create(BUFFER_LEN);
+    mock->nc = (void*)ncodec_open(MIMETYPE_2, stream);
+    assert_non_null(mock->nc);
+    ((NCodecInstance*)mock->nc)->trace.log = __ncodec_trace_log__;
+    mock->model = (FlexrayBusModel){ .log_nc = mock->nc };
+    mock->loglevel_save = __log_level__;
 
     *state = mock;
     return 0;
@@ -62,8 +107,10 @@ static int test_teardown(void** state)
     Mock* mock = *state;
     if (mock && mock->nc) ncodec_close((void*)mock->nc);
     release_state(&mock->model);
-    if (mock) free(mock);
+    release_config(&mock->model);
 
+    __log_level__ = mock->loglevel_save;
+    free(mock);
     return 0;
 }
 
@@ -89,7 +136,7 @@ void test_flexray__node_state_changes(void** _state)
     FlexrayNodeState* state = &mock->node_state;
     StateSequence checks[] = {
         {
-            .name = "DefautConfig --> NormalActive",
+            .name = "DefaultConfig --> Config --> Ready --> NormalActive",
             .initial_poc_state = NCodecPduFlexrayPocStateDefaultConfig,
             .initial_tcvr_state = NCodecPduFlexrayTransceiverStateNoSignal,
             .length = 4,
@@ -112,7 +159,7 @@ void test_flexray__node_state_changes(void** _state)
             },
         },
         {
-            .name = "DefautConfig --> Ready --> Config",
+            .name = "DefaultConfig --> Config --> Ready --> Config",
             .initial_poc_state = NCodecPduFlexrayPocStateDefaultConfig,
             .initial_tcvr_state = NCodecPduFlexrayTransceiverStateNoSignal,
             .length = 4,
@@ -174,7 +221,7 @@ void test_flexray__node_state_changes(void** _state)
             },
         },
         {
-            .name = "NormalActive --> DefaultConfig",
+            .name = "NormalActive --> Halt --> DefaultConfig",
             .initial_poc_state = NCodecPduFlexrayPocStateNormalActive,
             .initial_tcvr_state = NCodecPduFlexrayTransceiverStateFrameSync,
             .length = 4,
@@ -223,6 +270,117 @@ void test_flexray__node_state_changes(void** _state)
                 state->tcvr_state, checks[check].transition[i].tcvr_state);
         }
     }
+}
+
+
+void test_flexray__state_entry_func(void** _state)
+{
+    Mock*                          mock = *_state;
+    NCodecPduFlexrayNodeIdentifier node_ident = { .node.ecu_id = 1,
+        .node.swc_id = 1 };
+    NCodecPduFlexrayConfig         config = cc_config;
+    NCodecPduFlexrayLpduConfig     frame_table[] = {
+        { .slot_id = 12,
+                .payload_length = 64,
+                .base_cycle = 0,
+                .cycle_repetition = 4 },
+        { .slot_id = 12,
+                .payload_length = 64,
+                .base_cycle = 1,
+                .cycle_repetition = 4 },
+        { .slot_id = 12,
+                .payload_length = 64,
+                .base_cycle = 2,
+                .cycle_repetition = 4 },
+        { .slot_id = 24,
+                .payload_length = 64,
+                .base_cycle = 0,
+                .cycle_repetition = 1 },
+    };
+    config.frame_config.table = frame_table;
+    config.frame_config.count = ARRAY_SIZE(frame_table);
+    NCodecPdu pdu = {
+        .transport_type = NCodecPduTransportTypeFlexray,
+        .transport.flexray.metadata_type = NCodecPduFlexrayMetadataTypeConfig,
+        .transport.flexray.metadata.config = config,
+        .transport.flexray.node_ident = node_ident,
+    };
+    pdu.transport.flexray.metadata.config.node_ident = node_ident;
+    FlexrayBusModel* m = &mock->model;
+    m->node_ident = node_ident;
+    FlexrayEngine* engine = &m->engine;
+    *engine = (FlexrayEngine){ 0 };
+    // __log_level__ = NCODEC_LOG_DEBUG;
+    assert_int_equal(0, process_config(m, &pdu));
+    assert_int_equal(1, m->node_ident.node.ecu_id);
+    assert_int_equal(0, m->node_ident.node.cc_id);
+    assert_int_equal(1, m->node_ident.node.swc_id);
+    register_node_state(m, m->node_ident, true, false);
+    set_poc_state(m, m->node_ident, NCodecPduFlexrayPocStateNormalActive);
+
+    // Check the slot map.
+    VectorSlotMapItem* slot_map_item = NULL;
+    // Slot 12.
+    slot_map_item = vector_find(
+        &m->engine.slot_map, &(VectorSlotMapItem){ .slot_id = 12 }, 0, NULL);
+    assert_non_null(slot_map_item);
+    assert_int_equal(12, slot_map_item->slot_id);
+    assert_int_equal(3, vector_len(&slot_map_item->lpdus));
+    // Push the node_id of the middle LPDU (slot 12).
+    FlexrayLpdu* lpdu = vector_at(&slot_map_item->lpdus, 1, NULL);
+    assert_non_null(lpdu);
+    lpdu->node_ident.node.ecu_id = 10;
+    lpdu = vector_at(&slot_map_item->lpdus, 0, NULL);
+    lpdu->payload = calloc(64, sizeof(uint8_t));
+    lpdu = vector_at(&slot_map_item->lpdus, 1, NULL);
+    lpdu->payload = calloc(64, sizeof(uint8_t));
+    lpdu = vector_at(&slot_map_item->lpdus, 2, NULL);
+    lpdu->payload = calloc(64, sizeof(uint8_t));
+    // Slot 24.
+    slot_map_item = vector_find(
+        &m->engine.slot_map, &(VectorSlotMapItem){ .slot_id = 24 }, 0, NULL);
+    assert_non_null(slot_map_item);
+    assert_int_equal(24, slot_map_item->slot_id);
+    assert_int_equal(1, vector_len(&slot_map_item->lpdus));
+    lpdu = vector_at(&slot_map_item->lpdus, 0, NULL);
+    lpdu->payload = calloc(64, sizeof(uint8_t));
+
+    // Push the state Halt --> DefaultConfig
+    FlexrayNodeState* state = NULL;
+    assert_int_equal(1, vector_len(&m->state.node_state));
+    state = vector_find(&m->state.node_state,
+        &(FlexrayNodeState){ .node_ident.node.ecu_id = 1 }, 0, NULL);
+    assert_non_null(state);
+    assert_int_equal(NCodecPduFlexrayPocStateNormalActive, state->poc_state);
+    // Halt, no config change.
+    process_poc_command(m, state, NCodecPduFlexrayCommandHalt);
+    assert_int_equal(NCodecPduFlexrayPocStateHalt, state->poc_state);
+    assert_int_equal(1, vector_len(&m->engine.config_list));
+    slot_map_item = vector_find(
+        &m->engine.slot_map, &(VectorSlotMapItem){ .slot_id = 12 }, 0, NULL);
+    assert_non_null(slot_map_item);
+    assert_int_equal(12, slot_map_item->slot_id);
+    assert_int_equal(3, vector_len(&slot_map_item->lpdus));
+    slot_map_item = vector_find(
+        &m->engine.slot_map, &(VectorSlotMapItem){ .slot_id = 24 }, 0, NULL);
+    assert_non_null(slot_map_item);
+    assert_int_equal(24, slot_map_item->slot_id);
+    assert_int_equal(1, vector_len(&slot_map_item->lpdus));
+    // DefaultConfig, prior config removed, slot map items (and allocated
+    // payload).
+    process_poc_command(m, state, NCodecPduFlexrayCommandConfig);
+    assert_int_equal(NCodecPduFlexrayPocStateDefaultConfig, state->poc_state);
+    assert_int_equal(0, vector_len(&m->engine.config_list));
+    slot_map_item = vector_find(
+        &m->engine.slot_map, &(VectorSlotMapItem){ .slot_id = 12 }, 0, NULL);
+    assert_non_null(slot_map_item);
+    assert_int_equal(12, slot_map_item->slot_id);
+    assert_int_equal(1, vector_len(&slot_map_item->lpdus));
+    slot_map_item = vector_find(
+        &m->engine.slot_map, &(VectorSlotMapItem){ .slot_id = 24 }, 0, NULL);
+    assert_non_null(slot_map_item);
+    assert_int_equal(24, slot_map_item->slot_id);
+    assert_int_equal(0, vector_len(&slot_map_item->lpdus));
 }
 
 
@@ -397,11 +555,13 @@ void test_flexray__bus_condition(void** _state)
 int run_pdu_flexray_state_tests(void)
 {
     void* s = test_setup;
+    void* s2 = test_setup2;
     void* t = test_teardown;
 #define T cmocka_unit_test_setup_teardown
 
     const struct CMUnitTest tests[] = {
         T(test_flexray__node_state_changes, s, t),
+        T(test_flexray__state_entry_func, s2, t),
         T(test_flexray__bus_condition, s, t),
     };
 
