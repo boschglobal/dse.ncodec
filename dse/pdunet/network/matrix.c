@@ -18,9 +18,9 @@
 #endif
 
 
-typedef void (*LinearRangeFunc)(PduNetworkDesc*, PduRange*);
-static void _apply_range(PduNetworkDesc* net, PduRange* range, PduDirection dir,
-    LinearRangeFunc func)
+typedef void (*LinearRangeFunc)(PduNetwork*, PduRange*);
+static void _apply_range(
+    PduNetwork* net, PduRange* range, PduDirection dir, LinearRangeFunc func)
 {
     assert(net);
     if (range == NULL) {
@@ -36,17 +36,17 @@ static void _apply_range(PduNetworkDesc* net, PduRange* range, PduDirection dir,
     }
 }
 
-void pdunet_encode_linear(PduNetworkDesc* net, PduRange* range)
+void pdunet_encode_linear(PduNetwork* net, PduRange* range)
 {
     _apply_range(net, range, PduDirectionTx, pdunet_pdu_calculate_linear_range);
 }
 
-void pdunet_decode_linear(PduNetworkDesc* net, PduRange* range)
+void pdunet_decode_linear(PduNetwork* net, PduRange* range)
 {
     _apply_range(net, range, PduDirectionRx, pdunet_pdu_calculate_linear_range);
 }
 
-void pdunet_encode_pack(PduNetworkDesc* net, PduRange* range)
+void pdunet_encode_pack(PduNetwork* net, PduRange* range)
 {
     // NOTE: pack only PDUs that need updating. When this
     // occurs the basis for checksum calculation may be moved to
@@ -54,7 +54,7 @@ void pdunet_encode_pack(PduNetworkDesc* net, PduRange* range)
     _apply_range(net, range, PduDirectionTx, pdunet_pdu_pack_range);
 }
 
-void pdunet_decode_unpack(PduNetworkDesc* net, PduRange* range)
+void pdunet_decode_unpack(PduNetwork* net, PduRange* range)
 {
     _apply_range(net, range, PduDirectionRx, pdunet_pdu_pack_range);
 }
@@ -105,7 +105,7 @@ static const matrix_item_spec matrix_vector_offset_list[] = {
 #define MATRIX_RANGE_OFFSET  2
 
 static void _allocate_matrix(
-    PduNetworkDesc* net, size_t pdu_count, size_t signal_count)
+    PduNetwork* net, size_t pdu_count, size_t signal_count)
 {
     assert(net);
     // Item 0 .. MATRIX_SIGNAL_OFFSET - 1 (pdu)
@@ -128,7 +128,7 @@ static void _allocate_matrix(
     }
 }
 
-void pdunet_matrix_clear(PduNetworkDesc* net)
+void pdunet_matrix_clear(PduNetwork* net)
 {
     assert(net);
     for (size_t i = 0; i < vector_len(&net->matrix.payload); i++) {
@@ -152,7 +152,7 @@ void pdunet_matrix_clear(PduNetworkDesc* net)
 }
 
 
-static void _initialise_pdu(PduNetworkDesc* net, PduObject* o)
+static void _initialise_pdu(PduNetwork* net, PduObject* o)
 {
     uint8_t** payload =
         vector_at(&(net->matrix.payload), o->matrix.pdu_idx, NULL);
@@ -177,7 +177,7 @@ static void _initialise_pdu(PduNetworkDesc* net, PduObject* o)
     };
 }
 
-int pdunet_matrix_transform(PduNetworkDesc* net, PduNetworkSortFunc sort)
+int pdunet_matrix_transform(PduNetwork* net, PduNetworkSortFunc sort)
 {
     UNUSED(sort);
     assert(net);
@@ -338,7 +338,7 @@ int pdunet_matrix_transform(PduNetworkDesc* net, PduNetworkSortFunc sort)
 }
 
 
-void pdunet_pdu_calculate_linear_range(PduNetworkDesc* net, PduRange* r)
+void pdunet_pdu_calculate_linear_range(PduNetwork* net, PduRange* r)
 {
     assert(net);
     lua_State* L = net->lua.lua_state;
@@ -444,7 +444,7 @@ void pdunet_pdu_calculate_linear_range(PduNetworkDesc* net, PduRange* r)
 }
 
 
-void pdunet_pdu_pack_range(PduNetworkDesc* net, PduRange* r)
+void pdunet_pdu_pack_range(PduNetwork* net, PduRange* r)
 {
     assert(net);
     lua_State* L = net->lua.lua_state;

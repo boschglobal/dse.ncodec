@@ -26,7 +26,7 @@
 
 
 typedef struct PdunetMock {
-    PduNetworkDesc* net;
+    PduNetwork*     net;
     NCODEC*         ncodec;
     ABCodecBusModel bm_save;
     lua_State*      L;

@@ -30,8 +30,7 @@ uint32_t pdunet_checksum(const uint8_t* payload, size_t len)
     return csum;
 }
 
-static void _set_skip(
-    PduNetworkDesc* net, size_t offset, size_t count, bool skip)
+static void _set_skip(PduNetwork* net, size_t offset, size_t count, bool skip)
 {
     bool* skip_vec = (bool*)vector_at(&net->matrix.signal.skip, offset, NULL);
     for (size_t i = 0; i < count; i++) {
@@ -39,7 +38,7 @@ static void _set_skip(
     }
 }
 
-void pdunet_schedule(PduNetworkDesc* net)
+void pdunet_schedule(PduNetwork* net)
 {
     /* Signals not calculated. */
     _set_skip(net, 0, net->matrix.signal.count, true);
@@ -128,7 +127,7 @@ void pdunet_schedule(PduNetworkDesc* net)
 }
 
 
-PduNetworkNCodecVTable pdunet_network_factory(PduNetworkDesc* net)
+PduNetworkNCodecVTable pdunet_network_factory(PduNetwork* net)
 {
     YamlNode* md = dse_yaml_find_node(net->doc, "spec/metadata/flexray");
     if (md) {
@@ -165,7 +164,7 @@ static void* _object_match_handler(void* object)
 }
 
 
-void pdunet_parse_pdus(PduNetworkDesc* net, PdunetSchemaObject* object)
+void pdunet_parse_pdus(PduNetwork* net, PdunetSchemaObject* object)
 {
     uint32_t index = 0;
     do {
@@ -179,7 +178,7 @@ void pdunet_parse_pdus(PduNetworkDesc* net, PdunetSchemaObject* object)
 }
 
 
-PduItem pdunet_pdu_generator(PduNetworkDesc* net, YamlNode* n)
+PduItem pdunet_pdu_generator(PduNetwork* net, YamlNode* n)
 {
     PduItem pdu = { .id = 0 };
 
@@ -242,7 +241,7 @@ PduItem pdunet_pdu_generator(PduNetworkDesc* net, YamlNode* n)
 
 
 PduSignalItem pdunet_signal_generator(
-    PduNetworkDesc* net, YamlNode* n, PduItem* pdu)
+    PduNetwork* net, YamlNode* n, PduItem* pdu)
 {
     PduSignalItem signal = { .factor = NAN,
         .offset = NAN,
@@ -312,7 +311,7 @@ PduSignalItem pdunet_signal_generator(
 }
 
 
-void pdunet_build_msm(PduNetworkDesc* net, const char* name, size_t count,
+void pdunet_build_msm(PduNetwork* net, const char* name, size_t count,
     const char** signal, double* scalar)
 {
     assert(net);
@@ -387,10 +386,10 @@ pdunet_parse
 
 Parameters
 ----------
-net (PduNetworkDesc*)
-: PduNetworkDesc object.
+net (PduNetwork*)
+: PduNetwork object.
 */
-int pdunet_parse(PduNetworkDesc* net, void* doc)
+int pdunet_parse(PduNetwork* net, void* doc)
 {
     assert(net);
     assert(doc);
@@ -412,7 +411,7 @@ int pdunet_parse(PduNetworkDesc* net, void* doc)
     // Parse schedule.
     static const PdunetSchemaFieldSpec spec[] = {
         // clang-format off
-        { D, "spec/schedule/epoch_offset", offsetof(PduNetworkDesc, schedule.epoch_offset) },
+        { D, "spec/schedule/epoch_offset", offsetof(PduNetwork, schedule.epoch_offset) },
         // clang-format on
     };
     pdunet_schema_load_object(net, net->doc, net, spec, ARRAY_SIZE(spec));
@@ -438,10 +437,10 @@ pdunet_transform
 
 Parameters
 ----------
-net (PduNetworkDesc*)
-: PduNetworkDesc object.
+net (PduNetwork*)
+: PduNetwork object.
 */
-int pdunet_transform(PduNetworkDesc* net, PduNetworkSortFunc sort)
+int pdunet_transform(PduNetwork* net, PduNetworkSortFunc sort)
 {
     int rc = pdunet_matrix_transform(net, sort);
     if (rc) return rc;
@@ -461,10 +460,8 @@ static int _sort_mpdu(const void* left, const void* right)
 }
 
 
-static void pdunet_visit_map_pdu(PDUNET* n, PDUOBJECT* o, void* data)
+static void pdunet_visit_map_pdu(PduNetwork* net, PduObject* pdu, void* data)
 {
-    PduNetworkDesc* net = __pdunet(n);
-    PduObject*      pdu = __pduobject(o);
     if (pdu == NULL || pdu->pdu == NULL) return;
     PduObject* c_pdu = data;
     if (c_pdu == NULL || c_pdu->pdu == NULL) return;
@@ -485,11 +482,9 @@ static void pdunet_visit_map_pdu(PDUNET* n, PDUOBJECT* o, void* data)
 }
 
 
-void pdunet_visit_setup_containers(PDUNET* n, PDUOBJECT* o, void* data)
+void pdunet_visit_setup_containers(PduNetwork* net, PduObject* pdu, void* data)
 {
     UNUSED(data);
-    PduNetworkDesc* net = __pdunet(n);
-    PduObject*      pdu = __pduobject(o);
     if (pdu == NULL || pdu->pdu == NULL) return;
     if (pdu->container.header == HeaderFormatNone) return;
 
@@ -506,11 +501,9 @@ static size_t header_length[] = {
     [HeaderFormatFull] = 8,
 };
 
-void pdunet_visit_container_mapto(PDUNET* n, PDUOBJECT* o, void* data)
+void pdunet_visit_container_mapto(PduNetwork* net, PduObject* pdu, void* data)
 {
     UNUSED(data);
-    PduNetworkDesc* net = __pdunet(n);
-    PduObject*      pdu = __pduobject(o);
     assert(net);
     if (pdu == NULL || pdu->pdu == NULL) return;
     if (pdu->pdu->dir != PduDirectionTx) return;
@@ -607,11 +600,9 @@ void pdunet_visit_container_mapto(PDUNET* n, PDUOBJECT* o, void* data)
     pdunet_call_tx_func(net, pdu);
 }
 
-void pdunet_visit_container_mapfrom(PDUNET* n, PDUOBJECT* o, void* data)
+void pdunet_visit_container_mapfrom(PduNetwork* net, PduObject* pdu, void* data)
 {
     UNUSED(data);
-    PduNetworkDesc* net = __pdunet(n);
-    PduObject*      pdu = __pduobject(o);
     assert(net);
     if (pdu == NULL || pdu->pdu == NULL) return;
     if (pdu->pdu->dir != PduDirectionRx) return;
@@ -710,10 +701,10 @@ pdunet_configure
 
 Parameters
 ----------
-net (PduNetworkDesc*)
-: PduNetworkDesc object.
+net (PduNetwork*)
+: PduNetwork object.
 */
-int pdunet_configure(PduNetworkDesc* net)
+int pdunet_configure(PduNetwork* net)
 {
     assert(net);
     int rc = 0;

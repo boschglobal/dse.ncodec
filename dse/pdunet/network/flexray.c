@@ -58,7 +58,7 @@ static const double flexray_microtick[] = {
 };
 
 
-void pdunet_flexray_parse_network(PduNetworkDesc* net)
+void pdunet_flexray_parse_network(PduNetwork* net)
 {
     YamlNode* md = dse_yaml_find_node(net->doc, "spec/metadata/flexray");
     if (md) {
@@ -67,7 +67,7 @@ void pdunet_flexray_parse_network(PduNetworkDesc* net)
     }
 }
 
-void pdunet_flexray_parse_pdu(PduNetworkDesc* net, PduItem* pdu, void* n)
+void pdunet_flexray_parse_pdu(PduNetwork* net, PduItem* pdu, void* n)
 {
     assert(pdu);
     assert(n);
@@ -83,7 +83,7 @@ static const char* _frdir[] = {
     [NCodecPduFlexrayDirectionTx] = "Tx",
 };
 
-void pdunet_flexray_config(PduNetworkDesc* net)
+void pdunet_flexray_config(PduNetwork* net)
 {
     assert(net);
     assert(net->ncodec);
@@ -148,7 +148,7 @@ void pdunet_flexray_config(PduNetworkDesc* net)
         net->network.vtable.flexray.cycle_time * net->schedule.step_size);
 }
 
-void pdunet_flexray_lpdu_tx(PduNetworkDesc* net)
+void pdunet_flexray_lpdu_tx(PduNetwork* net)
 {
     assert(net);
     assert(net->ncodec);
@@ -201,7 +201,7 @@ void pdunet_flexray_lpdu_tx(PduNetworkDesc* net)
 }
 
 
-void pdunet_flexray_lpdu_rx(PduNetworkDesc* net)
+void pdunet_flexray_lpdu_rx(PduNetwork* net)
 {
     while (1) {
         NCodecPdu nc_pdu = {};
@@ -285,7 +285,7 @@ void pdunet_flexray_lpdu_rx(PduNetworkDesc* net)
     }
 }
 
-void pdunet_flexray_parse_network_metadata(PduNetworkDesc* net, YamlNode* md)
+void pdunet_flexray_parse_network_metadata(PduNetwork* net, YamlNode* md)
 {
     assert(net);
     assert(md);
@@ -330,7 +330,7 @@ void pdunet_flexray_parse_network_metadata(PduNetworkDesc* net, YamlNode* md)
 }
 
 void pdunet_flexray_parse_pdu_metadata(
-    PduNetworkDesc* net, PduItem* pdu, YamlNode* md)
+    PduNetwork* net, PduItem* pdu, YamlNode* md)
 {
     assert(pdu);
     assert(md);

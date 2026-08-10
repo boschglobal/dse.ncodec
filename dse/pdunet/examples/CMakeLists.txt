@@ -10,3 +10,6 @@ project(PduNet_Examples
 
 # Example Models.
 add_subdirectory(pdunet)
+if(UNIX)
+add_subdirectory(bench)
+endif()

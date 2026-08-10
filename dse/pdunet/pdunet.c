@@ -26,7 +26,7 @@
 pdunet_create
 =============
 
-Create and configure a `PduNetworkDesc` object to represent a PDU Network.
+Create and configure a `PduNetwork` object to represent a PDU Network.
 
 Parameters
 ----------
@@ -48,11 +48,11 @@ log (DseLog*)
 
 Returns
 -------
-PDUNET*
+PduNetwork*
 : PDU Network object, or NULL if required arguments are invalid or allocation
   fails.
 */
-PDUNET* pdunet_create(
+PduNetwork* pdunet_create(
     NCODEC* nc, void* doc, double step_size, lua_State* L, DseLog* log)
 {
     log_notice(log, "PDU Net: Create Network");
@@ -66,12 +66,12 @@ PDUNET* pdunet_create(
         errno = EINVAL;
         return NULL;
     }
-    PduNetworkDesc* net = calloc(1, sizeof(PduNetworkDesc));
+    PduNetwork* net = calloc(1, sizeof(PduNetwork));
     if (net == NULL) {
         errno = ENOMEM;
         return NULL;
     }
-    *net = (PduNetworkDesc){
+    *net = (PduNetwork){
         .ncodec = nc,
         .doc = doc,
         .schedule.step_size = MODEL_DEFAULT_STEP_SIZE,
@@ -137,7 +137,7 @@ Map external signal vectors to the PDU Network signal matrix.
 
 Parameters
 ----------
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
 name (const char*)
@@ -157,12 +157,10 @@ Returns
 int
 : 0 when the signal mapping was created, non-zero otherwise.
 */
-int pdunet_map_signals(PDUNET* n, const char* name, size_t count,
+int pdunet_map_signals(PduNetwork* net, const char* name, size_t count,
     const char** signal, double* scalar)
 {
-    PduNetworkDesc* net = __pdunet(n);
-    log_notice(
-        net->log, "PDU Net: Search for SignalGroup (Network=%s)", net->name);
+    log_notice(net->log, "PDU Net: Map Signals (Network=%s)", net->name);
     pdunet_build_msm(net, name, count, signal, scalar);
     if ((net->msm.in == NULL) && (net->msm.out == NULL)) {
         log_error(net->log, "Marshal table not created");
@@ -200,10 +198,10 @@ Call a visitor function for each PDU in the PDU Network.
 
 Parameters
 ----------
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
-r (PDURANGE*)
+r (PduRange*)
 : Range object, optional. When NULL the visitor function is called for all PDUs
   in the PDU Network.
 
@@ -217,10 +215,10 @@ Returns
 -------
 None.
 */
-void pdunet_visit(PDUNET* n, PDURANGE* r, PduNetworkVisitFunc visit, void* data)
+void pdunet_visit(
+    PduNetwork* net, PduRange* range, PduNetworkVisitFunc visit, void* data)
 {
-    UNUSED(r);
-    PduNetworkDesc* net = __pdunet(n);
+    UNUSED(range);
     if (net == NULL || visit == NULL) return;
 
     for (size_t i = 0; i < vector_len(&net->matrix.pdu); i++) {
@@ -240,10 +238,10 @@ if `needs_tx` is set on the `PduObject` after the visitor returns.
 
 Parameters
 ----------
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
-r (PDURANGE*)
+r (PduRange*)
 : Range object, optional. When NULL the visitor function is called for all PDUs
   in the PDU Network.
 
@@ -262,12 +260,9 @@ Returns
 -------
 None.
 */
-void pdunet_tx(PDUNET* n, PDURANGE* r, PduNetworkVisitFunc visit, void* data,
-    double simulation_time)
+void pdunet_tx(PduNetwork* net, PduRange* range, PduNetworkVisitFunc visit,
+    void* data, double simulation_time)
 {
-    PduNetworkDesc* net = __pdunet(n);
-    PduRange*       range = __pdurange(r);
-
     if (net == NULL) return;
     if (simulation_time < 0) simulation_time = 0.0;
 
@@ -323,10 +318,10 @@ call the visitor after a PDU is received.
 
 Parameters
 ----------
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
-r (PDURANGE*)
+r (PduRange*)
 : Range object, optional. When NULL the visitor function is called for all PDUs
   in the PDU Network.
 
@@ -341,11 +336,9 @@ Returns
 -------
 None.
 */
-void pdunet_rx(PDUNET* n, PDURANGE* r, PduNetworkVisitFunc visit, void* data)
+void pdunet_rx(
+    PduNetwork* net, PduRange* range, PduNetworkVisitFunc visit, void* data)
 {
-    PduNetworkDesc* net = __pdunet(n);
-    PduRange*       range = __pdurange(r);
-
     if (net == NULL) return;
 
     log_debug(net->log, "PDU Net: RX");
@@ -368,38 +361,33 @@ void pdunet_rx(PDUNET* n, PDURANGE* r, PduNetworkVisitFunc visit, void* data)
 }
 
 
-void pdunet_visit_clear_update_flag(PDUNET* n, PDUOBJECT* o, void* data)
+void pdunet_visit_clear_update_flag(PduNetwork* net, PduObject* pdu, void* data)
 {
-    UNUSED(n);
+    UNUSED(net);
     UNUSED(data);
-    PduObject* pdu = __pduobject(o);
     if (pdu) pdu->update_signals = false;
 }
 
 
-void pdunet_visit_clear_tx_flag(PDUNET* n, PDUOBJECT* o, void* data)
+void pdunet_visit_clear_tx_flag(PduNetwork* net, PduObject* pdu, void* data)
 {
-    UNUSED(n);
+    UNUSED(net);
     UNUSED(data);
-    PduObject* pdu = __pduobject(o);
     if (pdu) pdu->needs_tx = false;
 }
 
 
-void pdunet_visit_clear_checksum(PDUNET* n, PDUOBJECT* o, void* data)
+void pdunet_visit_clear_checksum(PduNetwork* net, PduObject* pdu, void* data)
 {
-    UNUSED(n);
+    UNUSED(net);
     UNUSED(data);
-    PduObject* pdu = __pduobject(o);
     if (pdu) pdu->checksum = 0;
 }
 
 
-void pdunet_visit_set_checksum(PDUNET* n, PDUOBJECT* o, void* data)
+void pdunet_visit_set_checksum(PduNetwork* net, PduObject* pdu, void* data)
 {
     UNUSED(data);
-    PduNetworkDesc* net = __pdunet(n);
-    PduObject*      pdu = __pduobject(o);
     if (pdu == NULL || pdu->pdu == NULL) return;
     if (pdu->pdu->dir == PduDirectionTx) {
         uint8_t* payload = NULL;
@@ -411,11 +399,9 @@ void pdunet_visit_set_checksum(PDUNET* n, PDUOBJECT* o, void* data)
 }
 
 
-void pdunet_visit_needs_tx(PDUNET* n, PDUOBJECT* o, void* data)
+void pdunet_visit_needs_tx(PduNetwork* net, PduObject* pdu, void* data)
 {
     UNUSED(data);
-    PduNetworkDesc* net = __pdunet(n);
-    PduObject*      pdu = __pduobject(o);
     if (pdu == NULL || pdu->pdu == NULL) return;
 
     if (pdu->pdu->dir == PduDirectionTx) {
@@ -450,10 +436,8 @@ void pdunet_visit_needs_tx(PDUNET* n, PDUOBJECT* o, void* data)
 }
 
 
-void pdunet_call_tx_func(PDUNET* n, PDUOBJECT* o)
+void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu)
 {
-    PduNetworkDesc* net = __pdunet(n);
-    PduObject*      pdu = __pduobject(o);
     if (pdu == NULL || pdu->pdu == NULL) return;
     if ((pdu->needs_tx != true) || (pdu->lua.tx_ref == 0)) return;
 
@@ -488,10 +472,8 @@ void pdunet_call_tx_func(PDUNET* n, PDUOBJECT* o)
 
 
 int pdunet_call_rx_func(
-    PDUNET* n, PDUOBJECT* o, uint8_t* payload, size_t payload_len)
+    PduNetwork* net, PduObject* pdu, uint8_t* payload, size_t payload_len)
 {
-    PduNetworkDesc* net = __pdunet(n);
-    PduObject*      pdu = __pduobject(o);
     if (pdu == NULL || pdu->pdu == NULL) return 0;
     if (pdu->lua.rx_ref == 0) return 0;
 
@@ -521,17 +503,15 @@ Destroy a PDU Network object and release all resources owned by it.
 
 Parameters
 ----------
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
 Returns
 -------
 None.
 */
-void pdunet_destroy(PDUNET* n)
+void pdunet_destroy(PduNetwork* net)
 {
-    PduNetworkDesc* net = __pdunet(n);
-
     if (net) {
         for (size_t i = 0; i < vector_len(&net->pdus); i++) {
             PduItem* pdu = vector_at(&net->pdus, i, NULL);

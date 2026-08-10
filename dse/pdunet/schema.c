@@ -35,7 +35,7 @@ void* pdunet_schema_object_enumerator(PdunetSchemaObject* object,
 }
 
 
-void pdunet_schema_load_object(PduNetworkDesc* net, void* node, void* object,
+void pdunet_schema_load_object(PduNetwork* net, void* node, void* object,
     const PdunetSchemaFieldSpec* spec, size_t count)
 {
     YamlNode* n = (YamlNode*)node;

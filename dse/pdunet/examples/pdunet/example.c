@@ -31,7 +31,7 @@ int run_pdunet_example(const char* yaml)
     if (nc == NULL) return 1;
 
     /* Create and map PDUNet. */
-    PDUNET* net = pdunet_create(nc, doc, 0.0005, NULL, NULL);
+    PduNetwork* net = pdunet_create(nc, doc, 0.0005, NULL, NULL);
     if (net == NULL) {
         ncodec_close(nc);
         return 2;

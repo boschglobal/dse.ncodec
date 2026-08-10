@@ -59,10 +59,8 @@ static void __ncodec_trace_log__(
     if (level >= dlog.level) dse_log2console(&dlog, level, NULL, 0, "%s", msg);
 }
 
-static void _visit_count_csum_set(PDUNET* n, PDUOBJECT* p, void* data)
+static void _visit_count_csum_set(PduNetwork* net, PduObject* pdu, void* data)
 {
-    PduNetworkDesc* net = (PduNetworkDesc*)n;
-    PduObject*      pdu = (PduObject*)p;
     assert_non_null(net);
     assert_non_null(data);
     int* counter = data;
@@ -87,7 +85,7 @@ void test_pdunet_schedule_pdu_fr(void** state)
     ((ABCodecInstance*)nc)->reader.bus_model = (ABCodecBusModel){};
     ((NCodecInstance*)nc)->trace.log = __ncodec_trace_log__;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -217,7 +215,7 @@ void test_pdunet_schedule_net_fr(void** state)
     ((ABCodecInstance*)nc)->reader.bus_model = (ABCodecBusModel){};
     ((NCodecInstance*)nc)->trace.log = __ncodec_trace_log__;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -326,7 +324,7 @@ void test_pdunet_schedule_status_fr(void** state)
     ((ABCodecInstance*)nc)->reader.bus_model = (ABCodecBusModel){};
     ((NCodecInstance*)nc)->trace.log = __ncodec_trace_log__;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -391,7 +389,7 @@ void test_pdunet_schedule_container_fr(void** state)
     ((ABCodecInstance*)nc)->reader.bus_model = (ABCodecBusModel){};
     ((NCodecInstance*)nc)->trace.log = __ncodec_trace_log__;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);

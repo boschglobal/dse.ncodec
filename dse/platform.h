@@ -47,8 +47,11 @@
 #define CLOCK_SOURCE CLOCK_MONOTONIC_RAW
 
 
-
 #endif // _WIN32
+
+
+/* Logging Interface. */
+typedef struct DseLog DseLog;
 
 
 #endif  // DSE_PLATFORM_H_

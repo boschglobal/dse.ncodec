@@ -120,14 +120,14 @@ static void _lua_push_pdu_ctx(
     // clang-format on
 }
 
-static void lua_model_error(PduNetworkDesc* net, lua_State* L, const char* msg)
+static void lua_model_error(PduNetwork* net, lua_State* L, const char* msg)
 {
     if (net->log->level != LOG_QUIET)
         log_error(net->log, "Lua Error: %s (%s)", msg, lua_tostring(L, -1));
 }
 
 
-int pdunet_lua_pdu_call(PduNetworkDesc* net, lua_State* L, int32_t func_ref,
+int pdunet_lua_pdu_call(PduNetwork* net, lua_State* L, int32_t func_ref,
     uint8_t* const payload, uint32_t payload_len, bool no_err_log)
 {
     if (L == NULL) return -EINVAL;
@@ -199,7 +199,7 @@ static void _lua_push_signal_ctx(lua_State* L, double phys, uint64_t raw,
     // clang-format on
 }
 
-int pdunet_lua_signal_call(PduNetworkDesc* net, lua_State* L, int32_t func_ref,
+int pdunet_lua_signal_call(PduNetwork* net, lua_State* L, int32_t func_ref,
     double* phys, uint64_t* raw, uint8_t* payload, uint32_t payload_len)
 {
     if (L == NULL) return -EINVAL;
@@ -275,7 +275,7 @@ void pdunet_load_lua_func(YamlNode* n, const char* path, const char** out)
 }
 
 
-void pdunet_parse_network_functions(PduNetworkDesc* net)
+void pdunet_parse_network_functions(PduNetwork* net)
 {
     assert(net);
 
@@ -323,7 +323,7 @@ static void __lua_model_destroy(lua_State* L)
 
 
 int pdunet_lua_install_script(
-    PduNetworkDesc* net, lua_State* L, const char* lua_script)
+    PduNetwork* net, lua_State* L, const char* lua_script)
 {
     if (lua_script == NULL) return 0;
     assert(L);
@@ -358,7 +358,7 @@ int pdunet_lua_install_script(
 }
 
 
-int pdunet_lua_setup(PduNetworkDesc* net)
+int pdunet_lua_setup(PduNetwork* net)
 {
     assert(net);
 
@@ -374,7 +374,7 @@ int pdunet_lua_setup(PduNetworkDesc* net)
 }
 
 
-void pdunet_lua_teardown(PduNetworkDesc* net)
+void pdunet_lua_teardown(PduNetwork* net)
 {
     if (net && net->lua.lua_state != NULL) {
         __lua_model_destroy(net->lua.lua_state);

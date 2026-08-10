@@ -1,0 +1,40 @@
+---
+kind: Network
+metadata:
+  name: Example
+  annotations:
+    bus_id: 1
+    node_id: 1
+    interface_id: 1
+
+spec:
+  schedule:
+    epoch_offset: 0.000
+
+  pdus:
+    - pdu: VehicleState
+      id: 1
+      length: 8
+      dir: Tx
+      schedule:
+        phase: 0.0
+        interval: 0.001
+        trigger: Periodic
+      metadata:
+        can:
+          frame_format: Base
+          frame_type: Data
+      signals:
+        - signal: Vehicle.Speed
+          encoding:
+            start: 0
+            length: 32
+            factor: 0.01
+            offset: 0
+
+        - signal: Vehicle.Acceleration
+          encoding:
+            start: 32
+            length: 32
+            factor: 0.01
+            offset: 0

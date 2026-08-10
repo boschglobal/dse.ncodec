@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 #include <lua.h>
-#include <dse/log.h>
+#include <dse/platform.h>
 
 
 /* DLL Interface visibility. */
@@ -51,46 +51,48 @@ Example
 
 */
 
-typedef void PDUNET;
-typedef void PDUOBJECT;
-typedef void PDURANGE;
+typedef struct PduNetwork PduNetwork;
+typedef struct PduObject  PduObject;
+typedef struct PduRange   PduRange;
 
-
-typedef void (*PduNetworkSortFunc)(PDUNET* net, PDURANGE* range, void* data);
-typedef void (*PduNetworkVisitFunc)(PDUNET* net, PDUOBJECT* pdu, void* data);
+typedef void (*PduNetworkSortFunc)(
+    PduNetwork* net, PduRange* range, void* data);
+typedef void (*PduNetworkVisitFunc)(
+    PduNetwork* net, PduObject* pdu, void* data);
 
 
 /* Primary API. */
-DLL_PUBLIC PDUNET* pdunet_create(
+DLL_PUBLIC PduNetwork* pdunet_create(
     void* ncodec, void* doc, double step_size, lua_State* L, DseLog* log);
-DLL_PUBLIC void pdunet_destroy(PDUNET* net);
+DLL_PUBLIC void pdunet_destroy(PduNetwork* net);
 
-DLL_PUBLIC int pdunet_map_signals(PDUNET* net, const char* name, size_t count,
-    const char** signal, double* scalar);
+DLL_PUBLIC int pdunet_map_signals(PduNetwork* net, const char* name,
+    size_t count, const char** signal, double* scalar);
 
 
 /* Secondary API. */
-DLL_PUBLIC int pdunet_sort(PDUNET* net, PduNetworkSortFunc sort);
+DLL_PUBLIC int pdunet_sort(PduNetwork* net, PduNetworkSortFunc sort);
 
 DLL_PUBLIC void pdunet_visit(
-    PDUNET* net, PDURANGE* range, PduNetworkVisitFunc visit, void* data);
-DLL_PUBLIC void pdunet_tx(PDUNET* net, PDURANGE* range,
+    PduNetwork* net, PduRange* range, PduNetworkVisitFunc visit, void* data);
+DLL_PUBLIC void pdunet_tx(PduNetwork* net, PduRange* range,
     PduNetworkVisitFunc visit, void* data, double simulation_time);
 DLL_PUBLIC void pdunet_rx(
-    PDUNET* net, PDURANGE* range, PduNetworkVisitFunc visit, void* data);
+    PduNetwork* net, PduRange* range, PduNetworkVisitFunc visit, void* data);
 
 DLL_PUBLIC void pdunet_visit_clear_update_flag(
-    PDUNET* net, PDUOBJECT* pdu, void* data);
+    PduNetwork* net, PduObject* pdu, void* data);
 DLL_PUBLIC void pdunet_visit_clear_tx_flag(
-    PDUNET* net, PDUOBJECT* pdu, void* data);
+    PduNetwork* net, PduObject* pdu, void* data);
 DLL_PUBLIC void pdunet_visit_clear_checksum(
-    PDUNET* net, PDUOBJECT* pdu, void* data);
+    PduNetwork* net, PduObject* pdu, void* data);
 DLL_PUBLIC void pdunet_visit_set_checksum(
-    PDUNET* net, PDUOBJECT* pdu, void* data);
-DLL_PUBLIC void pdunet_visit_needs_tx(PDUNET* net, PDUOBJECT* pdu, void* data);
+    PduNetwork* net, PduObject* pdu, void* data);
+DLL_PUBLIC void pdunet_visit_needs_tx(
+    PduNetwork* net, PduObject* pdu, void* data);
 
-DLL_PUBLIC void pdunet_call_tx_func(PDUNET* net, PDUOBJECT* pdu);
+DLL_PUBLIC void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu);
 DLL_PUBLIC int  pdunet_call_rx_func(
-     PDUNET* net, PDUOBJECT* pdu, uint8_t* payload, size_t payload_len);
+     PduNetwork* net, PduObject* pdu, uint8_t* payload, size_t payload_len);
 
 #endif  // DSE_PDUNET_PDUNET_H_

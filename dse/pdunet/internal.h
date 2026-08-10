@@ -19,23 +19,6 @@
 
 */
 
-typedef struct PduNetworkDesc PduNetworkDesc;
-typedef struct PduObject      PduObject;
-typedef struct PduRange       PduRange;
-static inline PduNetworkDesc* __pdunet(PDUNET* n)
-{
-    return (PduNetworkDesc*)n;
-}
-static inline PduObject* __pduobject(PDUOBJECT* o)
-{
-    return (PduObject*)o;
-}
-static inline PduRange* __pdurange(PDURANGE* r)
-{
-    return (PduRange*)r;
-}
-
-
 typedef int lua_func_t;
 
 
@@ -213,9 +196,9 @@ typedef struct PduTransformMatrix {
 } PduTransformMatrix;
 
 
-typedef void (*PduNetworkParseNetwork)(PduNetworkDesc* net);
-typedef void (*PduNetworkParsePdu)(PduNetworkDesc* net, PduItem* pdu, void* n);
-typedef void (*PduNetworkNCodecPduTx)(PduNetworkDesc* net);
+typedef void (*PduNetworkParseNetwork)(PduNetwork* net);
+typedef void (*PduNetworkParsePdu)(PduNetwork* net, PduItem* pdu, void* n);
+typedef void (*PduNetworkNCodecPduTx)(PduNetwork* net);
 
 typedef struct PduNetworkNCodecVTable {
     PduNetworkParseNetwork parse_network;
@@ -235,10 +218,9 @@ typedef struct PduNetworkNCodecVTable {
 } PduNetworkNCodecVTable;
 
 
-typedef struct PduNetworkDesc {
+typedef struct PduNetwork {
     const char* name;
     void*       ncodec;
-    //    ModelInstanceSpec* mi;
     void*       doc; /* YamlNode */
 
     /* Log Interface.*/
@@ -282,7 +264,7 @@ typedef struct PduNetworkDesc {
         MarshalSignalMap* in;  /* Bus Rx. */
         MarshalSignalMap* out; /* Bus Tx. */
     } msm;
-} PduNetworkDesc;
+} PduNetwork;
 
 
 #endif  // DSE_PDUNET_INTERNAL_H_

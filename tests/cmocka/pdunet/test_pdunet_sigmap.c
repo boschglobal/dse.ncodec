@@ -57,7 +57,7 @@ void test_pdunet_sigmap(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);

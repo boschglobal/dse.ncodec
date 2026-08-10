@@ -11,13 +11,13 @@
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 
-void pdunet_can_parse_network(PduNetworkDesc* net)
+void pdunet_can_parse_network(PduNetwork* net)
 {
     net->network.transport_type = NCodecPduTransportTypeCan;
 }
 
 
-void pdunet_can_parse_pdu(PduNetworkDesc* net, PduItem* pdu, void* n)
+void pdunet_can_parse_pdu(PduNetwork* net, PduItem* pdu, void* n)
 {
     assert(net);
     assert(pdu);
@@ -29,7 +29,7 @@ void pdunet_can_parse_pdu(PduNetworkDesc* net, PduItem* pdu, void* n)
 }
 
 
-void pdunet_can_config(PduNetworkDesc* net)
+void pdunet_can_config(PduNetwork* net)
 {
     assert(net);
     assert(net->ncodec);
@@ -55,7 +55,7 @@ void pdunet_can_config(PduNetworkDesc* net)
 }
 
 
-void pdunet_can_lpdu_tx(PduNetworkDesc* net)
+void pdunet_can_lpdu_tx(PduNetwork* net)
 {
     assert(net);
     assert(net->ncodec);
@@ -91,7 +91,7 @@ void pdunet_can_lpdu_tx(PduNetworkDesc* net)
 }
 
 
-void pdunet_can_lpdu_rx(PduNetworkDesc* net)
+void pdunet_can_lpdu_rx(PduNetwork* net)
 {
     while (1) {
         NCodecPdu nc_pdu = {};
@@ -122,8 +122,7 @@ void pdunet_can_lpdu_rx(PduNetworkDesc* net)
 }
 
 
-void pdunet_can_parse_pdu_metadata(
-    PduNetworkDesc* net, PduItem* pdu, YamlNode* md)
+void pdunet_can_parse_pdu_metadata(PduNetwork* net, PduItem* pdu, YamlNode* md)
 {
     assert(pdu);
     assert(md);

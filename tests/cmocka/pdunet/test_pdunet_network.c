@@ -76,7 +76,7 @@ void test_pdu_flexray_network_parse(void** state)
     PdunetMock* mock = *state;
     // dlog.level = LOG_TRACE;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -184,10 +184,8 @@ typedef struct matrix_check {
 } matrix_check;
 
 
-void _visit_count_needs_tx(PDUNET* n, PDUOBJECT* p, void* data)
+void _visit_count_needs_tx(PduNetwork* net, PduObject* pdu, void* data)
 {
-    PduNetworkDesc* net = (PduNetworkDesc*)n;
-    PduObject*      pdu = (PduObject*)p;
     assert_non_null(net);
     assert_non_null(data);
     int* counter = data;
@@ -207,7 +205,7 @@ void test_pdunet_transform(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -346,7 +344,7 @@ void test_pdunet_ncodec_pdu(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -387,7 +385,7 @@ void test_pdunet_linear_part_tx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -446,7 +444,7 @@ void test_pdunet_linear_part_rx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -506,7 +504,7 @@ void test_pdunet_pack_tx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -559,7 +557,7 @@ void test_pdunet_unpack_rx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -611,7 +609,7 @@ void test_pdunet_config(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -645,7 +643,7 @@ void test_pdunet_lua_tx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -734,7 +732,7 @@ void test_pdunet_lua_rx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -803,7 +801,7 @@ void test_pdunet_container_tx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -983,7 +981,7 @@ void test_pdunet_container_rx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -1077,7 +1075,7 @@ void test_pdunet_secured_pdu_tx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
@@ -1153,7 +1151,7 @@ void test_pdunet_secured_pdu_rx(void** state)
     // dlog.level = LOG_DEBUG;
     PdunetMock* mock = *state;
 
-    PduNetworkDesc* net =
+    PduNetwork* net =
         pdunet_create(mock->ncodec, mock->doc, mock->step_size, mock->L, &dlog);
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
