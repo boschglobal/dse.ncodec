@@ -14,4 +14,10 @@ target_link_libraries(pdunet_example
     PRIVATE
         pdunet
         ab-codec
+        yaml
+        lua
+        m
+        $<$<BOOL:${WIN32}>:ws2_32>
+        $<$<BOOL:${WIN32}>:iphlpapi>
+        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:${CMAKE_CXX_COMPILER_ID},"GNU">>:"-static winpthread">
 )

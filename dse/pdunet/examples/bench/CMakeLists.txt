@@ -19,6 +19,9 @@ target_link_libraries(bench
     PRIVATE
         pdunet
         ab-codec
+        yaml
+        lua
+        m
 )
 add_executable(bench_profile
     ${BENCH_SOURCES}
@@ -27,6 +30,9 @@ target_link_libraries(bench_profile
     PRIVATE
         pdunet
         ab-codec
+        yaml
+        lua
+        m
 )
 
 target_compile_options(bench_profile

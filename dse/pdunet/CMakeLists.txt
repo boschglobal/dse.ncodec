@@ -139,21 +139,6 @@ target_include_directories(pdunet
         ${LUA_SOURCE_DIR}
         ${YAML_SOURCE_DIR}/include
 )
-target_link_libraries(pdunet
-    PUBLIC
-        ab-codec
-    PRIVATE
-        yaml
-        lua
-        m
-        $<$<BOOL:${WIN32}>:ws2_32>
-        $<$<BOOL:${WIN32}>:iphlpapi>
-        $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:${CMAKE_CXX_COMPILER_ID},"GNU">>:"-static winpthread">
-)
-target_link_options(pdunet PRIVATE
-    $<$<PLATFORM_ID:Linux>:-Wl,--no-undefined>
-    $<$<PLATFORM_ID:Darwin>:-Wl,-undefined,error>
-)
 
 
 # Sub Modules
