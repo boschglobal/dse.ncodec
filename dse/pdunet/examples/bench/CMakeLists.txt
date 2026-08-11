@@ -14,24 +14,26 @@ set(BENCH_SOURCES
 
 add_executable(bench
     ${BENCH_SOURCES}
+    ${PDUNET_CLIB_SOURCES}
 )
 target_link_libraries(bench
     PRIVATE
         pdunet
         ab-codec
-        yaml
-        lua
+        ${DSE_NCODEC_YAML_TARGET}
+        ${DSE_NCODEC_LUA_TARGET}
         m
 )
 add_executable(bench_profile
     ${BENCH_SOURCES}
+    ${PDUNET_CLIB_SOURCES}
 )
 target_link_libraries(bench_profile
     PRIVATE
         pdunet
         ab-codec
-        yaml
-        lua
+        ${DSE_NCODEC_YAML_TARGET}
+        ${DSE_NCODEC_LUA_TARGET}
         m
 )
 

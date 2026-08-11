@@ -1,4 +1,4 @@
-# Copyright 2025 Robert Bosch GmbH
+# Copyright 2026 Robert Bosch GmbH
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -14,29 +14,6 @@ project(PduNet
     HOMEPAGE_URL "$ENV{PROJECT_URL}"
 )
 
-include(GNUInstallDirs)
-include(FetchContent)
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/_out)
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED TRUE)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_C_FLAGS_DEBUG "-g -ggdb")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O3")
-list(APPEND C_CXX_WARNING_FLAGS
-    -Wall
-    -W
-    -Wwrite-strings
-    -Wno-missing-field-initializers
-    -Wno-misleading-indentation
-)
-add_compile_options(${C_CXX_WARNING_FLAGS})
-add_compile_definitions(DLL_BUILD)
-
-
-set(REPO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 set(DSE_PDUNET_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(DSE_PDUNET_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
@@ -56,18 +33,10 @@ set(DSE_CLIB_INCLUDE_DIR "${DSE_CLIB_SOURCE_DIR}/..")
 
 # Associate Project - DSE Network Codec
 # -------------------------------------
-#FetchContent_Declare(dse_ncodec
-#    SOURCE_DIR          "${CMAKE_CURRENT_SOURCE_DIR}/../ncodec"
-#    SOURCE_SUBDIR       dse/ncodec
-#)
-#FetchContent_MakeAvailable(dse_ncodec)
-#set(DSE_NCODEC_SOURCE_DIR ${dse_ncodec_SOURCE_DIR}/dse/ncodec)
-#set(DSE_NCODEC_INCLUDE_DIR ${dse_ncodec_SOURCE_DIR})
-
-# Associate Project - DSE Network Codec
-# -------------------------------------
 # Directly add the subdirectory to ensure targets are fully visible
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../ncodec" "${CMAKE_CURRENT_BINARY_DIR}/ncodec")
+if(NOT TARGET ab-codec)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../ncodec" "${CMAKE_CURRENT_BINARY_DIR}/ncodec")
+endif()
 set(DSE_NCODEC_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../ncodec")
 set(DSE_NCODEC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
@@ -84,12 +53,15 @@ find_library(YAML_LIB
     REQUIRED
     NO_DEFAULT_PATH
 )
-add_library(yaml STATIC IMPORTED GLOBAL)
-set_target_properties(yaml
-    PROPERTIES
-        IMPORTED_LOCATION "${YAML_LIB}"
-        INTERFACE_INCLUDE_DIRECTORIES "${YAML_BINARY_DIR}"
-)
+if(NOT TARGET dse_ncodec_yaml)
+    add_library(dse_ncodec_yaml STATIC IMPORTED GLOBAL)
+    set_target_properties(dse_ncodec_yaml
+        PROPERTIES
+            IMPORTED_LOCATION "${YAML_LIB}"
+            INTERFACE_INCLUDE_DIRECTORIES "${YAML_BINARY_DIR}"
+    )
+endif()
+set(DSE_NCODEC_YAML_TARGET dse_ncodec_yaml)
 
 
 # External Project - lua
@@ -104,16 +76,27 @@ find_library(LUA_LIB
     REQUIRED
     NO_DEFAULT_PATH
 )
-add_library(lua STATIC IMPORTED GLOBAL)
-set_target_properties(lua
-    PROPERTIES
-        IMPORTED_LOCATION "${LUA_LIB}"
-        INTERFACE_INCLUDE_DIRECTORIES "${LUA_BINARY_DIR}"
-)
-
+if(NOT TARGET dse_ncodec_lua)
+    add_library(dse_ncodec_lua STATIC IMPORTED GLOBAL)
+    set_target_properties(dse_ncodec_lua
+        PROPERTIES
+            IMPORTED_LOCATION "${LUA_LIB}"
+            INTERFACE_INCLUDE_DIRECTORIES "${LUA_BINARY_DIR}"
+    )
+endif()
+set(DSE_NCODEC_LUA_TARGET dse_ncodec_lua)
 
 # Targets
 # =======
+
+set(PDUNET_CLIB_SOURCES
+    ${DSE_CLIB_SOURCE_DIR}/clib/collections/hashmap.c
+    ${DSE_CLIB_SOURCE_DIR}/clib/collections/set.c
+    ${DSE_CLIB_SOURCE_DIR}/clib/util/binary.c
+    ${DSE_CLIB_SOURCE_DIR}/clib/data/marshal.c
+    ${DSE_CLIB_SOURCE_DIR}/clib/util/yaml.c
+)
+
 
 # Target - Automotive Bus Codec
 # -----------------------------
@@ -125,11 +108,6 @@ add_library(pdunet OBJECT
     network/matrix.c
     network/network.c
     schema.c
-    ${DSE_CLIB_SOURCE_DIR}/clib/collections/hashmap.c
-    ${DSE_CLIB_SOURCE_DIR}/clib/collections/set.c
-    ${DSE_CLIB_SOURCE_DIR}/clib/util/binary.c
-    ${DSE_CLIB_SOURCE_DIR}/clib/data/marshal.c
-    ${DSE_CLIB_SOURCE_DIR}/clib/util/yaml.c
 )
 target_include_directories(pdunet
     PUBLIC
@@ -143,50 +121,6 @@ target_include_directories(pdunet
 
 # Sub Modules
 # ===========
-add_subdirectory(examples EXCLUDE_FROM_ALL)
-
-
-# Common Targets
-# ==============
-install(
-    DIRECTORY
-        ${REPO_DIR}/licenses/
-    DESTINATION
-        licenses
-    COMPONENT
-        licenses
-)
-install(
-    FILES
-        ${CMAKE_BINARY_DIR}/compile_commands.json
-    DESTINATION
-        doc
-    COMPONENT
-        doc
-)
-
-
-# Package
-# =======
-set(CPACK_SYSTEM_NAME "$ENV{PACKAGE_ARCH}")
-set(CPACK_PACKAGE_VENDOR "Robert Bosch GmbH")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "DSE PDU Network")
-set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-set(CPACK_OUTPUT_FILE_PREFIX "${CMAKE_BINARY_DIR}/_dist")
-set(CPACK_PACKAGE_CHECKSUM "SHA256")
-set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
-if(WIN32)
-    set(CPACK_GENERATOR "ZIP")
-else()
-    set(CPACK_GENERATOR "TGZ")
+if(DSE_NCODEC_BUILD_EXAMPLES)
+    add_subdirectory(examples EXCLUDE_FROM_ALL)
 endif()
-set(CPACK_PACKAGE_FILE_NAME
-    "PDUNet-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}"
-)
-set(CPACK_COMPONENTS_ALL
-    pdunet
-    licenses
-    doc
-)
-
-include(CPack)

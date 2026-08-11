@@ -8,14 +8,15 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 add_executable(pdunet_example
     example.c
     main.c
+    ${PDUNET_CLIB_SOURCES}
 )
 
 target_link_libraries(pdunet_example
     PRIVATE
         pdunet
         ab-codec
-        yaml
-        lua
+        ${DSE_NCODEC_YAML_TARGET}
+        ${DSE_NCODEC_LUA_TARGET}
         m
         $<$<BOOL:${WIN32}>:ws2_32>
         $<$<BOOL:${WIN32}>:iphlpapi>

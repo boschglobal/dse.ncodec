@@ -19,7 +19,7 @@ env:
   IMAGE_BASE_NAME: ${{ github.repository_owner }}/dse
   PACKAGE_VERSION: 0.0.2
   package_name: NCodec
-  build_dir: dse/ncodec/build
+  build_dir: dse/build
   CCACHE_SECONDARY_STORAGE: ${{ secrets.CCACHE_SECONDARY_STORAGE }}
 
 jobs:

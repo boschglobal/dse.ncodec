@@ -1,14 +1,14 @@
-# Copyright 2025 Robert Bosch GmbH
+# Copyright 2026 Robert Bosch GmbH
 #
 # SPDX-License-Identifier: Apache-2.0
 
 export NAMESPACE = dse
 export MODULE = ncodec
 export EXTERNAL_BUILD_DIR ?= /tmp/$(NAMESPACE).$(MODULE)
-export REPO_MIRRORS ?= $(shell pwd -P)/../../repo_mirrors.cmake
+export REPO_MIRRORS ?= $(shell pwd -P)/../repo_mirrors.cmake
 export PACKAGE_ARCH ?= linux-amd64
-export CMAKE_TOOLCHAIN_FILE ?= $(shell pwd -P)/../../extra/cmake/$(PACKAGE_ARCH).cmake
-export PROJECT_URL ?= https://github.com/boschglobal/$(NAMESPACE).$(MODULE).git
+export CMAKE_TOOLCHAIN_FILE ?= $(shell pwd -P)/../extra/cmake/$(PACKAGE_ARCH).cmake
+export PROJECT_URL ?= https://github.com/boschglobal/$(NAMESPACE).ncodec.git
 export PACKAGE_VERSION ?= 0.0.2
 export MAKE_NPROC ?= $(shell nproc)
 
@@ -16,7 +16,7 @@ export MAKE_NPROC ?= $(shell nproc)
 default: build
 
 external:
-	$(MAKE) -j $(MAKE_NPROC) -C ../../extra/external
+	$(MAKE) -j $(MAKE_NPROC) -C ../extra/external
 
 build: external
 # Build from scratch if no build dir.
@@ -39,8 +39,8 @@ build: external
 	-printf '%s %P\n' | numfmt --to=iec --suffix=B --padding=6
 
 examples: build
-	cd build; cmake --build examples -j $(MAKE_NPROC)
-	cd build; cmake --build examples -j $(MAKE_NPROC) -t install
+	cd build; cmake --build . -j $(MAKE_NPROC) -t examples
+	cd build; cmake --build . -j $(MAKE_NPROC) -t install-examples
 	@echo ""
 	@echo "Sandbox files: - $$(pwd)/build/_out"
 	@echo "--------------"
@@ -51,7 +51,7 @@ examples: build
 	! -path './*LICENSE*' \
 	-printf '%s %P\n' | numfmt --to=iec --suffix=B --padding=6
 
-package: build
+package:
 	@echo "Package parameters:"
 	@echo "-------------------"
 	@echo "NAMESPACE : $(NAMESPACE)"
@@ -65,10 +65,10 @@ package: build
 	@find build/_dist/ -type f -name '*' -exec ls -sh --color=auto {} \;
 
 clean:
-	$(MAKE) -j $(MAKE_NPROC) -C ../../extra/external clean
+	$(MAKE) -j $(MAKE_NPROC) -C ../extra/external clean
 	rm -rf build
 
 cleanall: clean
-	$(MAKE) -j $(MAKE_NPROC) -C ../../extra/external cleanall
+	$(MAKE) -j $(MAKE_NPROC) -C ../extra/external cleanall
 
 .PHONY: default build external package clean cleanall

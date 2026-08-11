@@ -1,5 +1,5 @@
 cd $REPODIR
-env abcosim=dse/ncodec/build/_out/examples/ab-codec/ab-fray-cosim
+env abcosim=dse/build/_out/examples/ab-codec/ab-fray-cosim
 
 # TEST: ab-fray-cosim example
 exec valgrind -q --leak-check=yes --error-exitcode=88 $abcosim

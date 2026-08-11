@@ -188,7 +188,7 @@ int run_pdunet_benchmark(const BenchArgs* args)
     printf("  step_size:         %.9f s\n", args->step_size);
     printf("  requested_end:     %.9f s\n", args->end_time);
     printf("  simulated_time:    %.9f s\n", simulated_elapsed);
-    printf("  steps:             %llu\n", steps);
+    printf("  steps:             %zu\n", steps);
     printf("  wall_time:         %.9f s\n", wall_elapsed);
     printf("  real_time_factor:  %.3f x\n", real_time_factor);
 
