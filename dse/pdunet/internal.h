@@ -251,6 +251,7 @@ typedef struct PduNetwork {
     struct {
         lua_State*  lua_state;
         const char* global;
+        bool        owner;
     } lua;
 
     /* PDUs (and Signals) parsed from Network YAML. */

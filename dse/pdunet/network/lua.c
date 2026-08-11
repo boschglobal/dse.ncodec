@@ -363,6 +363,7 @@ int pdunet_lua_setup(PduNetwork* net)
     assert(net);
 
     /* Establish the Lua interpreter. */
+    if (net->lua.lua_state == NULL) net->lua.owner = true;
     net->lua.lua_state = __lua_model_create(net->lua.lua_state);
     assert(net->lua.lua_state);
 
@@ -376,8 +377,8 @@ int pdunet_lua_setup(PduNetwork* net)
 
 void pdunet_lua_teardown(PduNetwork* net)
 {
-    if (net && net->lua.lua_state != NULL) {
+    if (net && net->lua.owner && net->lua.lua_state != NULL) {
         __lua_model_destroy(net->lua.lua_state);
-        net->lua.lua_state = NULL;
     }
+    net->lua.lua_state = NULL;
 }

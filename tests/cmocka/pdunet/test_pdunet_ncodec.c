@@ -28,6 +28,11 @@ extern NCODEC* ncodec_open(const char* mime_type, NSTREAM* stream);
 static int test_setup(void** state)
 {
     PdunetMock* mock = __create_mock("resources/model/pdunet_frnet.yaml");
+
+    /* Reset the Lua state, should be internally created/destroyed. */
+    lua_close(mock->L);
+    mock->L = NULL;
+
     *state = mock;
     return 0;
 }

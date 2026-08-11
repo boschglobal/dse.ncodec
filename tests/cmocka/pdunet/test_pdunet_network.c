@@ -65,6 +65,7 @@ static int test_teardown(void** state)
         if (mock->net) pdunet_destroy(mock->net);
         if (mock->ncodec) ncodec_close(mock->ncodec);
         if (mock->dl) dse_yaml_destroy_doc_list(mock->dl);
+        if (mock->L) lua_close(mock->L);
     }
     free(mock);
     return 0;
