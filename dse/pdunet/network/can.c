@@ -119,6 +119,11 @@ size_t pdunet_can_lpdu_rx(PduNetwork* net)
             if (len > pdu->ncodec.pdu.payload_len) {
                 len = pdu->ncodec.pdu.payload_len;
             }
+            /* Call the rx function. */
+            int rc =
+                pdunet_call_rx_func(net, pdu, (uint8_t*)nc_pdu.payload, len);
+            if (rc != 0) continue; /* Discarded. */
+            /* Process the payload. */
             uint8_t* payload = NULL;
             vector_at(&(net->matrix.payload), pdu->matrix.pdu_idx, &payload);
             memcpy(payload, nc_pdu.payload, len);
