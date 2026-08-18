@@ -82,6 +82,8 @@ DLL_PUBLIC void pdunet_rx(
 
 DLL_PUBLIC void pdunet_visit_clear_update_flag(
     PduNetwork* net, PduObject* pdu, void* data);
+DLL_PUBLIC void pdunet_visit_set_update_flag(
+    PduNetwork* net, PduObject* pdu, void* data);
 DLL_PUBLIC void pdunet_visit_clear_tx_flag(
     PduNetwork* net, PduObject* pdu, void* data);
 DLL_PUBLIC void pdunet_visit_clear_checksum(

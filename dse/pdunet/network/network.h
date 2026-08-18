@@ -15,10 +15,21 @@
 #include <lauxlib.h>
 #include <dse/platform.h>
 #include <dse/clib/collections/vector.h>
+#define XXH_INLINE_ALL
+#include <dse/clib/data/xxhash.h>
 #include <dse/clib/util/yaml.h>
 #include <dse/ncodec/interface/pdu.h>
 #include <dse/pdunet/internal.h>
 #include <dse/pdunet/pdunet.h>
+
+
+#if defined(__GNUC__) || defined(__clang__)
+#define LIKELY(x)   __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define LIKELY(x)   (x)
+#define UNLIKELY(x) (x)
+#endif
 
 
 /*
@@ -86,16 +97,20 @@ typedef void* (*PdunetSchemaObjectGenerator)(void* data);
 PDU Network Internal API
 ========================
 */
-
+static inline uint32_t pdunet_checksum(
+    const uint8_t* restrict payload, size_t len)
+{
+    if (payload == NULL) return 0;
+    return XXH32((void*)payload, len, 0);
+}
 
 /* network.c */
-DLL_PRIVATE uint32_t pdunet_checksum(const uint8_t* payload, size_t len);
-DLL_PRIVATE void     pdunet_schedule(PduNetwork* net);
-DLL_PRIVATE int      pdunet_parse(PduNetwork* net, void* doc);
-DLL_PRIVATE void     pdunet_build_msm(PduNetwork* net, const char* name,
-        size_t count, const char** signal, double* scalar);
-DLL_PRIVATE int      pdunet_configure(PduNetwork* net);
-DLL_PRIVATE int      pdunet_transform(PduNetwork* net, PduNetworkSortFunc sort);
+DLL_PRIVATE void pdunet_schedule(PduNetwork* net);
+DLL_PRIVATE int  pdunet_parse(PduNetwork* net, void* doc);
+DLL_PRIVATE void pdunet_build_msm(PduNetwork* net, const char* name,
+    size_t count, const char** signal, double* scalar);
+DLL_PRIVATE int  pdunet_configure(PduNetwork* net);
+DLL_PRIVATE int  pdunet_transform(PduNetwork* net, PduNetworkSortFunc sort);
 DLL_PRIVATE PduNetworkNCodecVTable pdunet_network_factory(PduNetwork* net);
 DLL_PRIVATE void pdunet_parse_pdus(PduNetwork* net, PdunetSchemaObject* object);
 DLL_PRIVATE PduItem       pdunet_pdu_generator(PduNetwork* net, YamlNode* n);
@@ -107,6 +122,8 @@ DLL_PRIVATE void pdunet_visit_container_mapto(
     PduNetwork* net, PduObject* pdu, void* data);
 DLL_PRIVATE void pdunet_visit_container_mapfrom(
     PduNetwork* net, PduObject* pdu, void* data);
+DLL_PRIVATE void pdunet_set_all_tx_signals_active(PduNetwork* net);
+
 
 /* schema.c */
 DLL_PRIVATE void* pdunet_schema_object_enumerator(PdunetSchemaObject* object,
@@ -118,6 +135,7 @@ DLL_PRIVATE void  pdunet_schema_load_object(PduNetwork* net, void* node,
 DLL_PRIVATE int pdunet_matrix_transform(
     PduNetwork* net, PduNetworkSortFunc sort);
 DLL_PRIVATE void pdunet_matrix_clear(PduNetwork* net);
+DLL_PRIVATE void pdunet_pdu_calculate_linear_tx_active(PduNetwork* net);
 DLL_PRIVATE void pdunet_pdu_calculate_linear_range(
     PduNetwork* net, PduRange* r);
 DLL_PRIVATE void pdunet_pdu_pack_range(PduNetwork* net, PduRange* r);
@@ -145,22 +163,21 @@ DLL_PRIVATE void pdunet_lua_teardown(PduNetwork* net);
 DLL_PRIVATE void pdunet_flexray_parse_network(PduNetwork* net);
 DLL_PRIVATE void pdunet_flexray_parse_pdu(
     PduNetwork* net, PduItem* pdu, void* n);
-DLL_PRIVATE void pdunet_flexray_config(PduNetwork* net);
-DLL_PRIVATE void pdunet_flexray_lpdu_tx(PduNetwork* net);
-DLL_PRIVATE void pdunet_flexray_lpdu_rx(PduNetwork* net);
-DLL_PRIVATE void pdunet_flexray_status(PduNetwork* net);
-DLL_PRIVATE void pdunet_flexray_parse_network_metadata(
-    PduNetwork* net, YamlNode* md);
+DLL_PRIVATE size_t pdunet_flexray_config(PduNetwork* net);
+DLL_PRIVATE size_t pdunet_flexray_lpdu_tx(PduNetwork* net);
+DLL_PRIVATE size_t pdunet_flexray_lpdu_rx(PduNetwork* net);
+DLL_PRIVATE void   pdunet_flexray_parse_network_metadata(
+      PduNetwork* net, YamlNode* md);
 DLL_PRIVATE void pdunet_flexray_parse_pdu_metadata(
     PduNetwork* net, PduItem* pdu, YamlNode* md);
 
 /* can.c */
-DLL_PRIVATE void pdunet_can_parse_network(PduNetwork* net);
-DLL_PRIVATE void pdunet_can_parse_pdu(PduNetwork* net, PduItem* pdu, void* n);
-DLL_PRIVATE void pdunet_can_config(PduNetwork* net);
-DLL_PRIVATE void pdunet_can_lpdu_tx(PduNetwork* net);
-DLL_PRIVATE void pdunet_can_lpdu_rx(PduNetwork* net);
-DLL_PRIVATE void pdunet_can_parse_pdu_metadata(
-    PduNetwork* net, PduItem* pdu, YamlNode* md);
+DLL_PRIVATE void   pdunet_can_parse_network(PduNetwork* net);
+DLL_PRIVATE void   pdunet_can_parse_pdu(PduNetwork* net, PduItem* pdu, void* n);
+DLL_PRIVATE size_t pdunet_can_config(PduNetwork* net);
+DLL_PRIVATE size_t pdunet_can_lpdu_tx(PduNetwork* net);
+DLL_PRIVATE size_t pdunet_can_lpdu_rx(PduNetwork* net);
+DLL_PRIVATE void   pdunet_can_parse_pdu_metadata(
+      PduNetwork* net, PduItem* pdu, YamlNode* md);
 
 #endif  // DSE_PDUNET_NETWORK_NETWORK_H_

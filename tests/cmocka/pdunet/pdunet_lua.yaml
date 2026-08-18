@@ -329,7 +329,7 @@ spec:
           transmit_mode: Continuous
           inhibit_null: true
       functions:
-        encode:
+        tx:
           lua: |
             return function(ctx)
                 ctx.payload[1] = ctx.payload[1] + 42

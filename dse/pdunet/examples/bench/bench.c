@@ -185,12 +185,14 @@ int run_pdunet_benchmark(const BenchArgs* args)
     printf("PDUNet benchmark result\n");
     printf("  network:           %s\n", args->network);
     printf("  signals:           %zu\n", vector_len(&signal_names));
-    printf("  step_size:         %.9f s\n", args->step_size);
-    printf("  requested_end:     %.9f s\n", args->end_time);
-    printf("  simulated_time:    %.9f s\n", simulated_elapsed);
+    printf("  step_size:         %.1f uSec\n", args->step_size * 1000000.0);
+    printf("  requested_end:     %.1f s\n", args->end_time);
+    printf("  simulated_time:    %.1f s\n", simulated_elapsed);
     printf("  steps:             %zu\n", steps);
     printf("  wall_time:         %.9f s\n", wall_elapsed);
     printf("  real_time_factor:  %.3f x\n", real_time_factor);
+    printf("  step cost:         %.3f uSec/step\n",
+        wall_elapsed * 1000000.0 / (double)steps);
 
     rc = 0;
 

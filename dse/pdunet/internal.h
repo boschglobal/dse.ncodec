@@ -178,14 +178,15 @@ typedef struct PduTransformMatrix {
         /* Signal. */
         Vector name; /* const char* */
         /* Schedule. */
-        Vector skip; /* bool, 0=update (default, 1 = skip matrix row) */
+        Vector skip; /* uint8_t, 0=update (default, 1 = skip matrix row) */
         /* Linear Transform. */
-        Vector phys;   /* double, signal value (physical) */
-        Vector raw;    /* uint64_t, signal value (raw) */
-        Vector factor; /* double, prohibited value 0 */
-        Vector offset; /* double */
-        Vector min;    /* double, clamps value */
-        Vector max;    /* double, clamps value */
+        Vector invalid; /* uint8_t, 0=No, 1=yes */
+        Vector phys;    /* double, signal value (physical) */
+        Vector raw;     /* uint64_t, signal value (raw) */
+        Vector factor;  /* double, prohibited value 0 */
+        Vector offset;  /* double */
+        Vector min;     /* double, clamps value */
+        Vector max;     /* double, clamps value */
         /* Complex (Lua) Transform. */
         Vector encode; /* Lua function handle (lua_func_t) */
         Vector decode; /* Lua function handle (lua_func_t) */
@@ -193,21 +194,24 @@ typedef struct PduTransformMatrix {
         Vector start_bit;   /* uint16_t */
         Vector length_bits; /* uint16_t */
     } signal;
+
+    /* Active signal index, resultant from schedule. */
+    Vector active_idx; /* size_t */
 } PduTransformMatrix;
 
 
 typedef void (*PduNetworkParseNetwork)(PduNetwork* net);
 typedef void (*PduNetworkParsePdu)(PduNetwork* net, PduItem* pdu, void* n);
-typedef void (*PduNetworkNCodecPduTx)(PduNetwork* net);
+typedef size_t (*PduNetworkNCodecLPduX)(PduNetwork* net);
 
 typedef struct PduNetworkNCodecVTable {
     PduNetworkParseNetwork parse_network;
     PduNetworkParsePdu     parse_pdu;
 
-    PduNetworkNCodecPduTx config;
-    PduNetworkNCodecPduTx lpdu_tx;
-    PduNetworkNCodecPduTx lpdu_rx;
-    PduNetworkNCodecPduTx status;
+    PduNetworkNCodecLPduX config;
+    PduNetworkNCodecLPduX lpdu_tx;
+    PduNetworkNCodecLPduX lpdu_rx;
+    PduNetworkNCodecLPduX status;
 
     /* Stateful Info. */
     bool config_done;

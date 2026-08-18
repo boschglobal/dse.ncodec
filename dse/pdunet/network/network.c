@@ -17,31 +17,57 @@ typedef struct MPduItem {
 } MPduItem;
 
 
-uint32_t pdunet_checksum(const uint8_t* payload, size_t len)
+static inline void _clear_skip(
+    PduNetwork* restrict net, size_t offset, size_t count)
 {
-    if (payload == NULL) return 0;
+    uint8_t* restrict skip =
+        (uint8_t*)vector_at(&net->matrix.signal.skip, offset, NULL);
+    const uint8_t* restrict invalid =
+        (const uint8_t*)vector_at(&net->matrix.signal.invalid, offset, NULL);
 
-    // FNV-1a hash (http://www.isthe.com/chongo/tech/comp/fnv/)
-    uint32_t csum = 2166136261UL; /* FNV_OFFSET 32 bit */
-    for (size_t i = 0; i < len; ++i) {
-        csum = csum ^ payload[i];
-        csum = csum * 16777619UL; /* FNV_PRIME 32 bit */
+    for (size_t i = 0; i < count; i++) {
+        if (UNLIKELY(skip[i] == false)) continue;
+
+        skip[i] = false;
+
+        if (LIKELY(invalid[i] == false)) {
+            vector_push(&net->matrix.active_idx, &(size_t){ offset + i });
+        }
     }
-    return csum;
 }
 
-static void _set_skip(PduNetwork* net, size_t offset, size_t count, bool skip)
+static inline void _set_skip_clear_active(PduNetwork* restrict net)
 {
-    bool* skip_vec = (bool*)vector_at(&net->matrix.signal.skip, offset, NULL);
-    for (size_t i = 0; i < count; i++) {
-        skip_vec[i] = skip;
+    uint8_t* restrict skip =
+        (uint8_t*)vector_at(&net->matrix.signal.skip, 0, NULL);
+    for (size_t i = 0; i < net->matrix.signal.count; i++) {
+        skip[i] = true;
+    }
+
+    vector_clear(&net->matrix.active_idx, NULL, NULL);
+}
+
+void pdunet_set_all_tx_signals_active(PduNetwork* net)
+{
+    assert(net);
+
+    _set_skip_clear_active(net);
+
+    for (size_t pdu_idx = 0; pdu_idx < vector_len(&net->matrix.pdu);
+        pdu_idx++) {
+        PduObject* o = vector_at(&(net->matrix.pdu), pdu_idx, NULL);
+        if (o == NULL) continue;
+        if (o->pdu == NULL) continue;
+        if (o->pdu->dir != PduDirectionTx) continue;
+
+        _clear_skip(net, o->matrix.range.offset, o->matrix.range.count);
     }
 }
 
 void pdunet_schedule(PduNetwork* net)
 {
     /* Signals not calculated. */
-    _set_skip(net, 0, net->matrix.signal.count, true);
+    _set_skip_clear_active(net);
 
     for (size_t pdu_idx = 0; pdu_idx < vector_len(&net->matrix.pdu);
         pdu_idx++) {
@@ -62,8 +88,7 @@ void pdunet_schedule(PduNetwork* net)
                  resultant payload has changed). */
                 log_trace(
                     net->log, "Schedule TX: PDU %u: on_change", o->pdu->id);
-                _set_skip(
-                    net, o->matrix.range.offset, o->matrix.range.count, false);
+                _clear_skip(net, o->matrix.range.offset, o->matrix.range.count);
                 continue;
             }
         }
@@ -112,7 +137,7 @@ void pdunet_schedule(PduNetwork* net)
         }
 
         /* PDU / I-PDU. */
-        _set_skip(net, o->matrix.range.offset, o->matrix.range.count, false);
+        _clear_skip(net, o->matrix.range.offset, o->matrix.range.count);
         if (o->schedule.trigger == PduScheduleTriggerPeriodic) {
             /* Periodic Schedule: PDU Tx occurs according to the schedule. */
             log_trace(net->log, "Schedule TX: PDU %u: trigger - periodic",
@@ -681,6 +706,7 @@ void pdunet_visit_container_mapfrom(PduNetwork* net, PduObject* pdu, void* data)
                 pi_payload_len = len;
             }
             memcpy(pi_payload, payload + payload_offset, pi_payload_len);
+            pi->pdu->update_signals = true; /* Indicate I-PDU was Rx'ed. */
             log_debug(net->log,
                 "Map from Container: [%u] L-PDU[%u] <-map- [%u] I-PDU[%u], "
                 "offset=%u, len=%u/%u",

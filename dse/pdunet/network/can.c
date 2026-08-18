@@ -29,7 +29,7 @@ void pdunet_can_parse_pdu(PduNetwork* net, PduItem* pdu, void* n)
 }
 
 
-void pdunet_can_config(PduNetwork* net)
+size_t pdunet_can_config(PduNetwork* net)
 {
     assert(net);
     assert(net->ncodec);
@@ -52,11 +52,15 @@ void pdunet_can_config(PduNetwork* net)
             i, pdu->id, (unsigned)pdu->length, dir_str, pdu->name,
             container_str);
     }
+
+    return 0;
 }
 
 
-void pdunet_can_lpdu_tx(PduNetwork* net)
+size_t pdunet_can_lpdu_tx(PduNetwork* net)
 {
+    size_t count = 0;
+
     assert(net);
     assert(net->ncodec);
     assert(net->network.transport_type == NCodecPduTransportTypeCan);
@@ -84,15 +88,20 @@ void pdunet_can_lpdu_tx(PduNetwork* net)
                              .transport.can_message = can_meta,
                          });
         pdu->needs_tx = false;
+        count++;
 
         log_debug(net->log, "  CAN: Tx[%u] id=0x%03X, len=%u", i, pdu->pdu->id,
             (unsigned)pdu->ncodec.pdu.payload_len);
     }
+
+    return count;
 }
 
 
-void pdunet_can_lpdu_rx(PduNetwork* net)
+size_t pdunet_can_lpdu_rx(PduNetwork* net)
 {
+    size_t count = 0;
+
     while (1) {
         NCodecPdu nc_pdu = {};
         if (ncodec_read(net->ncodec, &nc_pdu) < 0) break;
@@ -114,11 +123,14 @@ void pdunet_can_lpdu_rx(PduNetwork* net)
             vector_at(&(net->matrix.payload), pdu->matrix.pdu_idx, &payload);
             memcpy(payload, nc_pdu.payload, len);
             pdu->update_signals = true;
+            count++;
 
             log_debug(net->log, "  CAN: Rx[%u] id=0x%03X, len=%u", i, nc_pdu.id,
                 (unsigned)len);
         }
     }
+
+    return count;
 }
 
 

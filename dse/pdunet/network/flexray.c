@@ -83,7 +83,7 @@ static const char* _frdir[] = {
     [NCodecPduFlexrayDirectionTx] = "Tx",
 };
 
-void pdunet_flexray_config(PduNetwork* net)
+size_t pdunet_flexray_config(PduNetwork* net)
 {
     assert(net);
     assert(net->ncodec);
@@ -146,10 +146,14 @@ void pdunet_flexray_config(PduNetwork* net)
         net->schedule.step_size;
     log_notice(net->log, "PDU Net:   FlexRay: cycle_time=%f",
         net->network.vtable.flexray.cycle_time * net->schedule.step_size);
+
+    return 0;
 }
 
-void pdunet_flexray_lpdu_tx(PduNetwork* net)
+size_t pdunet_flexray_lpdu_tx(PduNetwork* net)
 {
+    size_t count = 0;
+
     assert(net);
     assert(net->ncodec);
     assert(net->network.transport_type == NCodecPduTransportTypeFlexray);
@@ -177,6 +181,7 @@ void pdunet_flexray_lpdu_tx(PduNetwork* net)
                             .metadata.lpdu = *lpdu,
                         } });
                 pdu->needs_tx = false;
+                count++;
             }
             break;
         case PduDirectionRx:
@@ -198,11 +203,15 @@ void pdunet_flexray_lpdu_tx(PduNetwork* net)
         }
         if (pdu->pdu->dir != PduDirectionTx) continue;
     }
+
+    return count;
 }
 
 
-void pdunet_flexray_lpdu_rx(PduNetwork* net)
+size_t pdunet_flexray_lpdu_rx(PduNetwork* net)
 {
+    size_t count = 0;
+
     while (1) {
         NCodecPdu nc_pdu = {};
         if (ncodec_read(net->ncodec, &nc_pdu) < 0) break;
@@ -278,11 +287,14 @@ void pdunet_flexray_lpdu_rx(PduNetwork* net)
             vector_at(&(net->matrix.payload), pdu->matrix.pdu_idx, &payload);
             memcpy(payload, nc_pdu.payload, len);
             pdu->update_signals = true;
+            count++;
 
             log_debug(
                 net->log, "  FlexRay: Rx[%u] slot=%u", i, pdu_config->slot_id);
         }
     }
+
+    return count;
 }
 
 void pdunet_flexray_parse_network_metadata(PduNetwork* net, YamlNode* md)

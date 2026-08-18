@@ -35,7 +35,6 @@ set(REPO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 option(DSE_NCODEC_BUILD_EXAMPLES "Build DSE NCodec examples" ${PROJECT_IS_TOP_LEVEL})
 
-
 # Sub Modules
 # ===========
 add_subdirectory(ncodec)

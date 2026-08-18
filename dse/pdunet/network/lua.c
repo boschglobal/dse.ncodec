@@ -25,19 +25,239 @@ typedef struct ctx_t {
 } ctx_t;
 
 
-/* Payload metatable. */
+/* Payload implementations.
+ *
+ * PDU callbacks use a table-backed payload mirror. This makes Lua loops such as
+ * checksum calculations fast because payload[i] is a normal Lua table access.
+ *
+ * Signal callbacks use a cached userdata payload. Signal payload access is
+ * expected to be infrequent, so avoid copying the full payload into/out of a
+ * Lua table on every signal call.
+ */
+
+#define PAYLOAD_TABLE_METATABLE    "pdu_payload_table"
+#define PAYLOAD_USERDATA_METATABLE "pdu_payload_array"
+
+static char _payload_table_len_key;
+
 
 typedef struct {
     uint8_t* data;
     uint32_t len;
 } payload_wrapper_t;
 
-#define PAYLOAD_METATABLE "pdu_payload_array"
 
-static int _payload_index(lua_State* L)
+/* Table-backed payload implementation, used by PDU callbacks. */
+
+static uint32_t _payload_table_get_len(lua_State* L, int idx)
+{
+    uint32_t len = 0;
+
+    idx = lua_absindex(L, idx);
+    lua_rawgetp(L, idx, &_payload_table_len_key);
+    if (lua_isinteger(L, -1)) {
+        lua_Integer value = lua_tointeger(L, -1);
+        if (value > 0) len = (uint32_t)value;
+    }
+    lua_pop(L, 1);
+
+    return len;
+}
+
+
+static void _payload_table_set_len(lua_State* L, int idx, uint32_t len)
+{
+    idx = lua_absindex(L, idx);
+    lua_pushinteger(L, (lua_Integer)len);
+    lua_rawsetp(L, idx, &_payload_table_len_key);
+}
+
+
+static int _payload_table_index(lua_State* L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    if (lua_type(L, 2) == LUA_TSTRING) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_Integer idx = luaL_checkinteger(L, 2);
+    uint32_t    len = _payload_table_get_len(L, 1);
+
+    if (idx < 1 || idx > len) {
+        return luaL_error(L,
+            "payload index " LUA_INTEGER_FMT " out of bounds (1..%u)", idx,
+            (unsigned)len);
+    }
+
+    /*
+     * Valid payload entries should already be present in the table. If Lua
+     * deleted one, return nil here; copy-back validation will fail later if
+     * the callback leaves the payload in that state.
+     */
+    lua_pushnil(L);
+    return 1;
+}
+
+
+static int _payload_table_newindex(lua_State* L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    lua_Integer idx = luaL_checkinteger(L, 2);
+    lua_Integer value = luaL_checkinteger(L, 3);
+    uint32_t    len = _payload_table_get_len(L, 1);
+
+    if (idx < 1 || idx > len) {
+        return luaL_error(L,
+            "payload index " LUA_INTEGER_FMT " out of bounds (1..%u)", idx,
+            (unsigned)len);
+    }
+    if (value < 0 || value > 255) {
+        return luaL_error(L,
+            "payload value " LUA_INTEGER_FMT " out of range (0..255)", value);
+    }
+
+    lua_pushvalue(L, 3);
+    lua_rawseti(L, 1, idx);
+    return 0;
+}
+
+
+static int _payload_table_len(lua_State* L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_pushinteger(L, (lua_Integer)_payload_table_get_len(L, 1));
+    return 1;
+}
+
+
+static void _create_payload_table_metatable(lua_State* L)
+{
+    if (luaL_newmetatable(L, PAYLOAD_TABLE_METATABLE)) {
+        lua_pushstring(L, "__index");
+        lua_pushcfunction(L, _payload_table_index);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__newindex");
+        lua_pushcfunction(L, _payload_table_newindex);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "__len");
+        lua_pushcfunction(L, _payload_table_len);
+        lua_settable(L, -3);
+    }
+    lua_pop(L, 1);
+}
+
+
+static void _push_payload_table(lua_State* L)
+{
+    lua_createtable(L, 0, 0);
+    luaL_getmetatable(L, PAYLOAD_TABLE_METATABLE);
+    lua_setmetatable(L, -2);
+}
+
+
+static void _push_cached_payload_table(
+    lua_State* L, void* registry_key, uint8_t* data, uint32_t len)
+{
+    if (data == NULL) len = 0;
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, registry_key);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        _push_payload_table(L);
+        lua_pushvalue(L, -1);
+        lua_rawsetp(L, LUA_REGISTRYINDEX, registry_key);
+    }
+
+    int      idx = lua_absindex(L, -1);
+    uint32_t old_len = _payload_table_get_len(L, idx);
+
+    /*
+     * Clear stale numeric entries when the payload shrinks so out-of-bounds
+     * reads hit __index and raise an error instead of seeing old data.
+     */
+    for (uint32_t i = len + 1; i <= old_len; i++) {
+        lua_pushnil(L);
+        lua_rawseti(L, idx, i);
+    }
+
+    _payload_table_set_len(L, idx, len);
+
+    /*
+     * Mirror the C payload into a Lua table. Lua checksum loops can then use
+     * fast raw table reads instead of calling a C __index metamethod per byte.
+     */
+    for (uint32_t i = 0; i < len; i++) {
+        lua_pushinteger(L, data[i]);
+        lua_rawseti(L, idx, i + 1);
+    }
+}
+
+
+/*
+ * Existing numeric payload entries are plain Lua table entries, so writes to
+ * them do not invoke __newindex. Validate type/range during copy-back.
+ */
+static int _copy_cached_payload_table_to_buffer(PduNetwork* net, lua_State* L,
+    void* registry_key, uint8_t* data, uint32_t len)
+{
+    if (data == NULL || len == 0) return 0;
+
+    int top = lua_gettop(L);
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, registry_key);
+    if (!lua_istable(L, -1)) {
+        if (net->log->level != LOG_QUIET) {
+            log_error(net->log, "Lua Error: cached payload is not a table");
+        }
+        lua_settop(L, top);
+        return -1;
+    }
+
+    int idx = lua_absindex(L, -1);
+
+    for (uint32_t i = 0; i < len; i++) {
+        lua_rawgeti(L, idx, i + 1);
+        if (!lua_isinteger(L, -1)) {
+            if (net->log->level != LOG_QUIET) {
+                log_error(net->log, "Lua Error: payload[%u] must be an integer",
+                    i + 1);
+            }
+            lua_settop(L, top);
+            return -1;
+        }
+
+        lua_Integer value = lua_tointeger(L, -1);
+        if (value < 0 || value > 255) {
+            if (net->log->level != LOG_QUIET) {
+                log_error(net->log,
+                    "Lua Error: payload[%u] value " LUA_INTEGER_FMT
+                    " out of range (0..255)",
+                    i + 1, value);
+            }
+            lua_settop(L, top);
+            return -1;
+        }
+
+        data[i] = (uint8_t)value;
+        lua_pop(L, 1);
+    }
+
+    lua_settop(L, top);
+    return 0;
+}
+
+
+/* Userdata-backed payload implementation, used by signal callbacks. */
+
+static int _payload_userdata_index(lua_State* L)
 {
     payload_wrapper_t* pw =
-        (payload_wrapper_t*)luaL_checkudata(L, 1, PAYLOAD_METATABLE);
+        (payload_wrapper_t*)luaL_checkudata(L, 1, PAYLOAD_USERDATA_METATABLE);
     lua_Integer idx = luaL_checkinteger(L, 2);
 
     if (idx < 1 || idx > pw->len) {
@@ -50,47 +270,51 @@ static int _payload_index(lua_State* L)
     return 1;
 }
 
-static int _payload_newindex(lua_State* L)
+
+static int _payload_userdata_newindex(lua_State* L)
 {
     payload_wrapper_t* pw =
-        (payload_wrapper_t*)luaL_checkudata(L, 1, PAYLOAD_METATABLE);
+        (payload_wrapper_t*)luaL_checkudata(L, 1, PAYLOAD_USERDATA_METATABLE);
     lua_Integer idx = luaL_checkinteger(L, 2);
     lua_Integer value = luaL_checkinteger(L, 3);
 
     if (idx < 1 || idx > pw->len) {
-        return luaL_error(
-            L, "payload index %d out of bounds (1..%d)", idx, pw->len);
+        return luaL_error(L,
+            "payload index " LUA_INTEGER_FMT " out of bounds (1..%u)", idx,
+            (unsigned)pw->len);
     }
     if (value < 0 || value > 255) {
-        return luaL_error(L, "payload value %d out of range (0..255)", value);
+        return luaL_error(L,
+            "payload value " LUA_INTEGER_FMT " out of range (0..255)", value);
     }
 
     pw->data[idx - 1] = (uint8_t)value;
     return 0;
 }
 
-static int _payload_len(lua_State* L)
+
+static int _payload_userdata_len(lua_State* L)
 {
     payload_wrapper_t* pw =
-        (payload_wrapper_t*)luaL_checkudata(L, 1, PAYLOAD_METATABLE);
+        (payload_wrapper_t*)luaL_checkudata(L, 1, PAYLOAD_USERDATA_METATABLE);
     lua_pushinteger(L, pw->len);
     return 1;
 }
 
 
-static void _create_payload_metatable(lua_State* L)
+static void _create_payload_userdata_metatable(lua_State* L)
 {
-    if (luaL_newmetatable(L, PAYLOAD_METATABLE)) {
+    if (luaL_newmetatable(L, PAYLOAD_USERDATA_METATABLE)) {
         lua_pushstring(L, "__index");
-        lua_pushcfunction(L, _payload_index);
+        lua_pushcfunction(L, _payload_userdata_index);
         lua_settable(L, -3);
 
         lua_pushstring(L, "__newindex");
-        lua_pushcfunction(L, _payload_newindex);
+        lua_pushcfunction(L, _payload_userdata_newindex);
         lua_settable(L, -3);
 
         lua_pushstring(L, "__len");
-        lua_pushcfunction(L, _payload_len);
+        lua_pushcfunction(L, _payload_userdata_len);
         lua_settable(L, -3);
     }
     lua_pop(L, 1);
@@ -104,21 +328,114 @@ static void _push_payload_userdata(lua_State* L, uint8_t* data, uint32_t len)
     pw->data = data;
     pw->len = len;
 
-    luaL_getmetatable(L, PAYLOAD_METATABLE);
+    luaL_getmetatable(L, PAYLOAD_USERDATA_METATABLE);
     lua_setmetatable(L, -2);
+}
+
+
+static void _push_cached_payload_userdata(
+    lua_State* L, void* registry_key, uint8_t* data, uint32_t len)
+{
+    if (data == NULL) len = 0;
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, registry_key);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        _push_payload_userdata(L, data, len);
+        lua_pushvalue(L, -1);
+        lua_rawsetp(L, LUA_REGISTRYINDEX, registry_key);
+        return;
+    }
+
+    payload_wrapper_t* pw =
+        (payload_wrapper_t*)luaL_checkudata(L, -1, PAYLOAD_USERDATA_METATABLE);
+    pw->data = data;
+    pw->len = len;
+}
+
+
+/* Registry keys for cached per-lua_State objects.
+ *
+ * These caches reduce table/userdata allocation and Lua GC pressure in the hot
+ * PDU/signal callback paths. This is safe as long as Lua scripts do not retain
+ * ctx or ctx.payload beyond the duration of the call.
+ */
+static char _pdu_ctx_registry_key;
+static char _pdu_payload_registry_key;
+static char _signal_ctx_registry_key;
+static char _signal_payload_registry_key;
+
+
+/*
+ * Reset only the supported result fields before reusing a cached ctx table.
+ *
+ * The input fields are overwritten by _lua_push_pdu_ctx() /
+ * _lua_push_signal_ctx(). Unsupported/custom Lua fields are not part of the
+ * API contract, so we avoid a full table scan here.
+ */
+static void _clear_ctx_result_fields(lua_State* L, int idx)
+{
+    idx = lua_absindex(L, idx);
+
+    lua_pushliteral(L, "err");
+    lua_pushnil(L);
+    lua_rawset(L, idx);
+
+    lua_pushliteral(L, "errmsg");
+    lua_pushnil(L);
+    lua_rawset(L, idx);
 }
 
 
 static void _lua_push_pdu_ctx(
     lua_State* L, uint8_t* payload, uint32_t payload_len)
 {
-    // clang-format off
-    lua_newtable(L);                                        // [table]
-    lua_pushstring(L, "payload");                           // [table][payload]
-    _push_payload_userdata(L, payload, payload_len);        // [table][payload][metatable]
-    lua_settable(L, -3);                                    // [table]
-    // clang-format on
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &_pdu_ctx_registry_key);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        lua_createtable(L, 0, 1);
+        lua_pushvalue(L, -1);
+        lua_rawsetp(L, LUA_REGISTRYINDEX, &_pdu_ctx_registry_key);
+    }
+
+    int idx = lua_absindex(L, -1);
+    _clear_ctx_result_fields(L, idx);
+
+    lua_pushliteral(L, "payload");
+    _push_cached_payload_table(
+        L, &_pdu_payload_registry_key, payload, payload_len);
+    lua_rawset(L, idx);
 }
+
+
+static void _lua_push_signal_ctx(lua_State* L, double phys, uint64_t raw,
+    uint8_t* payload, uint32_t payload_len)
+{
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &_signal_ctx_registry_key);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        lua_createtable(L, 0, 3);
+        lua_pushvalue(L, -1);
+        lua_rawsetp(L, LUA_REGISTRYINDEX, &_signal_ctx_registry_key);
+    }
+
+    int idx = lua_absindex(L, -1);
+    _clear_ctx_result_fields(L, idx);
+
+    lua_pushliteral(L, "phys");
+    lua_pushnumber(L, phys);
+    lua_rawset(L, idx);
+
+    lua_pushliteral(L, "raw");
+    lua_pushinteger(L, (lua_Integer)raw);
+    lua_rawset(L, idx);
+
+    lua_pushliteral(L, "payload");
+    _push_cached_payload_userdata(
+        L, &_signal_payload_registry_key, payload, payload_len);
+    lua_rawset(L, idx);
+}
+
 
 static void lua_model_error(PduNetwork* net, lua_State* L, const char* msg)
 {
@@ -133,33 +450,53 @@ int pdunet_lua_pdu_call(PduNetwork* net, lua_State* L, int32_t func_ref,
     if (L == NULL) return -EINVAL;
     if (payload == NULL) return -EINVAL;
 
+    int top = lua_gettop(L);
+
     lua_rawgeti(L, LUA_REGISTRYINDEX, func_ref);
     if (!lua_isfunction(L, -1)) {
-        lua_pop(L, 1);
+        lua_settop(L, top);
         return -EINVAL;
     }
+
     _lua_push_pdu_ctx(L, payload, payload_len);
-    if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
+
+    /*
+     * Keep ctx on the stack across lua_pcall(). The function receives the
+     * duplicated ctx argument, while C keeps the original stack reference for
+     * post-call result inspection. Lua return values are intentionally ignored.
+     *
+     * Before: ... func ctx
+     * After:  ... ctx func ctx
+     */
+    lua_pushvalue(L, -1);
+    lua_insert(L, -3);
+
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
         lua_model_error(net, L, "lua_pcall() failed");
-        lua_pop(L, 1);
+        lua_settop(L, top);
         return -1;
     }
-    if (!lua_istable(L, -1)) {
-        lua_pop(L, 1);
-        return 0;
-    }
+
     int idx = lua_gettop(L);
+
+    if (_copy_cached_payload_table_to_buffer(
+            net, L, &_pdu_payload_registry_key, payload, payload_len) != 0) {
+        lua_settop(L, top);
+        return -1;
+    }
+
     // Check the ctx table for an err.
     int err = 0;
-    lua_pushstring(L, "err");
-    lua_gettable(L, idx);
+    lua_pushliteral(L, "err");
+    lua_rawget(L, idx);
     if (lua_isinteger(L, -1)) {
         err = (int)lua_tointeger(L, -1);
     }
     lua_pop(L, 1);
+
     if (err) {
-        lua_pushstring(L, "errmsg");
-        lua_gettable(L, idx);
+        lua_pushliteral(L, "errmsg");
+        lua_rawget(L, idx);
         if (lua_isstring(L, -1)) {
             const char* msg = lua_tostring(L, -1);
             if (msg) {
@@ -174,30 +511,14 @@ int pdunet_lua_pdu_call(PduNetwork* net, lua_State* L, int32_t func_ref,
                 }
             }
         }
-        lua_pop(L, 2);
+        lua_settop(L, top);
         return -1;
     }
 
-    lua_pop(L, 1);
+    lua_settop(L, top);
     return 0;
 }
 
-static void _lua_push_signal_ctx(lua_State* L, double phys, uint64_t raw,
-    uint8_t* payload, uint32_t payload_len)
-{
-    // clang-format off
-    lua_newtable(L);                                        // [table]
-    lua_pushstring(L, "phys");                              // [table][phys]
-    lua_pushnumber(L, phys);                                // [table][phys][double]
-    lua_settable(L, -3);                                    // [table]
-    lua_pushstring(L, "raw");                               // [table][raw]
-    lua_pushinteger(L, (lua_Integer)raw);                   // [table][raw][uint64]
-    lua_settable(L, -3);                                    // [table]
-    lua_pushstring(L, "payload");                           // [table][payload]
-    _push_payload_userdata(L, payload, payload_len);        // [table][payload][metatable]
-    lua_settable(L, -3);                                    // [table]
-    // clang-format on
-}
 
 int pdunet_lua_signal_call(PduNetwork* net, lua_State* L, int32_t func_ref,
     double* phys, uint64_t* raw, uint8_t* payload, uint32_t payload_len)
@@ -207,34 +528,47 @@ int pdunet_lua_signal_call(PduNetwork* net, lua_State* L, int32_t func_ref,
     if (raw == NULL) return -EINVAL;
     if (payload == NULL) payload_len = 0;
 
+    int top = lua_gettop(L);
+
     lua_rawgeti(L, LUA_REGISTRYINDEX, func_ref);
     if (!lua_isfunction(L, -1)) {
-        lua_pop(L, 1);
+        lua_settop(L, top);
         return -EINVAL;
     }
+
     _lua_push_signal_ctx(L, *phys, *raw, payload, payload_len);
-    if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
+
+    /*
+     * Keep ctx on the stack across lua_pcall(). The function receives the
+     * duplicated ctx argument, while C keeps the original stack reference for
+     * post-call result inspection. Lua return values are intentionally ignored.
+     *
+     * Before: ... func ctx
+     * After:  ... ctx func ctx
+     */
+    lua_pushvalue(L, -1);
+    lua_insert(L, -3);
+
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
         lua_model_error(net, L, "lua_pcall() failed");
-        lua_pop(L, 1);
+        lua_settop(L, top);
         return -1;
     }
-    if (!lua_istable(L, -1)) {
-        lua_pop(L, 1);
-        return 0;
-    }
+
     int idx = lua_gettop(L);
 
     // Check the ctx table for an err.
     int err = 0;
-    lua_pushstring(L, "err");
-    lua_gettable(L, idx);
+    lua_pushliteral(L, "err");
+    lua_rawget(L, idx);
     if (lua_isinteger(L, -1)) {
         err = (int)lua_tointeger(L, -1);
     }
     lua_pop(L, 1);
+
     if (err) {
-        lua_pushstring(L, "errmsg");
-        lua_gettable(L, idx);
+        lua_pushliteral(L, "errmsg");
+        lua_rawget(L, idx);
         if (lua_isstring(L, -1)) {
             const char* msg = lua_tostring(L, -1);
             if (msg) {
@@ -244,23 +578,25 @@ int pdunet_lua_signal_call(PduNetwork* net, lua_State* L, int32_t func_ref,
                         net->log, "lua call returned error: %s (%d)", msg, err);
             }
         }
-        lua_pop(L, 2);
+        lua_settop(L, top);
         return -1;
     }
 
     // Check if values have changed.
-    lua_pushstring(L, "raw");
-    lua_gettable(L, idx);
+    lua_pushliteral(L, "raw");
+    lua_rawget(L, idx);
     if (lua_isinteger(L, -1)) {
         *raw = (uint64_t)lua_tointeger(L, -1);
     }
     lua_pop(L, 1);
-    lua_pushstring(L, "phys");
-    lua_gettable(L, idx);
+
+    lua_pushliteral(L, "phys");
+    lua_rawget(L, idx);
     if (lua_isnumber(L, -1)) {
         *phys = lua_tonumber(L, -1);
     }
-    lua_pop(L, 2);
+
+    lua_settop(L, top);
     return 0;
 }
 
@@ -369,7 +705,8 @@ int pdunet_lua_setup(PduNetwork* net)
 
     /* Setup Lua interpreter for PDU Net. */
     lua_State* L = net->lua.lua_state;
-    _create_payload_metatable(L);
+    _create_payload_table_metatable(L);
+    _create_payload_userdata_metatable(L);
 
     return 0;
 }

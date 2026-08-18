@@ -9,13 +9,6 @@
 
 #define UNUSED(x)     ((void)x)
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-#if defined(__GNUC__) || defined(__clang__)
-#define LIKELY(x)   __builtin_expect(!!(x), 1)
-#define UNLIKELY(x) __builtin_expect(!!(x), 0)
-#else
-#define LIKELY(x)   (x)
-#define UNLIKELY(x) (x)
-#endif
 
 
 typedef void (*LinearRangeFunc)(PduNetwork*, PduRange*);
@@ -38,7 +31,12 @@ static void _apply_range(
 
 void pdunet_encode_linear(PduNetwork* net, PduRange* range)
 {
-    _apply_range(net, range, PduDirectionTx, pdunet_pdu_calculate_linear_range);
+    if (range == NULL) {
+        pdunet_pdu_calculate_linear_tx_active(net);
+    } else {
+        _apply_range(
+            net, range, PduDirectionTx, pdunet_pdu_calculate_linear_range);
+    }
 }
 
 void pdunet_decode_linear(PduNetwork* net, PduRange* range)
@@ -80,6 +78,8 @@ typedef struct matrix_item_spec {
     VectorCompar func;
 } matrix_item_spec;
 static const matrix_item_spec matrix_vector_offset_list[] = {
+    /* dynamic lists */
+    { offsetof(PduTransformMatrix, active_idx), sizeof(size_t), NULL },
     /* pdu items (pdu_count) */
     { offsetof(PduTransformMatrix, pdu), sizeof(PduObject), vector_sort_txrx },
     { offsetof(PduTransformMatrix, payload), sizeof(uint8_t*), NULL },
@@ -88,7 +88,8 @@ static const matrix_item_spec matrix_vector_offset_list[] = {
     { offsetof(PduTransformMatrix, signal.pdu_idx), sizeof(size_t), NULL },
     { offsetof(PduTransformMatrix, signal.signal_idx), sizeof(size_t), NULL },
     { offsetof(PduTransformMatrix, signal.name), sizeof(const char*), NULL },
-    { offsetof(PduTransformMatrix, signal.skip), sizeof(bool), NULL },
+    { offsetof(PduTransformMatrix, signal.skip), sizeof(uint8_t), NULL },
+    { offsetof(PduTransformMatrix, signal.invalid), sizeof(uint8_t), NULL },
     { offsetof(PduTransformMatrix, signal.phys), sizeof(double), NULL },
     { offsetof(PduTransformMatrix, signal.raw), sizeof(uint64_t), NULL },
     { offsetof(PduTransformMatrix, signal.factor), sizeof(double), NULL },
@@ -101,15 +102,23 @@ static const matrix_item_spec matrix_vector_offset_list[] = {
     { offsetof(PduTransformMatrix, signal.length_bits), sizeof(uint16_t),
         NULL },
 };
-#define MATRIX_SIGNAL_OFFSET 3
-#define MATRIX_RANGE_OFFSET  2
+#define MATRIX_DYNAMIC_OFFSET 0
+#define MATRIX_PDU_OFFSET     1
+#define MATRIX_RANGE_OFFSET   3
+#define MATRIX_SIGNAL_OFFSET  4
 
 static void _allocate_matrix(
     PduNetwork* net, size_t pdu_count, size_t signal_count)
 {
     assert(net);
-    // Item 0 .. MATRIX_SIGNAL_OFFSET - 1 (pdu)
-    for (size_t i = 0; i < MATRIX_SIGNAL_OFFSET; i++) {
+    // Item MATRIX_DYNAMIC_OFFSET .. MATRIX_PDU_OFFSET - 1 (dynamic)
+    for (size_t i = MATRIX_DYNAMIC_OFFSET; i < MATRIX_PDU_OFFSET; i++) {
+        const matrix_item_spec* m = &matrix_vector_offset_list[i];
+        Vector*                 v = matrix_vec_at(&net->matrix, m->offset);
+        *v = vector_make(m->size, 0, m->func);
+    }
+    // Item MATRIX_PDU_OFFSET .. MATRIX_SIGNAL_OFFSET - 1 (pdu)
+    for (size_t i = MATRIX_PDU_OFFSET; i < MATRIX_SIGNAL_OFFSET; i++) {
         const matrix_item_spec* m = &matrix_vector_offset_list[i];
         Vector*                 v = matrix_vec_at(&net->matrix, m->offset);
         if (i == MATRIX_RANGE_OFFSET) {
@@ -266,17 +275,23 @@ int pdunet_matrix_transform(PduNetwork* net, PduNetworkSortFunc sort)
                 s->lua.decode_ref);
 
             // Index to matrix pdu, not net pdu.
+            double  min = isnan(s->min) ? -INFINITY : s->min;
+            double  max = isnan(s->max) ? INFINITY : s->max;
+            uint8_t invalid =
+                isnan(s->factor) || isnan(s->offset) ? true : false;
+
             vector_push(&net->matrix.signal.pdu_idx, &pdu_idx);
             vector_push(&net->matrix.signal.signal_idx, &sig_idx);
 
             vector_push(&net->matrix.signal.name, &s->name);
-            vector_push(&net->matrix.signal.skip, &(bool){ false });
+            vector_push(&net->matrix.signal.skip, &(uint8_t){ false });
+            vector_push(&net->matrix.signal.invalid, &invalid);
             vector_push(&net->matrix.signal.phys, &(double){ 0.0 });
             vector_push(&net->matrix.signal.raw, &(uint64_t){ 0 });
             vector_push(&net->matrix.signal.factor, &s->factor);
             vector_push(&net->matrix.signal.offset, &s->offset);
-            vector_push(&net->matrix.signal.min, &s->min);
-            vector_push(&net->matrix.signal.max, &s->max);
+            vector_push(&net->matrix.signal.min, &min);
+            vector_push(&net->matrix.signal.max, &max);
             vector_push(&net->matrix.signal.encode, &s->lua.encode_ref);
             vector_push(&net->matrix.signal.decode, &s->lua.decode_ref);
             vector_push(&net->matrix.signal.start_bit, &s->start_bit);
@@ -338,6 +353,70 @@ int pdunet_matrix_transform(PduNetwork* net, PduNetworkSortFunc sort)
 }
 
 
+void pdunet_pdu_calculate_linear_tx_active(PduNetwork* net)
+{
+    assert(net);
+    lua_State* L = net->lua.lua_state;
+
+    const size_t active_count = vector_len(&net->matrix.active_idx);
+    if (active_count == 0) return;
+
+    const size_t* restrict active_idx =
+        (const size_t*)vector_at(&net->matrix.active_idx, 0, NULL);
+
+    // clang-format off
+    double* restrict phys = (double*)vector_at(&net->matrix.signal.phys, 0, NULL);
+    const double* restrict factor = (const double*)vector_at(&net->matrix.signal.factor, 0, NULL);
+    const double* restrict offset = (const double*)vector_at(&net->matrix.signal.offset, 0, NULL);
+    const double* restrict min = (const double*)vector_at(&net->matrix.signal.min, 0, NULL);
+    const double* restrict max = (const double*)vector_at(&net->matrix.signal.max, 0, NULL);
+    uint64_t* restrict raw = (uint64_t*)vector_at(&net->matrix.signal.raw, 0, NULL);
+    const lua_func_t* restrict encode = (const lua_func_t*)vector_at(&net->matrix.signal.encode, 0, NULL); // NOLINT
+    const size_t* restrict pdu_idx = (const size_t*)vector_at(&net->matrix.signal.pdu_idx, 0, NULL); // NOLINT
+    // clang-format on
+
+    for (size_t k = 0; k < active_count; k++) {
+        const size_t i = active_idx[k];
+
+        if (phys[i] > max[i]) continue;
+        if (phys[i] < min[i]) continue;
+
+        /* Calculate the raw value. */
+        raw[i] = (uint64_t)((phys[i] - offset[i]) / factor[i]);
+
+        /* Call the Lua function. */
+        if (encode[i] > 0) {
+            double   _phys = phys[i];
+            uint64_t _raw = raw[i];
+            uint8_t* payload = NULL;
+            vector_at(&(net->matrix.payload), pdu_idx[i], &payload);
+            PduObject* o = vector_at(&(net->matrix.pdu), pdu_idx[i], NULL);
+
+            log_trace(net->log,
+                "Lua Call: signal encode[%zu]: phys=%f, raw=%u, func=%d", i,
+                _phys, _raw, encode[i]);
+            pdunet_lua_signal_call(
+                net, L, encode[i], &_phys, &_raw, payload, o->pdu->length);
+            log_trace(net->log, "  phys=%f, raw=%u", _phys, _raw);
+            if (_phys != phys[i]) {
+                /* Phys value changed, update raw. */
+                if (_phys > max[i]) continue;
+                if (_phys < min[i]) continue;
+                /* Update the raw value. */
+                phys[i] = _phys;
+                raw[i] = (uint64_t)((_phys - offset[i]) / factor[i]);
+                log_trace(
+                    net->log, "  phys=%f (updated), raw=%u", phys[i], raw[i]);
+            } else {
+                raw[i] = _raw;
+                log_trace(
+                    net->log, "  phys=%f, raw=%u (updated)", phys[i], raw[i]);
+            }
+        }
+    }
+}
+
+
 void pdunet_pdu_calculate_linear_range(PduNetwork* net, PduRange* r)
 {
     assert(net);
@@ -345,13 +424,14 @@ void pdunet_pdu_calculate_linear_range(PduNetwork* net, PduRange* r)
     errno = 0;
 
     // clang-format off
-    bool* skip = (bool*)vector_at(&net->matrix.signal.skip, r->offset, NULL);
-    double* phys = (double*)vector_at(&net->matrix.signal.phys, r->offset, NULL);
-    double* factor = (double*)vector_at(&net->matrix.signal.factor, r->offset, NULL);
-    double* offset = (double*)vector_at(&net->matrix.signal.offset, r->offset, NULL);
-    double* min = (double*)vector_at(&net->matrix.signal.min, r->offset, NULL);
-    double* max = (double*)vector_at(&net->matrix.signal.max, r->offset, NULL);
-    uint64_t* raw = (uint64_t*)vector_at(&net->matrix.signal.raw, r->offset, NULL);
+    const uint8_t* restrict skip = (uint8_t*)vector_at(&net->matrix.signal.skip, r->offset, NULL);
+    const uint8_t* restrict invalid = (uint8_t*)vector_at(&net->matrix.signal.invalid, r->offset, NULL); // NOLINT
+    double* restrict phys = (double*)vector_at(&net->matrix.signal.phys, r->offset, NULL);
+    const double* restrict factor = (double*)vector_at(&net->matrix.signal.factor, r->offset, NULL);
+    const double* restrict offset = (double*)vector_at(&net->matrix.signal.offset, r->offset, NULL);
+    const double* min = (double*)vector_at(&net->matrix.signal.min, r->offset, NULL);
+    const double* max = (double*)vector_at(&net->matrix.signal.max, r->offset, NULL);
+    uint64_t* restrict raw = (uint64_t*)vector_at(&net->matrix.signal.raw, r->offset, NULL);
     lua_func_t* encode = (lua_func_t*)vector_at(&net->matrix.signal.encode, r->offset, NULL);
     lua_func_t* decode = (lua_func_t*)vector_at(&net->matrix.signal.decode, r->offset, NULL);
     size_t* pdu_idx = (size_t*)vector_at(&net->matrix.signal.pdu_idx, r->offset, NULL);
@@ -363,13 +443,14 @@ void pdunet_pdu_calculate_linear_range(PduNetwork* net, PduRange* r)
         for (size_t i = 0; i < r->length; i++) {
             /* Schedule visitor will set skip is PDU/Signal should not update.*/
             if (LIKELY(skip[i])) continue;
-            /* Constraints on the calculation. */
-            // TODO: can these constrains be removed from the matrix?
-            if (!isnan(max[i]) && phys[i] > max[i]) continue;
-            if (!isnan(min[i]) && phys[i] < min[i]) continue;
-            if (isnan(factor[i]) || isnan(offset[i])) continue;
+            if (UNLIKELY(invalid[i])) continue;
+
+            if (phys[i] > max[i]) continue;
+            if (phys[i] < min[i]) continue;
+
             /* Calculate the raw value. */
-            raw[i] = (phys[i] - offset[i]) / factor[i];
+            raw[i] = (uint64_t)((phys[i] - offset[i]) / factor[i]);
+
             /* Call the Lua function. */
             if (encode[i] > 0) {
                 double   _phys = phys[i];
@@ -384,15 +465,17 @@ void pdunet_pdu_calculate_linear_range(PduNetwork* net, PduRange* r)
                 pdunet_lua_signal_call(
                     net, L, encode[i], &_phys, &_raw, payload, o->pdu->length);
                 log_trace(net->log, "  phys=%f, raw=%u", _phys, _raw);
-                raw[i] = _raw;
-                for (bool _ = (_phys != phys[i]); _; _ = false) {
-                    phys[i] = _phys;
+                if (_phys != phys[i]) {
                     /* Phys value changed, update raw. */
-                    if (!isnan(max[i]) && phys[i] > max[i]) break;
-                    if (!isnan(min[i]) && phys[i] < min[i]) break;
-                    if (isnan(factor[i]) || isnan(offset[i])) break;
+                    if (phys[i] > max[i]) continue;
+                    if (phys[i] < min[i]) continue;
                     /* Update the raw value. */
-                    raw[i] = (phys[i] - offset[i]) / factor[i];
+                    phys[i] = _phys;
+                    raw[i] = (uint64_t)((phys[i] - offset[i]) / factor[i]);
+                    log_trace(net->log, "  phys=%f (updated), raw=%u", phys[i],
+                        raw[i]);
+                } else {
+                    raw[i] = _raw;
                     log_trace(net->log, "  phys=%f, raw=%u (updated)", phys[i],
                         raw[i]);
                 }
@@ -401,46 +484,67 @@ void pdunet_pdu_calculate_linear_range(PduNetwork* net, PduRange* r)
         break;
     case PduDirectionRx:
         for (size_t i = 0; i < r->length; i++) {
+            if (UNLIKELY(invalid[i])) continue;
+
+            PduObject* o = vector_at(&(net->matrix.pdu), pdu_idx[i], NULL);
+            if (o == NULL || o->update_signals == false) {
+                continue; /* PDU was not Rx'ed, skip. */
+            }
+
+            /* Calculate the physical value. */
+            double val = (raw[i] * factor[i]) + offset[i];
+            if ((val <= max[i]) && (val >= min[i])) {
+                phys[i] = val;
+            }
+            log_trace(net->log, "  phys=%f, raw=%u", phys[i], raw[i]);
+
             /* Call the Lua function. */
             if (decode[i] > 0) {
                 double   _phys = phys[i];
                 uint64_t _raw = raw[i];
                 uint8_t* payload = NULL;
                 vector_at(&(net->matrix.payload), pdu_idx[i], &payload);
-                PduObject* o = vector_at(&(net->matrix.pdu), pdu_idx[i], NULL);
-
                 log_trace(net->log,
                     "Lua Call: Signal Decode[%u]: phys=%f, raw=%u, func=%d",
                     r->offset + i, _phys, _raw, decode[i]);
                 pdunet_lua_signal_call(
                     net, L, decode[i], &_phys, &_raw, payload, o->pdu->length);
                 log_trace(net->log, "  phys=%f, raw=%u", _phys, _raw);
-                phys[i] = _phys;
-                for (bool _ = (_raw != raw[i]); _; _ = false) {
-                    raw[i] = _raw;
+                if (_raw != raw[i]) {
                     /* Raw value changed, update phys. */
-                    if (isnan(factor[i]) || isnan(offset[i])) break;
+                    raw[i] = _raw;
                     double val = (raw[i] * factor[i]) + offset[i];
-                    if (!isnan(max[i]) && val > max[i]) break;
-                    if (!isnan(min[i]) && val < min[i]) break;
-                    /* Update the phys value. */
+                    if (val > max[i]) continue;
+                    if (val < min[i]) continue;
                     phys[i] = val;
                     log_trace(net->log, "  phys=%f, raw=%u (updated)", phys[i],
                         raw[i]);
+                } else {
+                    if (isnan(_phys)) continue;
+                    if (_phys > max[i]) continue;
+                    if (_phys < min[i]) continue;
+                    phys[i] = _phys;
+                    log_trace(
+                        net->log, "  phys=%f (updated), raw=%u", _phys, _raw);
                 }
             }
-
-            /* Calculate the raw value. */
-            if (isnan(factor[i]) || isnan(offset[i])) continue;
-            double val = (raw[i] * factor[i]) + offset[i];
-            if (!isnan(max[i]) && val > max[i]) continue;
-            if (!isnan(min[i]) && val < min[i]) continue;
-            phys[i] = val;
         }
         break;
     default:
         break;
     }
+}
+
+
+static inline bool _pdu_has_active_signal(PduNetwork* net, PduObject* o)
+{
+    uint8_t* skip = (uint8_t*)vector_at(
+        &net->matrix.signal.skip, o->matrix.range.offset, NULL);
+
+    for (size_t i = 0; i < o->matrix.range.count; i++) {
+        if (UNLIKELY(skip[i] == false)) return true;
+    }
+    return false;
 }
 
 
@@ -459,11 +563,15 @@ void pdunet_pdu_pack_range(PduNetwork* net, PduRange* r)
         (uint16_t*)vector_at(&net->matrix.signal.start_bit, r->offset, NULL);
     uint16_t* length =
         (uint16_t*)vector_at(&net->matrix.signal.length_bits, r->offset, NULL);
+    uint8_t* skip =
+        (uint8_t*)vector_at(&net->matrix.signal.skip, r->offset, NULL);
 
     switch (r->dir) {
     case PduDirectionTx:
         /* Pack from raw to payload. */
         for (size_t i = 0; i < r->length; i++) {
+            if (LIKELY(skip[i])) continue;
+
             size_t   bit_count = 0;
             size_t   byte_idx = start[i] / 8;
             uint64_t value = raw[i];
@@ -522,14 +630,16 @@ void pdunet_pdu_pack_range(PduNetwork* net, PduRange* r)
         }
         /* Call Lua functions, modify payload. */
         for (size_t i = 0; i < vector_len(&r->pdu_list); i++) {
-            size_t pdu_idx = 0;
-            vector_at(&r->pdu_list, i, &pdu_idx);
+            size_t pdu_matrix_idx = 0;
+            vector_at(&r->pdu_list, i, &pdu_matrix_idx);
+            PduObject* o = vector_at(&(net->matrix.pdu), pdu_matrix_idx, NULL);
+            if (o == NULL || !_pdu_has_active_signal(net, o)) continue;
+
             uint8_t* payload = NULL;
-            vector_at(&(net->matrix.payload), pdu_idx, &payload);
-            PduObject* o = vector_at(&(net->matrix.pdu), pdu_idx, NULL);
+            vector_at(&(net->matrix.payload), pdu_matrix_idx, &payload);
             if (o->lua.encode_ref > 0) {
                 log_trace(net->log, "Lua Call: PDU Pack Tx[%u]: func=%d",
-                    pdu_idx, o->lua.encode_ref);
+                    pdu_matrix_idx, o->lua.encode_ref);
                 pdunet_lua_pdu_call(
                     net, L, o->lua.encode_ref, payload, o->pdu->length, false);
             }
@@ -538,26 +648,34 @@ void pdunet_pdu_pack_range(PduNetwork* net, PduRange* r)
     case PduDirectionRx:
         /* Call Lua functions, modify payload. */
         for (size_t i = 0; i < vector_len(&r->pdu_list); i++) {
-            size_t pdu_idx = 0;
-            vector_at(&r->pdu_list, i, &pdu_idx);
-            uint8_t* payload = NULL;
-            vector_at(&(net->matrix.payload), pdu_idx, &payload);
-            PduObject* o = vector_at(&(net->matrix.pdu), pdu_idx, NULL);
+            size_t pdu_matrix_idx = 0;
+            vector_at(&r->pdu_list, i, &pdu_matrix_idx);
+            PduObject* o = vector_at(&(net->matrix.pdu), pdu_matrix_idx, NULL);
+            if (o == NULL || o->update_signals == false) {
+                continue; /* PDU was not Rx'ed, skip. */
+            }
+
             if (o->lua.decode_ref > 0) {
+                uint8_t* payload = NULL;
+                vector_at(&(net->matrix.payload), pdu_matrix_idx, &payload);
                 log_trace(net->log, "Lua Call: PDU Unpack Rx[%u]: func=%d",
-                    pdu_idx, o->lua.encode_ref);
+                    pdu_matrix_idx, o->lua.decode_ref);
                 pdunet_lua_pdu_call(
                     net, L, o->lua.decode_ref, payload, o->pdu->length, false);
             }
         }
         /* Unpack from payload to raw. */
         for (size_t i = 0; i < r->length; i++) {
+            PduObject* o = vector_at(&(net->matrix.pdu), pdu_idx[i], NULL);
+            if (o == NULL || o->update_signals == false) {
+                continue; /* PDU was not Rx'ed, skip. */
+            }
+
             size_t   bit_count = 0;
             size_t   byte_idx = start[i] / 8;
             uint64_t value = 0;
             uint8_t* payload = NULL;
             vector_at(&(net->matrix.payload), pdu_idx[i], &payload);
-            PduObject*     o = vector_at(&(net->matrix.pdu), pdu_idx[i], NULL);
             PduSignalItem* s = vector_at(&o->pdu->signals, signal_idx[i], NULL);
             log_trace(net->log, "Read Payload[%u][%s]: start=%u, length=%u",
                 pdu_idx[i], s->name, start[i], length[i]);

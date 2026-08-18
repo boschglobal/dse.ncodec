@@ -304,7 +304,6 @@ void pdunet_tx(PduNetwork* net, PduRange* range, PduNetworkVisitFunc visit,
     ncodec_flush(net->ncodec);
 
     /* Marshal from PDU Network to SignalVector (update changed signals). */
-    // TODO: trigger on actual Tx to reduce CPU consumption in idle steps.
     marshal_signalmap_in(net->log, net->msm.out);
 }
 
@@ -346,7 +345,8 @@ void pdunet_rx(
 
     /* Receive PDUs, call visitor. */
     if (net->network.vtable.lpdu_rx) {
-        net->network.vtable.lpdu_rx(net);
+        size_t count = net->network.vtable.lpdu_rx(net);
+        if (count == 0) return; /* Return early, no Rx. */
     }
     pdunet_visit(net, NULL, pdunet_visit_container_mapfrom, NULL);
     if (visit) pdunet_visit(net, range, visit, data);
@@ -366,6 +366,14 @@ void pdunet_visit_clear_update_flag(PduNetwork* net, PduObject* pdu, void* data)
     UNUSED(net);
     UNUSED(data);
     if (pdu) pdu->update_signals = false;
+}
+
+
+void pdunet_visit_set_update_flag(PduNetwork* net, PduObject* pdu, void* data)
+{
+    UNUSED(net);
+    UNUSED(data);
+    if (pdu) pdu->update_signals = true;
 }
 
 

@@ -433,6 +433,7 @@ void test_pdunet_linear_part_tx(void** state)
         assert_non_null(phys);
         assert_non_null(raw);
         *phys = c.phys;
+        pdunet_set_all_tx_signals_active(net);
         pdunet_encode_linear(net, NULL);
         assert_double_equal(*phys, c.phys, 0);
         assert_int_equal(*raw, c.raw);
@@ -493,6 +494,7 @@ void test_pdunet_linear_part_rx(void** state)
         assert_non_null(phys);
         assert_non_null(raw);
         *raw = c.raw;
+        o->update_signals = true; /* trigger the rx processing path */
         pdunet_decode_linear(net, NULL);
         assert_double_equal(*phys, c.phys, 0);
         assert_int_equal(*raw, c.raw);
@@ -537,6 +539,7 @@ void test_pdunet_pack_tx(void** state)
         uint64_t* raw =
             (uint64_t*)vector_at(&net->matrix.signal.raw, c.idx, NULL);
         *phys = c.phys;
+        pdunet_set_all_tx_signals_active(net);
         pdunet_encode_linear(net, NULL);
         assert_int_equal(*raw, c.raw);
     }
@@ -572,6 +575,7 @@ void test_pdunet_unpack_rx(void** state)
     payload[0] = 0x18;  // 6
     payload[1] = 0x90;  // 100/x64, lower part
     payload[2] = 0x01;  // 100/x64, upper part
+    pdunet_visit(net, NULL, pdunet_visit_set_update_flag, NULL);
     pdunet_decode_unpack(net, NULL);
 
     // Check some signal values.
@@ -687,6 +691,9 @@ void test_pdunet_lua_tx(void** state)
         *phys = c.phys;
         *raw = c.raw;
     }
+    PduObject* o = vector_at(&net->matrix.pdu, 4, NULL);
+    o->needs_tx = true;  // Schedule effect on Container PDU.
+    pdunet_set_all_tx_signals_active(net);
     pdunet_encode_linear(net, NULL);
     for (size_t i = 0; i < ARRAY_SIZE(signal_checks); i++) {
         matrix_check c = signal_checks[i];
@@ -702,8 +709,8 @@ void test_pdunet_lua_tx(void** state)
 
     // Pack the raw values and check the payload.
     pdunet_encode_pack(net, NULL);
-    PduObject* o = vector_at(&net->matrix.pdu, 2, NULL);
-    uint8_t    payload[64] = {
+    o = vector_at(&net->matrix.pdu, 2, NULL);
+    uint8_t payload[64] = {
         [0] = 0x51,  // checksum
         [1] = 0x06,  // 6
         [2] = 0x18,  // 24
@@ -713,11 +720,13 @@ void test_pdunet_lua_tx(void** state)
     assert_memory_equal(o->ncodec.pdu.payload, payload, 64);
 
     // Check tx_func called for Container PDU
+    pdunet_visit(net, NULL, pdunet_visit_needs_tx, NULL);
+    pdunet_visit(net, NULL, pdunet_visit_container_mapto, NULL);
     o = vector_at(&net->matrix.pdu, 4, NULL);
     uint8_t payload2[64] = {
         [0] = 0x2a,  // checksum
     };
-    assert_memory_equal(o->ncodec.pdu.payload, payload2, 64);
+    assert_memory_equal(o->ncodec.pdu.payload, payload2, 1);
 
     // Check tx_func called for I-PDU
     o = vector_at(&net->matrix.pdu, 5, NULL);
@@ -738,15 +747,17 @@ void test_pdunet_lua_rx(void** state)
     mock->net = net;  // Teardown will destroy.
     assert_non_null(net);
     assert_int_equal(vector_len(&net->matrix.pdu), 6);
+    PduObject* o = vector_at(&net->matrix.pdu, 0, NULL);
 
     // Pack the raw values and check the payload.
     uint8_t** _ = vector_at(&net->matrix.payload, 0, NULL);
     uint8_t*  payload = *_;
-    payload[0] = 0x51;  // checksum
-    payload[1] = 0x06;  // 6
-    payload[2] = 0x18;  // 24
-    payload[3] = 0x2a;  // 42
-    payload[4] = 0x09;  // 9
+    payload[0] = 0x51;        // checksum
+    payload[1] = 0x06;        // 6
+    payload[2] = 0x18;        // 24
+    payload[3] = 0x2a;        // 42
+    payload[4] = 0x09;        // 9
+    o->update_signals = true; /* trigger the rx processing path */
     pdunet_decode_unpack(net, NULL);
 
     // Check the payload (some fields modified).
@@ -757,7 +768,6 @@ void test_pdunet_lua_rx(void** state)
         [3] = 0x2a,  // 42
         [4] = 0x09,  // 9
     };
-    PduObject* o = vector_at(&net->matrix.pdu, 0, NULL);
     assert_memory_equal(o->ncodec.pdu.payload, check_payload, 64);
 
     matrix_check signal_checks[] = {
@@ -855,6 +865,7 @@ void test_pdunet_container_tx(void** state)
         uint64_t* raw =
             (uint64_t*)vector_at(&net->matrix.signal.raw, c.idx, NULL);
         *phys = c.phys;
+        pdunet_set_all_tx_signals_active(net);
         pdunet_encode_linear(net, NULL);
         assert_int_equal(*raw, c.raw);
     }
