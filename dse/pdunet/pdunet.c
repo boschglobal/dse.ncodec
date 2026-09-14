@@ -463,6 +463,7 @@ void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu)
     if (pdu->ncodec.pdu.save_payload != NULL) {
         memcpy(pdu->ncodec.pdu.save_payload, pdu->ncodec.pdu.payload,
             pdu->ncodec.pdu.payload_len);
+        pdu->ncodec.pdu.save_payload_valid = true;
     }
 
     int rc = pdunet_lua_pdu_call(net, L, pdu->lua.tx_ref,
@@ -480,11 +481,7 @@ void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu)
         }
     } else {
         /* The PDU was rejected. */
-        pdu->needs_tx = false;
-        if (pdu->ncodec.pdu.save_payload != NULL) {
-            memcpy(pdu->ncodec.pdu.payload, pdu->ncodec.pdu.save_payload,
-                pdu->ncodec.pdu.payload_len);
-        }
+        pdunet_tx_complete(pdu);
         log_trace(net->log, "Pdu: [%u] rejected, reason=%d, id=%u",
             pdu->matrix.pdu_idx, rc, pdu->pdu->id);
     }
@@ -512,6 +509,19 @@ int pdunet_call_rx_func(
             net->log, "Pdu: [%u] rejected, reason=%d", pdu->matrix.pdu_idx, rc);
     }
     return rc;
+}
+
+
+void pdunet_tx_complete(PduObject* pdu)
+{
+    assert(pdu);
+    if (pdu->needs_tx && pdu->ncodec.pdu.save_payload_valid) {
+        memcpy(pdu->ncodec.pdu.payload, pdu->ncodec.pdu.save_payload,
+            pdu->ncodec.pdu.payload_len);
+    }
+
+    pdu->needs_tx = false;
+    pdu->ncodec.pdu.save_payload_valid = false;
 }
 
 

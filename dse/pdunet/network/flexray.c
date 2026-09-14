@@ -180,12 +180,7 @@ size_t pdunet_flexray_lpdu_tx(PduNetwork* net)
                             .metadata_type = NCodecPduFlexrayMetadataTypeLpdu,
                             .metadata.lpdu = *lpdu,
                         } });
-                pdu->needs_tx = false;
-                if (pdu->ncodec.pdu.save_payload != NULL) {
-                    memcpy(pdu->ncodec.pdu.payload,
-                        pdu->ncodec.pdu.save_payload,
-                        pdu->ncodec.pdu.payload_len);
-                }
+                pdunet_tx_complete(pdu);
                 count++;
             }
             break;

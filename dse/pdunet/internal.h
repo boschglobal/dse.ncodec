@@ -152,8 +152,9 @@ typedef struct PduObject {
         struct {
             uint32_t id;
             uint8_t* payload;
-            uint8_t* save_payload;
             size_t   payload_len;
+            uint8_t* save_payload;
+            bool     save_payload_valid;
         } pdu;
         struct {
             void* lpdu;
