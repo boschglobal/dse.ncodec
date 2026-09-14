@@ -92,8 +92,6 @@ DLL_PUBLIC void pdunet_visit_set_checksum(
     PduNetwork* net, PduObject* pdu, void* data);
 DLL_PUBLIC void pdunet_visit_needs_tx(
     PduNetwork* net, PduObject* pdu, void* data);
-DLL_PUBLIC void pdunet_visit_restore_payload(
-    PduNetwork* net, PduObject* pdu, void* data);
 
 DLL_PUBLIC void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu);
 DLL_PUBLIC int  pdunet_call_rx_func(

@@ -181,6 +181,11 @@ size_t pdunet_flexray_lpdu_tx(PduNetwork* net)
                             .metadata.lpdu = *lpdu,
                         } });
                 pdu->needs_tx = false;
+                if (pdu->ncodec.pdu.save_payload != NULL) {
+                    memcpy(pdu->ncodec.pdu.payload,
+                        pdu->ncodec.pdu.save_payload,
+                        pdu->ncodec.pdu.payload_len);
+                }
                 count++;
             }
             break;
