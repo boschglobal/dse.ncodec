@@ -153,6 +153,8 @@ typedef struct PduObject {
             uint32_t id;
             uint8_t* payload;
             size_t   payload_len;
+            uint8_t* save_payload;
+            bool     save_payload_valid;
         } pdu;
         struct {
             void* lpdu;
@@ -164,8 +166,9 @@ typedef struct PduObject {
 /* Operate on this structure, vector optimised. */
 typedef struct PduTransformMatrix {
     /* PDU Objects, sorted on pdu.tx/rx then pdu.id. */
-    Vector pdu;     /* PduObject */
-    Vector payload; /* uint8_t*, allocated vector of payloads. */
+    Vector pdu;          /* PduObject */
+    Vector payload;      /* uint8_t*, allocated vector of payloads. */
+    Vector save_payload; /* uint8_t*, items allocated if tx_ref set. */
     /* Range objects, resultant from sorting. */
     Vector range;
 

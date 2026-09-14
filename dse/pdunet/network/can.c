@@ -87,7 +87,7 @@ size_t pdunet_can_lpdu_tx(PduNetwork* net)
                              .transport_type = NCodecPduTransportTypeCan,
                              .transport.can_message = can_meta,
                          });
-        pdu->needs_tx = false;
+        pdunet_tx_complete(pdu);
         count++;
 
         log_debug(net->log, "  CAN: Tx[%u] id=0x%03X, len=%u", i, pdu->pdu->id,

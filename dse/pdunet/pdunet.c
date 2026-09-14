@@ -436,8 +436,8 @@ void pdunet_visit_needs_tx(PduNetwork* net, PduObject* pdu, void* data)
                 pdu->needs_tx = false;
             }
         }
-        log_trace(net->log, "Pdu: [%u] needs_tx=%u", pdu->matrix.pdu_idx,
-            pdu->needs_tx);
+        log_trace(net->log, "Pdu: [%u] needs_tx=%u, id=%u", pdu->matrix.pdu_idx,
+            pdu->needs_tx, pdu->pdu->id);
     } else {
         pdu->needs_tx = false;
     }
@@ -454,8 +454,17 @@ void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu)
     assert(net);
     lua_State* L = net->lua.lua_state;
 
-    log_trace(net->log, "Lua Call: PDU Tx Tx[%u]: func=%d", pdu->matrix.pdu_idx,
-        pdu->lua.tx_ref);
+    log_trace(net->log, "Lua Call: PDU Tx Tx[%u]: func=%d, id=%u",
+        pdu->matrix.pdu_idx, pdu->lua.tx_ref, pdu->pdu->id);
+
+    /* Save the payload in case the tx_ref modifies it, which will invalidate
+    checksum calculations based on payload. The save_payload is restored after
+     vtable.lpdu_tx() is called. */
+    if (pdu->ncodec.pdu.save_payload != NULL) {
+        memcpy(pdu->ncodec.pdu.save_payload, pdu->ncodec.pdu.payload,
+            pdu->ncodec.pdu.payload_len);
+        pdu->ncodec.pdu.save_payload_valid = true;
+    }
 
     int rc = pdunet_lua_pdu_call(net, L, pdu->lua.tx_ref,
         pdu->ncodec.pdu.payload, pdu->ncodec.pdu.payload_len, true);
@@ -472,9 +481,9 @@ void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu)
         }
     } else {
         /* The PDU was rejected. */
-        pdu->needs_tx = false;
-        log_trace(
-            net->log, "Pdu: [%u] rejected, reason=%d", pdu->matrix.pdu_idx, rc);
+        pdunet_tx_complete(pdu);
+        log_trace(net->log, "Pdu: [%u] rejected, reason=%d, id=%u",
+            pdu->matrix.pdu_idx, rc, pdu->pdu->id);
     }
 }
 
@@ -500,6 +509,19 @@ int pdunet_call_rx_func(
             net->log, "Pdu: [%u] rejected, reason=%d", pdu->matrix.pdu_idx, rc);
     }
     return rc;
+}
+
+
+void pdunet_tx_complete(PduObject* pdu)
+{
+    assert(pdu);
+    if (pdu->needs_tx && pdu->ncodec.pdu.save_payload_valid) {
+        memcpy(pdu->ncodec.pdu.payload, pdu->ncodec.pdu.save_payload,
+            pdu->ncodec.pdu.payload_len);
+    }
+
+    pdu->needs_tx = false;
+    pdu->ncodec.pdu.save_payload_valid = false;
 }
 
 
