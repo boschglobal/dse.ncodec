@@ -483,19 +483,24 @@ static void get_stream_from_buffer(ABCodecReader* reader)
     _reader_reset_state(reader, false);
 
     /* Next message? */
-    uint8_t* buffer;
-    size_t   length;
+    uint8_t* buffer = NULL;
+    size_t   length = 0;
     stream->read((NCODEC*)nc, &buffer, &length, NCODEC_POS_NC);
 
     uint8_t*       msg_ptr = buffer;
     uint8_t* const buffer_ptr = buffer;
     while ((size_t)(msg_ptr - buffer_ptr) < length) {
+        size_t remaining = length - (size_t)(msg_ptr - buffer_ptr);
+        if (remaining < sizeof(flatbuffers_uoffset_t)) break;
+
         /* Messages start with a size prefix. */
         size_t msg_len = 0;
         msg_ptr = flatbuffers_read_size_prefix(msg_ptr, &msg_len);
         if (msg_len == 0) break;
+        if (msg_len > remaining - sizeof(flatbuffers_uoffset_t)) break;
         /* Advance the stream pos (+4 for size prefix). */
-        stream->seek((NCODEC*)nc, msg_len + 4, NCODEC_SEEK_CUR);
+        stream->seek((NCODEC*)nc, msg_len + sizeof(flatbuffers_uoffset_t),
+            NCODEC_SEEK_CUR);
         /* Set the parsing state. */
         if (flatbuffers_has_identifier(msg_ptr, flatbuffers_identifier)) {
             reader->state.msg_ptr = msg_ptr;
@@ -536,12 +541,13 @@ int32_t _reader_get_pdu(ABCodecReader* reader, NCodecPdu* pdu)
     /* Process the stream/frames. */
     if (reader->state.msg_ptr == NULL) get_stream_from_buffer(reader);
     if (reader->state.vector == NULL) get_vector_from_stream(reader);
-    while (reader->state.msg_ptr && reader->state.vector) {
+    while (reader->state.msg_ptr) {
         for (uint32_t _vi = reader->state.vector_idx;
             _vi < reader->state.vector_len; _vi++) {
             ns(Pdu_table_t) p = ns(Pdu_vec_at(reader->state.vector, _vi));
 
             /* Return the message. */
+            *pdu = (NCodecPdu){};
             pdu->id = ns(Pdu_id(p));
             flatbuffers_uint8_vec_t payload = ns(Pdu_payload(p));
             pdu->payload = (uint8_t*)payload;
