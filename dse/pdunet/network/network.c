@@ -617,10 +617,17 @@ void pdunet_visit_container_mapto(PduNetwork* net, PduObject* pdu, void* data)
         memcpy(payload + payload_offset, pi_payload, len);
         payload_offset += len;
 
+
         /* Send the Container (which now contains this I-PDU). */
         pdu->needs_tx = true;
         pi->pdu->needs_tx = false;
+        if (pi->pdu->lua.tx_ref && pi->pdu->ncodec.pdu.save_payload) {
+            memcpy(pi->pdu->ncodec.pdu.payload,
+                pi->pdu->ncodec.pdu.save_payload,
+                pi->pdu->ncodec.pdu.payload_len);
+        }
     }
+
     /* Apply Tx payload modifications to this Container PDU. */
     pdunet_call_tx_func(net, pdu);
 }

@@ -1128,10 +1128,11 @@ void test_pdunet_secured_pdu_tx(void** state)
             .payload_len = 8,
         },
         {
+            // Payload is copied to LPDU-TX, save_payload is restored.
             .pdu_idx = 8,
             .pdu_name = "IPDU-TX-1",
             .needs_tx = false,  // payload is in LPDU
-            .payload = { 0x40, 0x41, 0x00, 0x00 },
+            .payload = { 0x40, 0x00, 0x00, 0x00 },
             .payload_len = 8,
         },
         {

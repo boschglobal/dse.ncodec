@@ -303,6 +303,10 @@ void pdunet_tx(PduNetwork* net, PduRange* range, PduNetworkVisitFunc visit,
 
     ncodec_flush(net->ncodec);
 
+    /* Restore payload after tx so that checksums are consistent with the
+    payload object (which may have been modified by lua.tx_ref). */
+    pdunet_visit(net, range, pdunet_visit_restore_payload, NULL);
+
     /* Marshal from PDU Network to SignalVector (update changed signals). */
     marshal_signalmap_in(net->log, net->msm.out);
 }
@@ -406,6 +410,19 @@ void pdunet_visit_set_checksum(PduNetwork* net, PduObject* pdu, void* data)
     }
 }
 
+void pdunet_visit_restore_payload(PduNetwork* net, PduObject* pdu, void* data)
+{
+    UNUSED(net);
+    UNUSED(data);
+    if (pdu == NULL || pdu->pdu == NULL) return;
+    if (pdu->needs_tx && pdu->lua.tx_ref) {
+        if (pdu->ncodec.pdu.save_payload != NULL) {
+            memcpy(pdu->ncodec.pdu.payload, pdu->ncodec.pdu.save_payload,
+                pdu->ncodec.pdu.payload_len);
+        }
+    }
+}
+
 
 void pdunet_visit_needs_tx(PduNetwork* net, PduObject* pdu, void* data)
 {
@@ -436,8 +453,8 @@ void pdunet_visit_needs_tx(PduNetwork* net, PduObject* pdu, void* data)
                 pdu->needs_tx = false;
             }
         }
-        log_trace(net->log, "Pdu: [%u] needs_tx=%u", pdu->matrix.pdu_idx,
-            pdu->needs_tx);
+        log_trace(net->log, "Pdu: [%u] needs_tx=%u, id=%d", pdu->matrix.pdu_idx,
+            pdu->needs_tx, pdu->pdu->id);
     } else {
         pdu->needs_tx = false;
     }
@@ -454,8 +471,15 @@ void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu)
     assert(net);
     lua_State* L = net->lua.lua_state;
 
-    log_trace(net->log, "Lua Call: PDU Tx Tx[%u]: func=%d", pdu->matrix.pdu_idx,
-        pdu->lua.tx_ref);
+    log_trace(net->log, "Lua Call: PDU Tx Tx[%u]: func=%d, id=%d",
+        pdu->matrix.pdu_idx, pdu->lua.tx_ref, pdu->pdu->id);
+
+    /* Save the payload incase the tx func modified, which will invalidate the
+    payload. The save_payload is restored after vtable.lpdu_tx() is called. */
+    if (pdu->ncodec.pdu.save_payload != NULL) {
+        memcpy(pdu->ncodec.pdu.save_payload, pdu->ncodec.pdu.payload,
+            pdu->ncodec.pdu.payload_len);
+    }
 
     int rc = pdunet_lua_pdu_call(net, L, pdu->lua.tx_ref,
         pdu->ncodec.pdu.payload, pdu->ncodec.pdu.payload_len, true);
@@ -473,8 +497,12 @@ void pdunet_call_tx_func(PduNetwork* net, PduObject* pdu)
     } else {
         /* The PDU was rejected. */
         pdu->needs_tx = false;
-        log_trace(
-            net->log, "Pdu: [%u] rejected, reason=%d", pdu->matrix.pdu_idx, rc);
+        if (pdu->ncodec.pdu.save_payload != NULL) {
+            memcpy(pdu->ncodec.pdu.payload, pdu->ncodec.pdu.save_payload,
+                pdu->ncodec.pdu.payload_len);
+        }
+        log_trace(net->log, "Pdu: [%u] rejected, reason=%d, id=%d",
+            pdu->matrix.pdu_idx, rc, pdu->pdu->id);
     }
 }
 

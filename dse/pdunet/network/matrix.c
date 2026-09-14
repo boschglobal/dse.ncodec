@@ -83,6 +83,8 @@ static const matrix_item_spec matrix_vector_offset_list[] = {
     /* pdu items (pdu_count) */
     { offsetof(PduTransformMatrix, pdu), sizeof(PduObject), vector_sort_txrx },
     { offsetof(PduTransformMatrix, payload), sizeof(uint8_t*), NULL },
+    { offsetof(PduTransformMatrix, save_payload), sizeof(uint8_t*), NULL },
+    /* range objects (__PduDirectionCount) */
     { offsetof(PduTransformMatrix, range), sizeof(PduRange), NULL },
     /* signal items (signal_count) */
     { offsetof(PduTransformMatrix, signal.pdu_idx), sizeof(size_t), NULL },
@@ -104,8 +106,8 @@ static const matrix_item_spec matrix_vector_offset_list[] = {
 };
 #define MATRIX_DYNAMIC_OFFSET 0
 #define MATRIX_PDU_OFFSET     1
-#define MATRIX_RANGE_OFFSET   3
-#define MATRIX_SIGNAL_OFFSET  4
+#define MATRIX_RANGE_OFFSET   4
+#define MATRIX_SIGNAL_OFFSET  5
 
 static void _allocate_matrix(
     PduNetwork* net, size_t pdu_count, size_t signal_count)
@@ -144,6 +146,10 @@ void pdunet_matrix_clear(PduNetwork* net)
         uint8_t** payload = vector_at(&net->matrix.payload, i, NULL);
         if (*payload != NULL) free(*payload);
     }
+    for (size_t i = 0; i < vector_len(&net->matrix.save_payload); i++) {
+        uint8_t** save_payload = vector_at(&net->matrix.save_payload, i, NULL);
+        if (*save_payload != NULL) free(*save_payload);
+    }
     for (size_t i = 0; i < vector_len(&net->matrix.range); i++) {
         PduRange* range = vector_at(&net->matrix.range, i, NULL);
         vector_reset(&range->pdu_list);
@@ -166,17 +172,30 @@ static void _initialise_pdu(PduNetwork* net, PduObject* o)
     uint8_t** payload =
         vector_at(&(net->matrix.payload), o->matrix.pdu_idx, NULL);
     assert(payload);
+    uint8_t** save_payload =
+        vector_at(&(net->matrix.save_payload), o->matrix.pdu_idx, NULL);
+    assert(save_payload);
+
+    // Reallocate previous payload objects.
     if (*payload != NULL) {
         free(*payload);
         *payload = NULL;
     }
+    if (*save_payload != NULL) {
+        free(*save_payload);
+        *save_payload = NULL;
+    }
     if (o->pdu->length) {
         *payload = calloc(o->pdu->length, sizeof(uint8_t));
+        if (o->lua.tx_ref) {
+            *save_payload = calloc(o->pdu->length, sizeof(uint8_t));
+        }
     }
 
     // NCodec PDU fields, preset.
     o->ncodec.pdu.id = o->pdu->id;
     o->ncodec.pdu.payload = *payload;
+    o->ncodec.pdu.save_payload = *save_payload;
     o->ncodec.pdu.payload_len = o->pdu->length;
     switch (net->network.transport_type) {
     case NCodecPduTransportTypeFlexray:
@@ -223,6 +242,7 @@ int pdunet_matrix_transform(PduNetwork* net, PduNetworkSortFunc sort)
         };
         vector_push(&(net->matrix.pdu), &o);
         vector_push(&(net->matrix.payload), &(uint8_t*){ NULL });
+        vector_push(&(net->matrix.save_payload), &(uint8_t*){ NULL });
     }
     vector_sort(&net->matrix.pdu);
     for (size_t pdu_idx = 0; pdu_idx < vector_len(&net->matrix.pdu);
