@@ -212,9 +212,9 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 | Field               | Type                 | Value                  |  CAN             | FlexRay        | IP               | PDU              | Struct           |
 | :---                | :---:                | :---:                  | :---:            | :---:          | :---:            | :---:            | :---:            |
-| <var>ecu_id</var>   | <code>uint8_t</code> | 0[^pop], 1..           | &check;&check;   | &check;&check; | &check;&check;   | &check;&check;   | &check;&check;   |
-| <var>cc_id</var>    | <code>uint8_t</code> | 0 \| 1                 | -                | &check;        | -                | -                | -                |
-| <var>swc_id</var>   | <code>uint8_t</code> | 0..                    | &check;[^swc_id] | &check;        | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
+| <var>ecu_id</var>   | <code>uint16_t</code> | 0[^pop], 1..           | &check;&check;   | &check;&check; | &check;&check;   | &check;&check;   | &check;&check;   |
+| <var>cc_id</var>    | <code>uint16_t</code> | 0 \| 1                 | -                | &check;        | -                | -                | -                |
+| <var>swc_id</var>   | <code>uint32_t</code> | 0..                    | &check;[^swc_id] | &check;        | &check;[^swc_id] | &check;[^swc_id] | &check;[^swc_id] |
 | <var>name</var>     | <code>string</code>  |                        | &check;[^name]   | &check;[^name] | &check;[^name]   | &check;[^name]   | &check;[^name]   |
 | <var>model</var>    | <code>string</code>  | `flexray`              | -                | &check;&check; | -                | -                | -                |
 | <var>mode</var>     | <code>string</code>  | `pop`                  | -                | &check;        | -                | -                | -                |
