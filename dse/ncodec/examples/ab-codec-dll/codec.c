@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <stdio.h>
+#include <dse/clib/collections/vector.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
 
@@ -14,57 +15,92 @@ typedef struct CodecHooks {
     NCodecClose close;
 } CodecHooks;
 
-static CodecHooks codec_hooks = {0};
+static Vector codec_hooks = {
+    .item_size = sizeof(CodecHooks),
+    .initial_capacity = VECTOR_DEFAULT_CAPACITY,
+};
+
+
+__attribute__((destructor)) static void custom_codec_unload(void)
+{
+    vector_reset(&codec_hooks);
+}
+
+
+static CodecHooks* find_hooks(NCODEC* nc)
+{
+    for (size_t index = 0; index < vector_len(&codec_hooks); index++) {
+        CodecHooks* hooks = vector_at(&codec_hooks, index, NULL);
+        if (hooks->instance == nc) return hooks;
+    }
+    return NULL;
+}
 
 
 static int32_t custom_read(NCODEC* nc, NCodecMessage* msg)
 {
-    if (nc == NULL || codec_hooks.instance != nc) return -EINVAL;
+    if (nc == NULL) return -EINVAL;
+    CodecHooks* hooks = find_hooks(nc);
+    if (hooks == NULL) return -EINVAL;
 
     printf("Custom DLL: read\n");
-    return codec_hooks.read(nc, msg);
+    return hooks->read(nc, msg);
 }
 
 
 static int32_t custom_write(NCODEC* nc, NCodecMessage* msg)
 {
-    if (nc == NULL || codec_hooks.instance != nc) return -EINVAL;
+    if (nc == NULL) return -EINVAL;
+    CodecHooks* hooks = find_hooks(nc);
+    if (hooks == NULL) return -EINVAL;
 
     printf("Custom DLL: write\n");
-    return codec_hooks.write(nc, msg);
+    return hooks->write(nc, msg);
 }
 
 
 static void custom_close(NCODEC* nc)
 {
-    if (nc == NULL || codec_hooks.instance != nc) return;
+    if (nc == NULL) return;
 
-    NCodecClose original_close = codec_hooks.close;
-    codec_hooks = (CodecHooks){0};
-    original_close(nc);
+    for (size_t index = 0; index < vector_len(&codec_hooks); index++) {
+        CodecHooks* hooks = vector_at(&codec_hooks, index, NULL);
+        if (hooks->instance != nc) continue;
+
+        NCodecClose original_close = hooks->close;
+        CodecHooks last;
+        vector_pop(&codec_hooks, &last);
+        if (index < vector_len(&codec_hooks)) {
+            *hooks = last;
+        }
+        original_close(nc);
+        return;
+    }
 }
 
 
 DLL_PUBLIC NCODEC* ncodec_create(const char* mime_type)
 {
-    if (codec_hooks.instance != NULL) {
-        errno = EBUSY;
-        return NULL;
-    }
-
     NCODEC* nc = ab_codec_create(mime_type);
     if (nc == NULL) return NULL;
 
     NCodecInstance* instance = (NCodecInstance*)nc;
-    codec_hooks = (CodecHooks){
+    CodecHooks hooks = {
         .instance = nc,
         .read = instance->codec.read,
         .write = instance->codec.write,
         .close = instance->codec.close,
     };
-
+    int rc = vector_push(&codec_hooks, &hooks);
+    if (rc < 0) {
+        hooks.close(nc);
+        errno = -rc;
+        return NULL;
+    }
     instance->codec.read = custom_read;
     instance->codec.write = custom_write;
     instance->codec.close = custom_close;
+
+    /* Return the NCodec object. */
     return nc;
 }
