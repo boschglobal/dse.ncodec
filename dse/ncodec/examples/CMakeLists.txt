@@ -10,5 +10,6 @@ project(NCodec_Examples
 
 # Example Models.
 add_subdirectory(ab-codec)
+add_subdirectory(ab-codec-dll)
 add_subdirectory(ab-codec-fmi)
 add_subdirectory(codec)

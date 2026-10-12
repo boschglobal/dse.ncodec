@@ -324,6 +324,16 @@ static void _decode_ip_addr_v4(
     addr->dst_addr = ns(IpV4_dst_addr(ip_v4));
 }
 
+static void _decode_ip_addr_v6_words(
+    uint16_t dst[8], ns(IpAddressV6_struct_t) src)
+{
+    const uint8_t* src_bytes = (const uint8_t*)src;
+    for (size_t i = 0; i < 8; i++) {
+        dst[i] =
+            flatbuffers_uint16_read_from_pe(src_bytes + i * sizeof(dst[i]));
+    }
+}
+
 static void _decode_ip_addr_v6(
     ns(IpMessageMetadata_table_t) ip_msg, NCodecPdu* _pdu)
 {
@@ -331,22 +341,8 @@ static void _decode_ip_addr_v6(
     _pdu->transport.ip_message.ip_addr_type = NCodecPduIpAddrIPv6;
     ns(IpV6_table_t) ip_v6 =
         (ns(IpV6_table_t))ns(IpMessageMetadata_ip_addr(ip_msg));
-    addr->src_addr[0] = ns(IpV6_src_addr(ip_v6))->v0;
-    addr->src_addr[1] = ns(IpV6_src_addr(ip_v6))->v1;
-    addr->src_addr[2] = ns(IpV6_src_addr(ip_v6))->v2;
-    addr->src_addr[3] = ns(IpV6_src_addr(ip_v6))->v3;
-    addr->src_addr[4] = ns(IpV6_src_addr(ip_v6))->v4;
-    addr->src_addr[5] = ns(IpV6_src_addr(ip_v6))->v5;
-    addr->src_addr[6] = ns(IpV6_src_addr(ip_v6))->v6;
-    addr->src_addr[7] = ns(IpV6_src_addr(ip_v6))->v7;
-    addr->dst_addr[0] = ns(IpV6_dst_addr(ip_v6))->v0;
-    addr->dst_addr[1] = ns(IpV6_dst_addr(ip_v6))->v1;
-    addr->dst_addr[2] = ns(IpV6_dst_addr(ip_v6))->v2;
-    addr->dst_addr[3] = ns(IpV6_dst_addr(ip_v6))->v3;
-    addr->dst_addr[4] = ns(IpV6_dst_addr(ip_v6))->v4;
-    addr->dst_addr[5] = ns(IpV6_dst_addr(ip_v6))->v5;
-    addr->dst_addr[6] = ns(IpV6_dst_addr(ip_v6))->v6;
-    addr->dst_addr[7] = ns(IpV6_dst_addr(ip_v6))->v7;
+    _decode_ip_addr_v6_words(addr->src_addr, ns(IpV6_src_addr(ip_v6)));
+    _decode_ip_addr_v6_words(addr->dst_addr, ns(IpV6_dst_addr(ip_v6)));
 }
 
 static void _decode_do_ip(ns(IpMessageMetadata_table_t) ip_msg, NCodecPdu* _pdu)

@@ -1,0 +1,28 @@
+cd $REPODIR
+env example=dse/build/_out/examples/ab-codec-dll/ab-codec-dll-example
+env codec=dse/build/_out/examples/ab-codec-dll/lib/ab-codec-dll.so
+
+# TEST: ncodec_load with custom DLL
+exec valgrind -q --leak-check=yes --error-exitcode=88 $example ./$codec
+cmp stdout $WORK/expected.stdout
+
+
+-- expected.stdout --
+Custom DLL: read
+Custom DLL: write
+Custom DLL: read
+Message is: Hello World
+Custom DLL: read
+Custom DLL: write
+Custom DLL: read
+Message is: Hello World
+Custom DLL: read
+Custom DLL: write
+Custom DLL: read
+Message is: Hello World
+Custom DLL: read
+Custom DLL: write
+Custom DLL: read
+Message is: Hello World
+Custom DLL: read
+Custom DLL: write

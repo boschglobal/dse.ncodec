@@ -149,6 +149,10 @@ typedef struct ABCodecInstance {
 } ABCodecInstance;
 
 
+/* codec.c */
+DLL_PRIVATE NCODEC* ab_codec_create(const char* mime_type);
+
+
 /* Log interface. */
 #define AB_CODEC_LOG_BUFFER_SIZE 512
 static inline void __trace_log(void* nc, NCodecTraceLogLevel level,

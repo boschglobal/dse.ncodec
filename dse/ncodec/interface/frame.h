@@ -5,6 +5,7 @@
 #ifndef DSE_NCODEC_INTERFACE_FRAME_H_
 #define DSE_NCODEC_INTERFACE_FRAME_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 

@@ -360,7 +360,7 @@ void codec_close(NCODEC* nc)
 }
 
 
-NCODEC* ncodec_create(const char* mime_type)
+NCODEC* ab_codec_create(const char* mime_type)
 {
     if (mime_type == NULL) return NULL;
 

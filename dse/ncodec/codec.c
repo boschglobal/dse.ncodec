@@ -27,6 +27,21 @@ Returns
 -1
 : The Network Codec library could not be loaded. Inspect `errno` for more
   details.
+
+Error Conditions
+----------------
+EBUSY
+: A Network Codec library is already loaded.
+
+EINVAL
+: The filename is NULL or empty.
+
+ENOENT
+: The library could not be loaded and the dynamic loader provided no `errno`.
+    Otherwise, the dynamic loader's `errno` is preserved.
+
+ENOSYS
+: The library does not provide `ncodec_create`.
 */
 extern int32_t ncodec_load(const char* filename, const char* hint);
 
