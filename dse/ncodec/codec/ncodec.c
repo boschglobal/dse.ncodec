@@ -5,8 +5,11 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <dse/ncodec/codec.h>
 #include <dse/ncodec/codec/ab/codec.h>
+#include <dse/ncodec/codec/diag/codec.h>
 
 
 #define UNUSED(x) ((void)x)
@@ -16,18 +19,33 @@ typedef NCODEC* (*NCodecCreateFunc)(const char* mime_type);
 
 
 /* Dynamic Hooking support. */
-
 static NCODEC* _ncodec_create(const char* mime_type)
 {
-    NCODEC* nc = NULL;
     if (mime_type == NULL) return NULL;
 
-    /* AB Codec. */
-    nc = ab_codec_create(mime_type);
-    if (nc) return nc;
+    NCODEC*     nc = NULL;
+    const char* interface = NULL;
+    char*       _buf = strdup(mime_type);
+    char*       _pos = NULL;
 
-    /* No supported codec. */
-    return NULL;
+    /* Route on the "interface" parameter (last value, as codec_config). */
+    char* _param = strtok_r(_buf, "; ", &_pos); /* Codec name. */
+    while (_param && (_param = strtok_r(NULL, "; ", &_pos)) != NULL) {
+        char* value = strchr(_param, '=');
+        if (value == NULL) continue;
+        *value++ = '\0';
+        if (strcmp(_param, "interface") == 0) interface = value;
+    }
+    if (interface && strcmp(interface, "stream") == 0) {
+        /* AB Codec. */
+        nc = ab_codec_create(mime_type);
+    } else if (interface && strcmp(interface, "diagnostic") == 0) {
+        /* Diagnostic Codec. */
+        nc = diag_codec_create(mime_type);
+    }
+
+    free(_buf);
+    return nc;
 }
 
 
@@ -95,4 +113,3 @@ int32_t ncodec_load(const char* filename, const char* hint)
     errno = 0;
     return 0;
 }
-

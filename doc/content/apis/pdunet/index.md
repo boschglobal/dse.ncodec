@@ -35,7 +35,7 @@ the PDUNet YAML configuration file.
 
 ### pdunet_create
 
-Create and configure a `PduNetworkDesc` object to represent a PDU Network.
+Create and configure a `PduNetwork` object to represent a PDU Network.
 
 #### Parameters
 
@@ -57,7 +57,7 @@ log (DseLog*)
 
 #### Returns
 
-PDUNET*
+PduNetwork*
 : PDU Network object, or NULL if required arguments are invalid or allocation
   fails.
 
@@ -69,7 +69,7 @@ Destroy a PDU Network object and release all resources owned by it.
 
 #### Parameters
 
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
 #### Returns
@@ -84,7 +84,7 @@ Map external signal vectors to the PDU Network signal matrix.
 
 #### Parameters
 
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
 name (const char*)
@@ -113,10 +113,10 @@ call the visitor after a PDU is received.
 
 #### Parameters
 
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
-r (PDURANGE*)
+r (PduRange*)
 : Range object, optional. When NULL the visitor function is called for all PDUs
   in the PDU Network.
 
@@ -141,10 +141,10 @@ if `needs_tx` is set on the `PduObject` after the visitor returns.
 
 #### Parameters
 
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
-r (PDURANGE*)
+r (PduRange*)
 : Range object, optional. When NULL the visitor function is called for all PDUs
   in the PDU Network.
 
@@ -171,10 +171,10 @@ Call a visitor function for each PDU in the PDU Network.
 
 #### Parameters
 
-n (PDUNET*)
+n (PduNetwork*)
 : PDU Network object.
 
-r (PDURANGE*)
+r (PduRange*)
 : Range object, optional. When NULL the visitor function is called for all PDUs
   in the PDU Network.
 

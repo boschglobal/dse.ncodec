@@ -20,7 +20,8 @@ a simple stream-based data exchange and can be configured with bus models to cre
 bus simulations. NCodec can be integrated directly from source code or loaded via a shared library.
 
 
-__Codecs__: [AB Codec](#ab-codec) _(CAN/FlexRay/IP and PDU based networks)_
+__Codecs__: [AB Codec](#ab-codec) _(CAN/FlexRay/IP and PDU based networks)_ /
+[Diagnostic Codec](#diagnostic-codec) _(UDS, transport protocol, Service RPC and XiL)_
 <br/>
 __Bus Models__: [FlexRay](#mime-type---pdu-interface)
 <br/>
@@ -40,6 +41,7 @@ __Integrations__:
   - [Network Technology Stack](#network-technology-stack)
 - [Codecs](#codecs)
   - [AB Codec](#ab-codec)
+  - [Diagnostic Codec](#diagnostic-codec)
 - [Build](#build)
   - [Package Layout](#package-layout)
 
@@ -227,6 +229,72 @@ __MIME type__:  `application/x-automotive-bus; interface=stream;`
 
 > [!NOTE]
 > __&check;&check;__ indicates a required field. Other fields default to `0` or `NULL`.
+
+
+### Diagnostic Codec
+
+__MIME type__:  `application/x-automotive-bus; interface=diagnostic;`
+
+The Diagnostic Codec is included in the `ab-codec` library and uses the same
+NCodec API and stream objects as the AB Codec.
+
+
+#### Feature Matrix
+
+| `type` | Header                                                    | Schema (identifier) | Root type               |
+| :---   | :---                                                      | :---                | :---                    |
+| `uds`  | [interface/diag/uds.h](dse/ncodec/interface/diag/uds.h)   | uds.fbs (`DUDS`)    | `NCodecDiagUdsMessage`  |
+| `tp`   | [interface/diag/tp.h](dse/ncodec/interface/diag/tp.h)     | tp.fbs (`DITP`)     | `NCodecDiagTpMessage`   |
+| `srpc` | [interface/diag/srpc.h](dse/ncodec/interface/diag/srpc.h) | srpc.fbs (`DSRP`)   | `NCodecDiagSrpcMessage` |
+| `xil`  | [interface/diag/xil.h](dse/ncodec/interface/diag/xil.h)   | xil.fbs (`DXIL`)    | `NCodecDiagXilMessage`  |
+
+Union payloads follow the `NCodecPdu` convention: a `*_type` field selects the
+active member of the embedded union. Vectors are `ptr`/`ptr_len` pairs, a `NULL`
+pointer indicates an absent vector. Decoded messages reference the stream buffer
+and are valid until the stream is modified (`ncodec_write()`/`ncodec_truncate()`).
+
+```c
+NCodecDiagUdsMessage msg = {
+    .is_request = true,
+    .service_id = NCodecDiagUdsServiceIdTesterPresentRequest,
+    .primitive_type = NCodecDiagUdsServicePrimitiveTypeTesterPresentRequest,
+    .primitive.tester_present_request = { .sub_function = 0 },
+};
+ncodec_write(nc, &msg);
+```
+
+Each call to `ncodec_write()` writes one size-prefixed message to the stream,
+`ncodec_flush()` has no further effect. Messages with other identifiers (e.g.
+AB Codec messages) are skipped by `ncodec_read()`. Writing a message with a
+missing required field (`/* Required. */` in the headers) returns `-EINVAL`.
+
+
+#### MIME type - Diagnostic Interface
+
+| Field               | Type                 | Value            | UDS   | TP    | SRPC                 | XiL                  |
+| :---                | :---:                | :---:            | :---: | :---: | :---:                | :---:                |
+| <var>node_id</var>  | <code>uint8_t</code> | 0..              | -     | -     | &check;[^diag_node]  | &check;[^diag_node]  |
+| <var>swc_id</var>   | <code>uint8_t</code> | 0..              | -     | -     | &check;[^diag_id]    | -                    |
+| <var>ecu_id</var>   | <code>uint8_t</code> | 0..              | -     | -     | &check;[^diag_id]    | -                    |
+| <var>name</var>     | <code>string</code>  |                  | -     | -     | &check;[^diag_name]  | &check;[^diag_name]  |
+| <var>loopback</var> | <code>bool</code>    | 0(off),1(active) | -     | -     | &check;              | &check;              |
+
+[^diag_node]: Written to the message `node_uid` field when that field is not set
+    (i.e. `0`). When set, messages from the same `node_id` are filtered on read
+    (unless `loopback` is active).
+[^diag_id]: Written to the message `swc_id`/`ecu_id` fields when those fields
+    are not set (i.e. `0`).
+[^diag_name]: Written to the message `ecu_name` field when that field is not
+    set (i.e. `NULL`). Required for XiL messages.
+
+> [!NOTE]
+> Schema timestamp fields (e.g. `simulation_time`) are message data, the
+> Diagnostic Codec does not implement `ncodec_utime()`.
+
+> [!NOTE]
+> The XiL `DidSelector`/`DidIdentity` field `identifier` is accessed in the
+> generated FlatBuffers headers as `did_identifier` (renamed by `make update`
+> to avoid a collision with the FlatCC file identifier macros).
 
 
 ## Build

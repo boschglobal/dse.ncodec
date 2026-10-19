@@ -13,10 +13,49 @@ project(${MODULE}
 )
 include(GNUInstallDirs)
 set(INSTALL_SUBDIR ${MODULE_LC})
+set(FLATCC_SOURCE_DIR  ${DSE_NCODEC_SOURCE_DIR}/schema/abs/flatcc/src)
+set(FLATCC_INCLUDE_DIR ${DSE_NCODEC_SOURCE_DIR}/schema/abs/flatcc/include)
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 
 
+# Target - FlatCC Runtime (common to all codecs)
+# ----------------------------------------------
+add_library(ncodec-flatcc OBJECT
+    ${FLATCC_SOURCE_DIR}/builder.c
+    ${FLATCC_SOURCE_DIR}/emitter.c
+    ${FLATCC_SOURCE_DIR}/refmap.c
+)
+target_include_directories(ncodec-flatcc
+    PUBLIC
+        ${FLATCC_INCLUDE_DIR}
+)
+
+
+# Target - NCodec API (common to all codecs)
+# ------------------------------------------
+add_library(ncodec-api OBJECT
+    ${DSE_NCODEC_SOURCE_DIR}/codec.c
+)
+target_include_directories(ncodec-api
+    PUBLIC
+        ${DSE_NCODEC_INCLUDE_DIR}
+)
+
+
+# Target - NCodec Streams (common to all codecs)
+# ----------------------------------------------
+add_library(ncodec-stream OBJECT
+    ${DSE_NCODEC_SOURCE_DIR}/stream/ascii85.c
+    ${DSE_NCODEC_SOURCE_DIR}/stream/buffer.c
+)
+target_include_directories(ncodec-stream
+    PUBLIC
+        ${DSE_NCODEC_INCLUDE_DIR}
+)
+
+
 add_subdirectory(ab)
+add_subdirectory(diag)
 
 
 # External Project - dlfcn-win32
@@ -57,8 +96,14 @@ add_library(ab-codec OBJECT
 )
 target_link_libraries(ab-codec
     PUBLIC
+        ncodec-api
+        $<TARGET_OBJECTS:ncodec-api>
+        ncodec-stream
+        $<TARGET_OBJECTS:ncodec-stream>
         ab-codec-impl
         $<TARGET_OBJECTS:ab-codec-impl>
+        diag-codec-impl
+        $<TARGET_OBJECTS:diag-codec-impl>
         ${DSE_NCODEC_DL_TARGET}
 )
 add_library(ab-codec-shared-lib SHARED)
@@ -83,10 +128,25 @@ install(
 install(
     FILES
         ${DSE_NCODEC_SOURCE_DIR}/codec.h
+    DESTINATION
+        ${INSTALL_SUBDIR}/${CMAKE_INSTALL_INCLUDEDIR}/dse/ncodec
+    COMPONENT
+        ${MODULE_LC}
+)
+install(
+    FILES
         ${DSE_NCODEC_SOURCE_DIR}/interface/frame.h
         ${DSE_NCODEC_SOURCE_DIR}/interface/pdu.h
     DESTINATION
-        ${INSTALL_SUBDIR}/${CMAKE_INSTALL_INCLUDEDIR}/dse/ncodec
+        ${INSTALL_SUBDIR}/${CMAKE_INSTALL_INCLUDEDIR}/dse/ncodec/interface
+    COMPONENT
+        ${MODULE_LC}
+)
+install(
+    DIRECTORY
+        ${DSE_NCODEC_SOURCE_DIR}/interface/diag
+    DESTINATION
+        ${INSTALL_SUBDIR}/${CMAKE_INSTALL_INCLUDEDIR}/dse/ncodec/interface
     COMPONENT
         ${MODULE_LC}
 )
@@ -98,3 +158,11 @@ install(
     COMPONENT
         ${MODULE_LC}
  )
+install(
+    FILES
+        ${DSE_NCODEC_INCLUDE_DIR}/dse/platform.h
+    DESTINATION
+        ${INSTALL_SUBDIR}/${CMAKE_INSTALL_INCLUDEDIR}/dse
+    COMPONENT
+        ${MODULE_LC}
+)

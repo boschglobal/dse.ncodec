@@ -355,7 +355,7 @@ Returns
 */
 inline int64_t ncodec_seek(NCODEC* nc, size_t pos, int32_t op)
 {
-    NCodecInstance* _nc = (NCodecInstance*)nc;
+    NCodecInstance*     _nc = (NCodecInstance*)nc;
     NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->stream : NULL;
     if (_nc && stream && stream->seek) {
         return stream->seek(nc, pos, op);
@@ -387,7 +387,7 @@ Returns
 */
 inline int64_t ncodec_tell(NCODEC* nc)
 {
-    NCodecInstance* _nc = (NCodecInstance*)nc;
+    NCodecInstance*     _nc = (NCodecInstance*)nc;
     NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->stream : NULL;
     if (_nc && stream && stream->tell) {
         return stream->tell(nc);
@@ -452,7 +452,7 @@ nc (NCODEC*)
 */
 inline void ncodec_close(NCODEC* nc)
 {
-    NCodecInstance* _nc = (NCodecInstance*)nc;
+    NCodecInstance*     _nc = (NCodecInstance*)nc;
     NCodecStreamVTable* stream = _nc ? (NCodecStreamVTable*)_nc->stream : NULL;
     if (_nc && stream && stream->close) {
         stream->close(nc);

@@ -157,7 +157,7 @@ typedef struct NCodecUtimeOperation {
     double simulation_time;
     double step_size;
     bool   broadcast; /* Push change to all nodes. */
-    bool   force; /* Force the change, ignore checks. Also applies to broadcast. */
+    bool   force;     /* Force the change, ignore checks. */
 } NCodecUtimeOperation;
 
 typedef int32_t NCodecLoad(const char* filename, const char* hint);
@@ -188,7 +188,7 @@ typedef struct NCodecVTable {
 typedef enum NCodecTraceLogLevel {
     NCODEC_LOG_TRACE = 0,
     NCODEC_LOG_DEBUG,
-    NCODEC_LOG_CODEC,   /* Intermediate debug messages. */
+    NCODEC_LOG_CODEC, /* Intermediate debug messages. */
     NCODEC_LOG_INFO,
     NCODEC_LOG_NOTICE, /* Application level messages. */
     NCODEC_LOG_QUIET,  /* Suppress all logs, excluding errors. */
@@ -198,8 +198,8 @@ typedef enum NCodecTraceLogLevel {
 
 typedef void (*NCodecTraceWrite)(NCODEC* nc, NCodecMessage* msg);
 typedef void (*NCodecTraceRead)(NCODEC* nc, NCodecMessage* msg);
-typedef void (*NCodecTraceLog)(NCODEC* nc, NCodecTraceLogLevel level,
-    const char* msg);
+typedef void (*NCodecTraceLog)(
+    NCODEC* nc, NCodecTraceLogLevel level, const char* msg);
 
 typedef struct NCodecTraceVTable {
     NCodecTraceWrite write;

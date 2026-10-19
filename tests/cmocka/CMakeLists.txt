@@ -56,3 +56,4 @@ set(DSE_CLIB_INCLUDE_DIR "${DSE_CLIB_SOURCE_DIR}/..")
 # =======
 add_subdirectory(codec/ab)
 add_subdirectory(pdunet)
+add_subdirectory(codec/diag)

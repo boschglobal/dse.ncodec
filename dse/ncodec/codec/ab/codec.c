@@ -370,7 +370,8 @@ NCODEC* ab_codec_create(const char* mime_type)
 
     /* Check the MIMEtype is correct. */
     char* _codec_name = strtok_r(_buf, "; ", &_pos);
-    if (strncmp(_codec_name, CODEC, strlen(CODEC)) != 0) {
+    if (_codec_name == NULL ||
+        strncmp(_codec_name, CODEC, strlen(CODEC)) != 0) {
         goto create_fail;
     }
 

@@ -11,7 +11,7 @@ DSE_CLANG_FORMAT_IMAGE ?= ghcr.io/boschglobal/dse-clang-format:main
 ###############
 ## External Projects.
 ABS_REPO ?= https://github.com/boschglobal/automotive-bus-schema
-ABS_VERSION ?= 1.0.16
+ABS_VERSION ?= 1.0.17
 export ABS_URL ?= $(ABS_REPO)/releases/download/v$(ABS_VERSION)/automotive-bus-schema.tar.gz
 
 DSE_CLIB_REPO ?= https://github.com/boschglobal/dse.clib
@@ -128,6 +128,9 @@ do-update:
 	rm -rf $(SRC_DIR)/schema
 	mkdir -p $(SRC_DIR)/schema/abs
 	cp -rv $(EXTERNAL_BUILD_DIR)/automotive-bus-schema/flatbuffers/c/automotive_bus_schema/* $(SRC_DIR)/schema/abs
+	# Avoid flatcc's collision between DID fields and file-identifier macros.
+	sed -i -E '/^__flatbuffers_define_scalar_field/s/(DidSelector|DidIdentity), identifier,/\1, did_identifier,/g' $(SRC_DIR)/schema/abs/diagnostic/xil_reader.h
+	sed -i -E '/^__flatbuffers_build_scalar_field/s/(DidSelector|DidIdentity)_identifier,/\1_did_identifier,/g; s/(DidSelector|DidIdentity)_identifier_(add|pick)\(/\1_did_identifier_\2(/g' $(SRC_DIR)/schema/abs/diagnostic/xil_builder.h
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/platform.h $(NAMESPACE)/platform.h
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/util/ascii85.c $(NAMESPACE)/ncodec/stream/ascii85.c
 	sed -i 's/dse_ascii85_/ncodec_ascii85_/g' $(NAMESPACE)/ncodec/stream/ascii85.c
@@ -136,11 +139,14 @@ do-update:
 
 .PHONY: format
 format:
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec.c
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec.h
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/ab
+	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/diag
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/interface
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/stream
-	@${DSE_CLANG_FORMAT_CMD} dse/pdunet
 	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/examples/ab-codec
+	@${DSE_CLANG_FORMAT_CMD} dse/pdunet
 	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
 
 .PHONY: generate
