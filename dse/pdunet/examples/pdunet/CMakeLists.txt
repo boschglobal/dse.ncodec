@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.21)
 
 project(PDUNet_Example)
 
+set(EXAMPLE_PATH "examples/pdunet/pdunet")
+
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
@@ -10,7 +12,10 @@ add_executable(pdunet_example
     main.c
     ${PDUNET_CLIB_SOURCES}
 )
-
+set_target_properties(pdunet_example
+    PROPERTIES
+        OUTPUT_NAME "pdunet"
+)
 target_link_libraries(pdunet_example
     PRIVATE
         pdunet
@@ -21,4 +26,19 @@ target_link_libraries(pdunet_example
         $<$<BOOL:${WIN32}>:ws2_32>
         $<$<BOOL:${WIN32}>:iphlpapi>
         $<$<AND:$<BOOL:${WIN32}>,$<STREQUAL:${CMAKE_CXX_COMPILER_ID},"GNU">>:"-static winpthread">
+)
+
+
+install(
+    TARGETS
+        pdunet_example
+    DESTINATION
+        ${EXAMPLE_PATH}/bin
+)
+
+install(
+    FILES
+        network.yaml
+    DESTINATION
+        ${EXAMPLE_PATH}/data
 )

@@ -6,6 +6,7 @@
 ## Docker Images.
 GCC_BUILDER_IMAGE ?= ghcr.io/boschglobal/dse-gcc-builder:latest
 DSE_CLANG_FORMAT_IMAGE ?= ghcr.io/boschglobal/dse-clang-format:main
+FLATC_BUILDER_IMAGE ?= ghcr.io/boschglobal/automotive-bus-schema-flatc-builder:main
 
 
 ###############
@@ -75,9 +76,28 @@ DOCKER_BUILDER_CMD := \
 		$(GCC_BUILDER_IMAGE)
 endif
 
+# Clang Format: files/directories to format, and paths to exclude.
+# Add to (+=) or remove from (FORMAT_EXCLUDE) these lists as required.
+FORMAT_PATHS := \
+	dse/ncodec/codec.c \
+	dse/ncodec/codec.h \
+	dse/ncodec/codec/ab \
+	dse/ncodec/codec/diag \
+	dse/ncodec/stream \
+	dse/ncodec/examples/ab-codec \
+	dse/pdunet \
+	tests/cmocka
+# Exclusions are `find -path` globs (e.g. generated code).
+FORMAT_EXCLUDE := \
+	*/build/* \
+	*/flatbuffers/*
+FORMAT_FILES = $(shell find $(FORMAT_PATHS) -type f \( -iname '*.c' -o -iname '*.h' \) \
+	$(foreach p,$(FORMAT_EXCLUDE),-not -path '$(p)') | sort)
+
 DSE_CLANG_FORMAT_CMD := docker run -it --rm \
 	--user $$(id -u):$$(id -g) \
 	--volume $$(pwd):/tmp/code \
+	--entrypoint /bin/bash \
 	${DSE_CLANG_FORMAT_IMAGE}
 
 
@@ -139,15 +159,9 @@ do-update:
 
 .PHONY: format
 format:
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec.c
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec.h
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/ab
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/diag
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/interface
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/stream
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/examples/ab-codec
-	@${DSE_CLANG_FORMAT_CMD} dse/pdunet
-	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
+	@${DSE_CLANG_FORMAT_CMD} -c 'cp /usr/local/etc/clang-format .clang-format; \
+		clang-format --Wno-error=unknown -i --verbose $(FORMAT_FILES); \
+		rm -f .clang-format'
 
 .PHONY: generate
 generate:

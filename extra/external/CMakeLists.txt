@@ -106,6 +106,30 @@ ExternalProject_Add(lua
 )
 
 
+# FFI
+# ---
+set(FFI_CONFIGURE_HOST "")
+if(DEFINED TOOLCHAIN_PREFIX)
+    set(FFI_CONFIGURE_HOST --host=${TOOLCHAIN_PREFIX})
+endif()
+ExternalProject_Add(ffi
+    URL                 ${ExternalProject__FFI__URL}
+    SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/ffi"
+    BINARY_DIR          "$ENV{EXTERNAL_BUILD_DIR}/ffi"
+    CONFIGURE_COMMAND   ./configure
+                        ${FFI_CONFIGURE_HOST}
+                        CC=${CMAKE_C_COMPILER}
+                        CFLAGS=${CMAKE_C_FLAGS}
+                        --disable-shared
+                        --enable-static
+                        --with-pic
+                        --disable-docs
+                        --disable-multi-os-directory
+    BUILD_COMMAND       make
+    INSTALL_COMMAND     sh -c "cp */.libs/libffi.a */include/ffi.h */include/ffitarget.h ."
+)
+
+
 # OSS Target
 # ==========
 add_custom_target(oss)
