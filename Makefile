@@ -31,6 +31,7 @@ export PACKAGE_ARCH_LIST ?= $(PACKAGE_ARCH)
 export CMAKE_TOOLCHAIN_FILE ?= $(shell pwd -P)/extra/cmake/$(PACKAGE_ARCH).cmake
 export SRC_DIR = $(NAMESPACE)/$(MODULE)
 SUBDIRS = $(NAMESPACE)
+DIAG_SERVICE_ARGS_DIR = dse/diagnet/service
 
 
 ###############
@@ -83,6 +84,8 @@ FORMAT_PATHS := \
 	dse/ncodec/codec.h \
 	dse/ncodec/codec/ab \
 	dse/ncodec/codec/diag \
+	dse/diagnet \
+	dse/ncodec/interface \
 	dse/ncodec/stream \
 	dse/ncodec/examples/ab-codec \
 	dse/pdunet \
@@ -166,6 +169,12 @@ format:
 .PHONY: generate
 generate:
 	$(MAKE) -C doc generate
+	docker run --rm \
+		--user $$(id -u):$$(id -g) \
+		--volume $$(pwd):/tmp/repo \
+		--workdir /tmp/repo \
+		$(FLATC_BUILDER_IMAGE) \
+		flatcc -a -o $(DIAG_SERVICE_ARGS_DIR)/flatbuffers $(DIAG_SERVICE_ARGS_DIR)/args.fbs
 
 .PHONY: clean
 clean:
@@ -234,7 +243,7 @@ super-linter:
 		--env RUN_LOCAL=true \
 		--env DEFAULT_BRANCH=main \
 		--env IGNORE_GITIGNORED_FILES=true \
-		--env FILTER_REGEX_EXCLUDE="(doc/content/.*|dse/ncodec/schema/.*)" \
+		--env FILTER_REGEX_EXCLUDE="(doc/content/.*|dse/ncodec/schema/.*|dse/diagnet/service/flatbuffers/.*)" \
 		--env VALIDATE_CPP=true \
 		--env VALIDATE_DOCKERFILE=true \
 		--env VALIDATE_MARKDOWN=true \

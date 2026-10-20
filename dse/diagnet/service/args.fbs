@@ -1,0 +1,40 @@
+namespace ServiceArgs;
+
+table Int8Value    { value: byte; }
+table UInt8Value   { value: ubyte; }
+table Int16Value   { value: short; }
+table UInt16Value  { value: ushort; }
+table Int32Value   { value: int; }
+table UInt32Value  { value: uint; }
+table Int64Value   { value: long; }
+table UInt64Value  { value: ulong; }
+table Float32Value { value: float; }
+table Float64Value { value: double; }
+table StringValue { value: string (required); }
+table BinaryValue { value: [ubyte] (required); }
+
+union Value {
+    Int32Value,
+    UInt32Value,
+    Int64Value,
+    UInt64Value,
+    Float32Value,
+    Float64Value,
+    StringValue,
+    Int8Value,
+    UInt8Value,
+    Int16Value,
+    UInt16Value,
+    BinaryValue
+}
+
+table Argument {
+    value: Value;
+}
+
+table Arguments {
+    items: [Argument] (required);
+}
+
+root_type Arguments;
+file_identifier "SARG";

@@ -39,6 +39,7 @@ option(DSE_NCODEC_BUILD_EXAMPLES "Build DSE NCodec examples" ${PROJECT_IS_TOP_LE
 # ===========
 add_subdirectory(ncodec)
 add_subdirectory(pdunet)
+add_subdirectory(diagnet)
 
 
 # Example Targets
@@ -47,14 +48,16 @@ if(PROJECT_IS_TOP_LEVEL)
     add_custom_target(examples
         COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}/ncodec/examples" --parallel
         COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}/pdunet/examples" --parallel
-        COMMENT "Building ncodec and pdunet examples"
+        COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}/diagnet/examples" --parallel
+        COMMENT "Building ncodec, pdunet and diagnet examples"
     )
 
     add_custom_target(install-examples
         COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}/ncodec/examples" --target install --parallel
         COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}/pdunet/examples" --target install --parallel
+        COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}/diagnet/examples" --target install --parallel
         DEPENDS examples
-        COMMENT "Installing ncodec and pdunet examples"
+        COMMENT "Installing ncodec, pdunet and diagnet examples"
     )
 endif()
 
