@@ -119,7 +119,7 @@ ExternalProject_Add(ffi
     CONFIGURE_COMMAND   ./configure
                         ${FFI_CONFIGURE_HOST}
                         CC=${CMAKE_C_COMPILER}
-                        CFLAGS=${CMAKE_C_FLAGS}
+                        "CFLAGS=${CMAKE_C_FLAGS} -Wno-deprecated-declarations"
                         --disable-shared
                         --enable-static
                         --with-pic

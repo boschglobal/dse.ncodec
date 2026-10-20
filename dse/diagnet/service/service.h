@@ -54,9 +54,8 @@ void service_destroy(ServiceManager* sm);
 /* Client API. */
 int  service_request(ServiceManager* sm, const char* service,
      const char* function, NCodecDiagSrpcMessageContext* ctx);
-/* The returned ctx->response holds the function result as a native ffi_sarg
- * (ctx->response_len == sizeof(ffi_sarg)). Free with service_ctx_delete(). */
 int  service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx);
+void service_reset(ServiceManager* sm);
 void service_ctx_cancel(ServiceManager* sm, uint8_t context_id);
 void service_ctx_delete(NCodecDiagSrpcMessageContext* ctx);
 

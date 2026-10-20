@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -11,6 +12,8 @@
 #include <dse/diagnet/service/service.h>
 #include <dse/diagnet/examples/rpn/rpn.h>
 
+
+#define SERVICE_NAME "RPN"
 
 static ffi_type* _int_arg[] = { &ffi_type_sint };
 
@@ -45,31 +48,37 @@ static ServiceFunction _registry[] = {
 };
 
 
-static int client_request(
-    ServiceManager* sm, NCODEC* nc, const char* func, int val)
+static int client_request(ServiceManager* sm, const char* func, int val)
 {
     static uint8_t context_id = 0;
-    int            rc;
+    int            rc = 0;
 
-    /* Build the arguments. */
+    /* Find the NCodec of the "RPN" service group. */
+    NCODEC* nc = NULL;
+    for (size_t i = 0; i < vector_len(&sm->funcs); i++) {
+        ServiceGroup* group = vector_at(&sm->funcs, i, NULL);
+        if (group && strcmp(group->name, SERVICE_NAME) == 0) nc = group->nc;
+    }
+    if (nc == NULL) return -ENOENT;
+
+    /* Build the request. */
+    NCodecDiagSrpcMessageContext request = {
+        .context_id = ++context_id,
+        .response_required = (strcmp(func, "pop") == 0),
+    };
     CallArgumentsBuilder builder;
     rc = call_arguments_builder_init(&builder);
     if (rc != 0) return rc;
     if (strcmp(func, "push") == 0) {
         rc = call_arguments_add_i32(&builder, val);
+        if (rc != 0) goto reset;
     }
-
-    /* Only pop returns a value, so only pop requires a response. */
-    NCodecDiagSrpcMessageContext request = {
-        .context_id = ++context_id,
-        .response_required = (strcmp(func, "pop") == 0),
-    };
-    if (rc == 0) rc = call_arguments_finalize(&builder, &request);
+    rc = call_arguments_finalize(&builder, &request);
+    if (rc != 0) goto reset;
 
     /* Push the request. */
-    if (rc == 0) rc = service_request(sm, "RPN", func, &request);
-    call_arguments_builder_destroy(&builder);
-    if (rc != 0) return rc;
+    rc = service_request(sm, SERVICE_NAME, func, &request);
+    if (rc != 0) goto reset;
 
     /* Cycle the transport/server (single stream, rewind to read). */
     ncodec_seek(nc, 0, NCODEC_SEEK_SET);
@@ -79,17 +88,22 @@ static int client_request(
     ncodec_seek(nc, 0, NCODEC_SEEK_SET);
     if (request.response_required) {
         NCodecDiagSrpcMessageContext* response = NULL;
-        rc = service_response(sm, &response);
-        if (rc == 0) {
-            ffi_sarg value = 0;
-            if (response->response_len == sizeof(value)) {
-                memcpy(&value, response->response, sizeof(value));
+        while (service_response(sm, &response) >= 0) {
+            if (response->context_id == request.context_id) {
+                ffi_sarg value = 0;
+                if (response->response_len == sizeof(value)) {
+                    memcpy(&value, response->response, sizeof(value));
+                }
+                printf("%s: returned %d (context_id %u)\n", func, (int)value,
+                    response->context_id);
             }
-            printf("%s: returned %d (context_id %u)\n", func, (int)value,
-                response->context_id);
             service_ctx_delete(response);
         }
     }
+
+reset:
+    call_arguments_builder_destroy(&builder);
+    service_reset(sm); /* Truncate NC objects. */
     return rc;
 }
 
@@ -100,18 +114,18 @@ int run_example(NCODEC* nc)
     ServiceManager sm = service_manager_create();
 
     /* Setup the server part of the service manager. */
-    service_register(
-        &sm, nc, "RPN", _registry, sizeof(_registry) / sizeof(_registry[0]));
+    service_register(&sm, nc, SERVICE_NAME, _registry,
+        sizeof(_registry) / sizeof(_registry[0]));
 
     /* Send some client requests (via/over the NCodec). */
-    client_request(&sm, nc, "push", 7);
-    client_request(&sm, nc, "push", 8);
-    client_request(&sm, nc, "multiply", 0);
-    client_request(&sm, nc, "push", 15);
-    client_request(&sm, nc, "minus", 0);
-    client_request(&sm, nc, "push", 1);
-    client_request(&sm, nc, "add", 0);
-    client_request(&sm, nc, "pop", 0);
+    client_request(&sm, "push", 7);
+    client_request(&sm, "push", 8);
+    client_request(&sm, "multiply", 0);
+    client_request(&sm, "push", 15);
+    client_request(&sm, "minus", 0);
+    client_request(&sm, "push", 1);
+    client_request(&sm, "add", 0);
+    client_request(&sm, "pop", 0);
 
     /* Destroy the service manager. */
     service_destroy(&sm);

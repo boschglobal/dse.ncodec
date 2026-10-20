@@ -144,6 +144,17 @@ int service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx)
 }
 
 
+void service_reset(ServiceManager* sm)
+{
+    if (sm == NULL) return;
+
+    for (size_t i = 0; i < vector_len(&sm->funcs); i++) {
+        ServiceGroup* group = vector_at(&sm->funcs, i, NULL);
+        if (group && group->nc) ncodec_truncate(group->nc);
+    }
+}
+
+
 void service_ctx_cancel(ServiceManager* sm, uint8_t context_id)
 {
     if (sm == NULL) return;

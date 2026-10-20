@@ -27,7 +27,6 @@ static int _pop(void)
 {
     int v = 0;
     vector_pop(&stack, &v);
-    _print("pop");
     return v;
 }
 
