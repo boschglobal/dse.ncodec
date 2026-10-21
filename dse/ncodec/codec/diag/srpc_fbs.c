@@ -69,8 +69,9 @@ static uint32_t _emit_invoke_return(
 }
 
 static uint32_t _emit_message(flatcc_builder_t* B,
-    const NCodecDiagSrpcMessage* m, const char* ecu_name, uint32_t ecu_id,
-    uint32_t swc_id, uint32_t node_uid)
+    const NCodecDiagSrpcMessage* m, const char* target_ecu_name,
+    uint32_t target_ecu_id, uint32_t target_swc_id, uint32_t origin_ecu_id,
+    uint32_t origin_swc_id, uint32_t node_uid)
 {
     ns(ServiceRpcMessage_start_as_root_with_size(B));
     ns(ServiceRpcMessage_call_id_add(B, m->call_id));
@@ -87,12 +88,14 @@ static uint32_t _emit_message(flatcc_builder_t* B,
     default:
         break;
     }
-    if (ecu_name) {
-        ns(ServiceRpcMessage_ecu_name_add(
-            B, flatbuffers_string_create_str(B, ecu_name)));
+    if (target_ecu_name) {
+        ns(ServiceRpcMessage_target_ecu_name_add(
+            B, flatbuffers_string_create_str(B, target_ecu_name)));
     }
-    ns(ServiceRpcMessage_ecu_id_add(B, ecu_id));
-    ns(ServiceRpcMessage_swc_id_add(B, swc_id));
+    ns(ServiceRpcMessage_target_ecu_id_add(B, target_ecu_id));
+    ns(ServiceRpcMessage_target_swc_id_add(B, target_swc_id));
+    ns(ServiceRpcMessage_origin_ecu_id_add(B, origin_ecu_id));
+    ns(ServiceRpcMessage_origin_swc_id_add(B, origin_swc_id));
     ns(ServiceRpcMessage_frame_id_add(B, m->frame_id));
     ns(ServiceRpcMessage_node_uid_add(B, node_uid));
     ns(ServiceRpcMessage_simulation_time_add(B, m->simulation_time));
@@ -154,9 +157,11 @@ static void _decode_message(
     default:
         break;
     }
-    m->ecu_name = ns(ServiceRpcMessage_ecu_name(t));
-    m->ecu_id = ns(ServiceRpcMessage_ecu_id(t));
-    m->swc_id = ns(ServiceRpcMessage_swc_id(t));
+    m->target.ecu_name = ns(ServiceRpcMessage_target_ecu_name(t));
+    m->target.ecu_id = ns(ServiceRpcMessage_target_ecu_id(t));
+    m->target.swc_id = ns(ServiceRpcMessage_target_swc_id(t));
+    m->origin.ecu_id = ns(ServiceRpcMessage_origin_ecu_id(t));
+    m->origin.swc_id = ns(ServiceRpcMessage_origin_swc_id(t));
     m->frame_id = ns(ServiceRpcMessage_frame_id(t));
     m->node_uid = ns(ServiceRpcMessage_node_uid(t));
     m->simulation_time = ns(ServiceRpcMessage_simulation_time(t));
@@ -172,14 +177,24 @@ int32_t srpc_write(NCODEC* nc, NCodecMessage* msg)
     if (_msg == NULL) return -EINVAL;
     if (_nc->c.stream == NULL) return -ENOSR;
 
-    const char* ecu_name = _msg->ecu_name ? _msg->ecu_name : _nc->name;
-    uint32_t    ecu_id = _msg->ecu_id ? _msg->ecu_id : _nc->ecu_id;
-    uint32_t    swc_id = _msg->swc_id ? _msg->swc_id : _nc->swc_id;
-    uint32_t    node_uid = _msg->node_uid ? _msg->node_uid : _nc->node_id;
+    /* Set the Target fields for this message. */
+    const char* target_ecu_name = _msg->target.ecu_name;
+    uint32_t    target_ecu_id = _msg->target.ecu_id;
+    uint32_t    target_swc_id = _msg->target.swc_id;
+
+    /* Set the Origin fields for this message. */
+    uint32_t origin_ecu_id =
+        _msg->origin.ecu_id ? _msg->origin.ecu_id : _nc->ecu_id;
+    uint32_t origin_swc_id =
+        _msg->origin.swc_id ? _msg->origin.swc_id : _nc->swc_id;
+
+    /* Set the node_uid for the sender of _this_ message. */
+    uint32_t node_uid = _msg->node_uid ? _msg->node_uid : _nc->node_id;
 
     flatcc_builder_t* B = &_nc->fbs_builder;
     flatcc_builder_reset(B);
-    if (_emit_message(B, _msg, ecu_name, ecu_id, swc_id, node_uid) == 0) {
+    if (_emit_message(B, _msg, target_ecu_name, target_ecu_id, target_swc_id,
+            origin_ecu_id, origin_swc_id, node_uid) == 0) {
         flatcc_builder_reset(B);
         log_error(_nc, "Service RPC message is missing a required field");
         return -EINVAL;

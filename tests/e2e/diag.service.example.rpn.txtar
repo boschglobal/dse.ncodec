@@ -1,0 +1,18 @@
+cd $REPODIR
+env example=dse/build/_out/examples/diagnet/rpn/bin/rpn
+
+# TEST: Diag Service RPN example
+exec valgrind -q --leak-check=yes --error-exitcode=88 $example
+cmp stdout $WORK/expected.stdout
+
+
+-- expected.stdout --
+push     [7]
+push     [7 8]
+multiply [56]
+push     [56 15]
+minus    [41]
+push     [41 1]
+add      [42]
+pop      []
+pop: returned 42 (context_id 8)

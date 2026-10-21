@@ -45,10 +45,14 @@ static void _request_destroy(void* item, void* data)
 }
 
 
-ServiceManager service_manager_create(void)
+ServiceManager service_manager_create(
+    const char* ecu_name, uint32_t ecu_id, uint32_t swc_id)
 {
     return (ServiceManager){
-        .funcs = vector_make(sizeof(ServiceGroup), 0, _name_compar),
+        .ecu_name = ecu_name,
+        .ecu_id = ecu_id,
+        .swc_id = swc_id,
+        .groups = vector_make(sizeof(ServiceGroup), 0, _name_compar),
         .requests = vector_make(sizeof(NCodecDiagSrpcMessageContext*), 0, NULL),
     };
 }
@@ -61,15 +65,15 @@ int service_register(ServiceManager* sm, void* nc, const char* name,
 
     // The group must not already exist.
     ServiceGroup key = { .name = name };
-    if (vector_find(&sm->funcs, &key, 0, NULL) != NULL) return -EEXIST;
+    if (vector_find(&sm->groups, &key, 0, NULL) != NULL) return -EEXIST;
     ServiceGroup new_group = {
         .name = name,
         .nc = nc,
         .funcs = vector_make(sizeof(ServiceFunction), 0, _name_compar),
     };
-    vector_push(&sm->funcs, &new_group);
-    vector_sort(&sm->funcs);
-    ServiceGroup* group = vector_find(&sm->funcs, &key, 0, NULL);
+    vector_push(&sm->groups, &new_group);
+    vector_sort(&sm->groups);
+    ServiceGroup* group = vector_find(&sm->groups, &key, 0, NULL);
     if (group == NULL) return -ENOMEM;
 
     int rc = 0;
@@ -116,8 +120,8 @@ void service_process_requests(ServiceManager* sm)
 {
     if (sm == NULL) return;
 
-    for (size_t i = 0; i < vector_len(&sm->funcs); i++) {
-        ServiceGroup* group = vector_at(&sm->funcs, i, NULL);
+    for (size_t i = 0; i < vector_len(&sm->groups); i++) {
+        ServiceGroup* group = vector_at(&sm->groups, i, NULL);
         if (group == NULL || group->nc == NULL) continue;
 
         Vector response = vector_make(sizeof(ResponseItem), 0, NULL);
@@ -131,9 +135,21 @@ void service_process_requests(ServiceManager* sm)
             }
             NCodecDiagSrpcInvokeCall* call = &msg.payload.invoke_call;
 
-            // TODO: filter on ecu_id/node_id. Or is that done by NCodec
-            // already?
+            /* Filter the request. */
+            if (msg.target.ecu_name) {
+                if (strcmp(msg.target.ecu_name, sm->ecu_name) != 0) {
+                    continue;
+                }
+            } else {
+                if (msg.target.ecu_id != sm->ecu_id) {
+                    continue;
+                }
+            }
+            if (msg.target.swc_id != sm->swc_id) {
+                continue;
+            }
 
+            /* Dispatch the request. */
             ffi_sarg result = 0;
             int      rc = service_dispatch(sm, call, &result);
             if (rc != 0) {
@@ -143,7 +159,7 @@ void service_process_requests(ServiceManager* sm)
             }
             if (rc == 0 && !call->ctx.response_required) continue;
 
-            // Build the response (shallow copy of the request context).
+            /* Build the response (shallow copy of the request context). */
             NCodecDiagSrpcMessage ret = msg;
             ret.payload_type = NCodecDiagSrpcPayloadTypeInvokeReturn;
             memset(&ret.payload, 0, sizeof(ret.payload));
@@ -188,7 +204,7 @@ int service_dispatch(
 
     // Locate the service group.
     ServiceGroup  group_key = { .name = call->service };
-    ServiceGroup* group = vector_find(&sm->funcs, &group_key, 0, NULL);
+    ServiceGroup* group = vector_find(&sm->groups, &group_key, 0, NULL);
     if (group == NULL) {
         return -ENOENT;
     }
@@ -226,8 +242,8 @@ int service_dispatch(
 void service_destroy(ServiceManager* sm)
 {
     if (sm == NULL) return;
-    vector_clear(&sm->funcs, _group_destroy, NULL);
-    vector_reset(&sm->funcs);
+    vector_clear(&sm->groups, _group_destroy, NULL);
+    vector_reset(&sm->groups);
     vector_clear(&sm->requests, _request_destroy, NULL);
     vector_reset(&sm->requests);
 }

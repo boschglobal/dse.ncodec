@@ -12,7 +12,7 @@ FLATC_BUILDER_IMAGE ?= ghcr.io/boschglobal/automotive-bus-schema-flatc-builder:m
 ###############
 ## External Projects.
 ABS_REPO ?= https://github.com/boschglobal/automotive-bus-schema
-ABS_VERSION ?= 1.0.17
+ABS_VERSION ?= 1.1.0
 export ABS_URL ?= $(ABS_REPO)/releases/download/v$(ABS_VERSION)/automotive-bus-schema.tar.gz
 
 DSE_CLIB_REPO ?= https://github.com/boschglobal/dse.clib

@@ -61,7 +61,14 @@ typedef flatbuffers_uoffset_t *AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMes
  *     IDL for Automotive Bus - Diagnostic Interface - Service RPC
  *     ===========================================================
  *     Service RPC
- *     MIME Type : application/x-automotive-bus; interface=diagnostic; type=srpc; schema=fbs
+ *     MIME Type : application/x-automotive-bus;
+ *                 interface=diagnostic;
+ *                 type=srpc;
+ *                 schema=fbs;
+ *                 ecu_name=<ecu_name>;
+ *                 ecu_id=<ecu_id>;
+ *                 swc_id=<swc_id>;
+ *                 loopback=<0|1>;
  *     Flatbuffers file identifier : DSRP
  *     Generic RPC interface for dispatching a function on a named service. */
 struct AutomotiveBus_Diagnostic_ServiceRpc_MessageContext_table { uint8_t unused__; };
@@ -77,16 +84,18 @@ __flatbuffers_define_vector_field(0, AutomotiveBus_Diagnostic_ServiceRpc_Message
 /**  Response: Container for the response content. */
 __flatbuffers_define_vector_field(1, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, response, flatbuffers_uint8_vec_t, 0)
 /**  Request: Type of request (transparent to the Service RPC). */
-__flatbuffers_define_scalar_field(2, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, request_type, flatbuffers_uint8, uint8_t, UINT8_C(0))
+__flatbuffers_define_scalar_field(2, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, request_type, flatbuffers_uint32, uint32_t, UINT32_C(0))
 /**  Request: Source of request (transparent to the Service RPC). */
-__flatbuffers_define_scalar_field(3, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, request_source, flatbuffers_uint8, uint8_t, UINT8_C(0))
+__flatbuffers_define_scalar_field(3, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, request_source, flatbuffers_uint32, uint32_t, UINT32_C(0))
 /**  Response: Include the request bytes in the response message. */
 __flatbuffers_define_scalar_field(4, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, response_include_request, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
-/**  Response: A response is returned in all cases, or only when an error has occurred." */
+/**  Response: A response is returned in all cases, or only when an error
+ *   has occurred." */
 __flatbuffers_define_scalar_field(5, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, response_required, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(1))
 /**  Metadata: An identifier for this message context. */
-__flatbuffers_define_scalar_field(6, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, context_id, flatbuffers_uint8, uint8_t, UINT8_C(0))
-/**  Metadata: Frame identifier when the response should be associated with a network pdu. */
+__flatbuffers_define_scalar_field(6, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, context_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Metadata: Frame identifier when the response should be associated
+ *   with a network pdu. */
 __flatbuffers_define_scalar_field(7, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext, rx_pdu_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
 
 struct AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall_table { uint8_t unused__; };
@@ -97,9 +106,13 @@ static inline AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall_table_t AutomotiveB
 __flatbuffers_offset_vec_at(AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall_table_t, vec, i, 0)
 __flatbuffers_table_as_root(AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall)
 
+/**  Invoke: The service name containing the function to be invoked. */
 __flatbuffers_define_string_field(0, AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall, service, 1)
+/**  Invoke: The function name to be invoked. */
 __flatbuffers_define_string_field(1, AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall, function, 1)
-__flatbuffers_define_scalar_field(2, AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall, op_status, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Metadata: Additional out-of-band operation status value. */
+__flatbuffers_define_scalar_field(2, AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall, op_status, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Context: Context object to be passed to the invoked function. */
 __flatbuffers_define_table_field(3, AutomotiveBus_Diagnostic_ServiceRpc_InvokeCall, ctx, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext_table_t, 1)
 
 struct AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn_table { uint8_t unused__; };
@@ -110,8 +123,12 @@ static inline AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn_table_t Automotiv
 __flatbuffers_offset_vec_at(AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn_table_t, vec, i, 0)
 __flatbuffers_table_as_root(AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn)
 
-__flatbuffers_define_scalar_field(0, AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn, return_value, flatbuffers_uint8, uint8_t, UINT8_C(0))
-__flatbuffers_define_scalar_field(1, AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn, error_code, flatbuffers_uint8, uint8_t, UINT8_C(0))
+/**  Invoke: Return value from the invoked function. */
+__flatbuffers_define_scalar_field(0, AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn, return_value, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Invoke: Error code, either from the invoked function or from the invoke
+ *   call itself (service dependant). */
+__flatbuffers_define_scalar_field(1, AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn, error_code, flatbuffers_int32, int32_t, INT32_C(0))
+/**  Context: Context object with response from the invoked function. */
 __flatbuffers_define_table_field(2, AutomotiveBus_Diagnostic_ServiceRpc_InvokeReturn, ctx, AutomotiveBus_Diagnostic_ServiceRpc_MessageContext_table_t, 1)
 typedef uint8_t AutomotiveBus_Diagnostic_ServiceRpc_Payload_union_type_t;
 __flatbuffers_define_integer_type(AutomotiveBus_Diagnostic_ServiceRpc_Payload, AutomotiveBus_Diagnostic_ServiceRpc_Payload_union_type_t, 8)
@@ -154,23 +171,27 @@ __flatbuffers_define_scalar_field(0, AutomotiveBus_Diagnostic_ServiceRpc_Service
 /**  RPC: Message payload. */
 __flatbuffers_define_union_field(flatbuffers_, 2, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, payload, AutomotiveBus_Diagnostic_ServiceRpc_Payload, 0)
 /**  Identifier: Target ECU/Runnable for this Service RPC. */
-__flatbuffers_define_string_field(3, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, ecu_name, 0)
+__flatbuffers_define_string_field(3, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, target_ecu_name, 0)
 /**  Identifier: Target ECU for this Service RPC. */
-__flatbuffers_define_scalar_field(4, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, ecu_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
+__flatbuffers_define_scalar_field(4, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, target_ecu_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
 /**  Identifier: Target Runnable for this Service RPC. */
-__flatbuffers_define_scalar_field(5, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, swc_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
-/**  Identifier: Frame ID related to _this_ Service RPC message if it
+__flatbuffers_define_scalar_field(5, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, target_swc_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Identifier: Origin ECU for this Service RPC. */
+__flatbuffers_define_scalar_field(6, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, origin_ecu_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Identifier: Origin Runnable for this Service RPC. */
+__flatbuffers_define_scalar_field(7, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, origin_swc_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
+/**  Metadata: Frame ID related to _this_ Service RPC message if it
  *   is transmitted on a bus (CAN, FlexRay, IP etc). */
-__flatbuffers_define_scalar_field(6, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, frame_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
+__flatbuffers_define_scalar_field(8, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, frame_id, flatbuffers_uint32, uint32_t, UINT32_C(0))
 /**  Metadata: Node UID of the Simulation (or System) node which is sending
  *   this stream object. Used by a Node to detect incoming stream objects
  *   which the Node had previously sent (i.e. an echo from the underlying
  *   implementation of the stream transport). */
-__flatbuffers_define_scalar_field(7, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, node_uid, flatbuffers_uint32, uint32_t, UINT32_C(0))
+__flatbuffers_define_scalar_field(9, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, node_uid, flatbuffers_uint32, uint32_t, UINT32_C(0))
 /**  Metadata: Message timestamp in simulation time. */
-__flatbuffers_define_scalar_field(8, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, simulation_time, flatbuffers_double, double, 0.000000)
+__flatbuffers_define_scalar_field(10, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, simulation_time, flatbuffers_double, double, 0.000000)
 /**  Metadata: UTC timestamp (i.e. wall clock). */
-__flatbuffers_define_scalar_field(9, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, utc_time, flatbuffers_uint64, uint64_t, UINT64_C(0))
+__flatbuffers_define_scalar_field(11, AutomotiveBus_Diagnostic_ServiceRpc_ServiceRpcMessage, utc_time, flatbuffers_uint64, uint64_t, UINT64_C(0))
 
 
 #include "flatcc/flatcc_epilogue.h"

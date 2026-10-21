@@ -60,14 +60,16 @@ static NCodecDiagSrpcMessageContext** _request_find(
 static ServiceGroup* _group_find(ServiceManager* sm, const char* name)
 {
     ServiceGroup key = { .name = name };
-    return vector_find(&sm->funcs, &key, 0, NULL);
+    return vector_find(&sm->groups, &key, 0, NULL);
 }
 
 
-int service_request(ServiceManager* sm, const char* service,
-    const char* function, NCodecDiagSrpcMessageContext* ctx)
+int service_request(ServiceManager* sm, const char* ecu_name, uint32_t ecu_id,
+    uint32_t swc_id, const char* service, const char* function,
+    NCodecDiagSrpcMessageContext* ctx)
 {
-    if (sm == NULL || service == NULL || function == NULL || ctx == NULL) {
+    if (sm == NULL || ecu_name == NULL || service == NULL || function == NULL ||
+        ctx == NULL) {
         return -EINVAL;
     }
     ServiceGroup* group = _group_find(sm, service);
@@ -83,6 +85,15 @@ int service_request(ServiceManager* sm, const char* service,
     }
 
     NCodecDiagSrpcMessage msg = {
+        .target = {
+            .ecu_name = ecu_name,
+            .ecu_id = ecu_id,
+            .swc_id = swc_id,
+        },
+        .origin = {
+            .ecu_id = sm->ecu_id,
+            .swc_id = sm->swc_id,
+        },
         .payload_type = NCodecDiagSrpcPayloadTypeInvokeCall,
         .payload.invoke_call = {
             .service = service,
@@ -114,8 +125,8 @@ int service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx)
     // TODO: will this be re-entrant, or do we need to drain the nc objects
     // to a vector?
 
-    for (size_t i = 0; i < vector_len(&sm->funcs); i++) {
-        ServiceGroup* group = vector_at(&sm->funcs, i, NULL);
+    for (size_t i = 0; i < vector_len(&sm->groups); i++) {
+        ServiceGroup* group = vector_at(&sm->groups, i, NULL);
         if (group == NULL || group->nc == NULL) continue;
 
         while (1) {
@@ -125,6 +136,15 @@ int service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx)
                 continue;
             }
 
+            /* Filter the response. */
+            if (msg.origin.ecu_id != sm->ecu_id) {
+                continue;
+            }
+            if (msg.origin.swc_id != sm->swc_id) {
+                continue;
+            }
+
+            /* Process the response. */
             NCodecDiagSrpcInvokeReturn*    ret = &msg.payload.invoke_return;
             size_t                         index = 0;
             NCodecDiagSrpcMessageContext** request =
@@ -148,8 +168,8 @@ void service_reset(ServiceManager* sm)
 {
     if (sm == NULL) return;
 
-    for (size_t i = 0; i < vector_len(&sm->funcs); i++) {
-        ServiceGroup* group = vector_at(&sm->funcs, i, NULL);
+    for (size_t i = 0; i < vector_len(&sm->groups); i++) {
+        ServiceGroup* group = vector_at(&sm->groups, i, NULL);
         if (group && group->nc) ncodec_truncate(group->nc);
     }
 }

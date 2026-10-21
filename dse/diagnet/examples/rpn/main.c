@@ -12,7 +12,7 @@
 #define MIMETYPE                                                               \
     "application/x-automotive-bus;"                                            \
     "interface=diagnostic;type=srpc;schema=fbs;"                               \
-    "ecu_id=1;loopback=1"
+    "ecu_name=vECU;ecu_id=1;swc_id=0;loopback=1"
 
 
 int run_example(NCODEC* nc);
@@ -31,7 +31,7 @@ NCODEC* ncodec_open(const char* mime_type, NSTREAM* stream)
 
 int main(int argc, char** argv)
 {
-    if (argc < 2) {
+    if (argc < 1) {
         fprintf(stderr, "usage: %s\n", argv[0]);
         return 1;
     }

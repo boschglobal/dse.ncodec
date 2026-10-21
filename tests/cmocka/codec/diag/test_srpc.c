@@ -53,22 +53,22 @@ void test_srpc_payload(void** state)
             .payload_type = NCodecDiagSrpcPayloadTypeInvokeCall,
             .payload.invoke_call = { .service = "Dcm",
                 .function = "Dispatch",
-                .op_status = 3,
+                .op_status = 0x12345678,
                 .ctx = { .request = request,
                     .request_len = ARRAY_SIZE(request),
-                    .request_type = 1,
-                    .request_source = 2,
+                    .request_type = 0x12345678,
+                    .request_source = 0x87654321,
                     .response_include_request = true,
                     .response_required = false,
-                    .context_id = 4,
+                    .context_id = 0x12345678,
                     .rx_pdu_id = 0x1234 } },
             .frame_id = 0x7e0,
             .simulation_time = 1.5,
             .utc_time = 1700000000 },
         { .call_id = 1,
             .payload_type = NCodecDiagSrpcPayloadTypeInvokeReturn,
-            .payload.invoke_return = { .return_value = 5,
-                .error_code = 6,
+            .payload.invoke_return = { .return_value = 0x12345678,
+                .error_code = -123456789,
                 .ctx = { .request = empty,
                     .response = response,
                     .response_len = ARRAY_SIZE(response),
@@ -92,7 +92,7 @@ void test_srpc_payload(void** state)
     assert_int_equal(out.payload_type, NCodecDiagSrpcPayloadTypeInvokeCall);
     assert_string_equal(out.payload.invoke_call.service, "Dcm");
     assert_string_equal(out.payload.invoke_call.function, "Dispatch");
-    assert_int_equal(out.payload.invoke_call.op_status, 3);
+    assert_int_equal(out.payload.invoke_call.op_status, 0x12345678);
     assert_context_equal(
         &msg[0].payload.invoke_call.ctx, &out.payload.invoke_call.ctx);
     assert_int_equal(out.frame_id, 0x7e0);
@@ -101,8 +101,8 @@ void test_srpc_payload(void** state)
 
     assert_true(ncodec_read(nc, &out) > 0);
     assert_int_equal(out.payload_type, NCodecDiagSrpcPayloadTypeInvokeReturn);
-    assert_int_equal(out.payload.invoke_return.return_value, 5);
-    assert_int_equal(out.payload.invoke_return.error_code, 6);
+    assert_int_equal(out.payload.invoke_return.return_value, 0x12345678);
+    assert_int_equal(out.payload.invoke_return.error_code, -123456789);
     assert_context_equal(
         &msg[1].payload.invoke_return.ctx, &out.payload.invoke_return.ctx);
     assert_true(out.simulation_time == 2.5);
@@ -119,15 +119,14 @@ void test_srpc_metadata(void** state)
 {
     Mock* mock = *state;
 
-    /* Codec parameters are used when message fields are not set. */
+    /* Codec parameters provide defaults for origin and node_uid. */
     NCodecDiagSrpcMessage msg = { .call_id = 1 };
     assert_true(ncodec_write(mock->nc, &msg) > 0);
     /* Message fields take precedence. */
     msg = (NCodecDiagSrpcMessage){ .call_id = 2,
-        .ecu_name = "target",
-        .ecu_id = 300,
-        .swc_id = 301,
-        .node_uid = 302 };
+        .target = { .ecu_name = "target", .ecu_id = 300, .swc_id = 301 },
+        .origin = { .ecu_id = 302, .swc_id = 303 },
+        .node_uid = 304 };
     assert_true(ncodec_write(mock->nc, &msg) > 0);
 
     NCODEC* nc = ncodec_open(
@@ -138,29 +137,35 @@ void test_srpc_metadata(void** state)
     NCodecDiagSrpcMessage out = {};
     assert_true(ncodec_read(nc, &out) > 0);
     assert_int_equal(out.call_id, 1);
-    assert_string_equal(out.ecu_name, "ecu_1");
-    assert_int_equal(out.ecu_id, 3);
-    assert_int_equal(out.swc_id, 2);
+    assert_null(out.target.ecu_name);
+    assert_int_equal(out.target.ecu_id, 0);
+    assert_int_equal(out.target.swc_id, 0);
+    assert_int_equal(out.origin.ecu_id, 3);
+    assert_int_equal(out.origin.swc_id, 2);
     assert_int_equal(out.node_uid, 1);
 
     assert_true(ncodec_read(nc, &out) > 0);
     assert_int_equal(out.call_id, 2);
-    assert_string_equal(out.ecu_name, "target");
-    assert_int_equal(out.ecu_id, 300);
-    assert_int_equal(out.swc_id, 301);
-    assert_int_equal(out.node_uid, 302);
+    assert_string_equal(out.target.ecu_name, "target");
+    assert_int_equal(out.target.ecu_id, 300);
+    assert_int_equal(out.target.swc_id, 301);
+    assert_int_equal(out.origin.ecu_id, 302);
+    assert_int_equal(out.origin.swc_id, 303);
+    assert_int_equal(out.node_uid, 304);
     ncodec_close(nc);
 
-    /* Without codec parameters, fields remain unset. */
+    /* Without codec parameters, target and origin fields remain unset. */
     nc = ncodec_open(MIMETYPE("srpc"), ncodec_buffer_stream_create(BUFFER_LEN));
     msg = (NCodecDiagSrpcMessage){ .call_id = 3 };
     assert_true(ncodec_write(nc, &msg) > 0);
     ncodec_seek(nc, 0, NCODEC_SEEK_SET);
     assert_true(ncodec_read(nc, &out) > 0);
     assert_int_equal(out.call_id, 3);
-    assert_null(out.ecu_name);
-    assert_int_equal(out.ecu_id, 0);
-    assert_int_equal(out.swc_id, 0);
+    assert_null(out.target.ecu_name);
+    assert_int_equal(out.target.ecu_id, 0);
+    assert_int_equal(out.target.swc_id, 0);
+    assert_int_equal(out.origin.ecu_id, 0);
+    assert_int_equal(out.origin.swc_id, 0);
     assert_int_equal(out.node_uid, 0);
     ncodec_close(nc);
 }

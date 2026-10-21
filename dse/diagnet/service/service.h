@@ -14,7 +14,13 @@
 
 
 typedef struct ServiceManager {
-    Vector funcs;    /* vector<ServiceGroup> */
+    /* Identifying properties of the service. */
+    const char* ecu_name;
+    uint32_t    ecu_id;
+    uint32_t    swc_id;
+
+    /* Service registration and data. */
+    Vector groups;   /* vector<ServiceGroup> */
     Vector requests; /* vector<NCodecDiagSrpcMessageContext> */
 } ServiceManager;
 
@@ -41,7 +47,8 @@ typedef struct ServiceFunction {
 
 
 /* Service Manager API. */
-ServiceManager service_manager_create(void);
+ServiceManager service_manager_create(
+    const char* ecu_name, uint32_t ecu_id, uint32_t swc_id);
 
 /* Service API. */
 int  service_register(ServiceManager* sm, void* nc, const char* name,
@@ -52,8 +59,9 @@ int  service_dispatch(
 void service_destroy(ServiceManager* sm);
 
 /* Client API. */
-int  service_request(ServiceManager* sm, const char* service,
-     const char* function, NCodecDiagSrpcMessageContext* ctx);
+int  service_request(ServiceManager* sm, const char* ecu_name, uint32_t ecu_id,
+     uint32_t swc_id, const char* service, const char* function,
+     NCodecDiagSrpcMessageContext* ctx);
 int  service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx);
 void service_reset(ServiceManager* sm);
 void service_ctx_cancel(ServiceManager* sm, uint8_t context_id);

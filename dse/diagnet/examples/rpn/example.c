@@ -13,6 +13,9 @@
 #include <dse/diagnet/examples/rpn/rpn.h>
 
 
+#define ECU_NAME     "vECU"
+#define ECU_ID       1
+#define SWC_ID       0
 #define SERVICE_NAME "RPN"
 
 static ffi_type* _int_arg[] = { &ffi_type_sint };
@@ -55,8 +58,8 @@ static int client_request(ServiceManager* sm, const char* func, int val)
 
     /* Find the NCodec of the "RPN" service group. */
     NCODEC* nc = NULL;
-    for (size_t i = 0; i < vector_len(&sm->funcs); i++) {
-        ServiceGroup* group = vector_at(&sm->funcs, i, NULL);
+    for (size_t i = 0; i < vector_len(&sm->groups); i++) {
+        ServiceGroup* group = vector_at(&sm->groups, i, NULL);
         if (group && strcmp(group->name, SERVICE_NAME) == 0) nc = group->nc;
     }
     if (nc == NULL) return -ENOENT;
@@ -77,7 +80,8 @@ static int client_request(ServiceManager* sm, const char* func, int val)
     if (rc != 0) goto reset;
 
     /* Push the request. */
-    rc = service_request(sm, SERVICE_NAME, func, &request);
+    rc = service_request(
+        sm, ECU_NAME, ECU_ID, SWC_ID, SERVICE_NAME, func, &request);
     if (rc != 0) goto reset;
 
     /* Cycle the transport/server (single stream, rewind to read). */
@@ -111,7 +115,7 @@ reset:
 int run_example(NCODEC* nc)
 {
     /* Create a service manager (shared between client and server). */
-    ServiceManager sm = service_manager_create();
+    ServiceManager sm = service_manager_create(ECU_NAME, ECU_ID, SWC_ID);
 
     /* Setup the server part of the service manager. */
     service_register(&sm, nc, SERVICE_NAME, _registry,
