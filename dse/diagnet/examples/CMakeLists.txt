@@ -12,3 +12,4 @@ project(DiagNet_Examples
 if(UNIX)
 add_subdirectory(rpn)
 endif()
+add_subdirectory(plant)
