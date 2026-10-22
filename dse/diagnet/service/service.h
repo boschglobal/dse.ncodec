@@ -25,10 +25,21 @@ typedef struct ServiceManager {
 } ServiceManager;
 
 
+/* The returned object and each non-NULL context buffer must be heap allocated.
+ * Request and response buffers must be distinct. Ownership transfers to service
+ * processing, which frees them after encoding the response. */
+typedef int (*ServiceDispatch)(ServiceManager* sm,
+    const NCodecDiagSrpcInvokeCall* call, NCodecDiagSrpcInvokeReturn** ret);
+
 typedef struct ServiceGroup {
     const char* name;
     void*       nc;
     Vector      funcs; /* vector<ServiceFunction> */
+
+    /* VTable interface. */
+    struct {
+        ServiceDispatch dispatch;
+    } vtable;
 } ServiceGroup;
 
 
@@ -51,11 +62,13 @@ ServiceManager service_manager_create(
     const char* ecu_name, uint32_t ecu_id, uint32_t swc_id);
 
 /* Service API. */
-int  service_register(ServiceManager* sm, void* nc, const char* name,
-     ServiceFunction registry[], size_t count);
+int service_register(ServiceManager* sm, void* nc, const char* name,
+    ServiceFunction registry[], size_t count);
+int service_set_dispatch(
+    ServiceManager* sm, const char* name, ServiceDispatch func);
 void service_process_requests(ServiceManager* sm);
-int  service_dispatch(
-     ServiceManager* sm, NCodecDiagSrpcInvokeCall* call, ffi_sarg* result);
+int  service_dispatch(ServiceManager* sm, const NCodecDiagSrpcInvokeCall* call,
+     NCodecDiagSrpcInvokeReturn** ret);
 void service_destroy(ServiceManager* sm);
 
 /* Client API. */

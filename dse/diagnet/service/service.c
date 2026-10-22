@@ -70,6 +70,11 @@ int service_register(ServiceManager* sm, void* nc, const char* name,
         .name = name,
         .nc = nc,
         .funcs = vector_make(sizeof(ServiceFunction), 0, _name_compar),
+
+        /* VTable interface - defaults. */
+        .vtable = {
+            .dispatch = service_dispatch,
+        },
     };
     vector_push(&sm->groups, &new_group);
     vector_sort(&sm->groups);
@@ -111,10 +116,19 @@ int service_register(ServiceManager* sm, void* nc, const char* name,
 }
 
 
-typedef struct ResponseItem {
-    NCodecDiagSrpcMessage msg;
-    ffi_sarg              result;
-} ResponseItem;
+int service_set_dispatch(
+    ServiceManager* sm, const char* name, ServiceDispatch func)
+{
+    if (sm == NULL || name == NULL) return -EINVAL;
+
+    ServiceGroup  key = { .name = name };
+    ServiceGroup* group = vector_find(&sm->groups, &key, 0, NULL);
+    if (group == NULL) return -ENOENT;
+    group->vtable.dispatch = func;
+
+    return 0;
+}
+
 
 void service_process_requests(ServiceManager* sm)
 {
@@ -123,8 +137,9 @@ void service_process_requests(ServiceManager* sm)
     for (size_t i = 0; i < vector_len(&sm->groups); i++) {
         ServiceGroup* group = vector_at(&sm->groups, i, NULL);
         if (group == NULL || group->nc == NULL) continue;
+        if (group->vtable.dispatch == NULL) continue;
 
-        Vector response = vector_make(sizeof(ResponseItem), 0, NULL);
+        Vector response = vector_make(sizeof(NCodecDiagSrpcMessage), 0, NULL);
 
         // Drain the stream; ncodec_read returns a negative value when empty.
         while (1) {
@@ -149,44 +164,80 @@ void service_process_requests(ServiceManager* sm)
                 continue;
             }
 
+            /* Force the call response to NULL, even if in flatbuffer. */
+            call->ctx.response = NULL;
+            call->ctx.response_len = 0;
+
             /* Dispatch the request. */
-            ffi_sarg result = 0;
-            int      rc = service_dispatch(sm, call, &result);
+            NCodecDiagSrpcInvokeReturn* ret = NULL;
+            int rc = group->vtable.dispatch(sm, call, &ret);
             if (rc != 0) {
                 log_error(group->nc,
                     "Service:Process: dispatch failed (call_id=%u, rc=%d)",
                     msg.call_id, rc);
             }
-            if (rc == 0 && !call->ctx.response_required) continue;
+            if (rc == 0 && ret == NULL) continue; /* OK and no response. */
 
-            /* Build the response (shallow copy of the request context). */
-            NCodecDiagSrpcMessage ret = msg;
-            ret.payload_type = NCodecDiagSrpcPayloadTypeInvokeReturn;
-            memset(&ret.payload, 0, sizeof(ret.payload));
-            ret.payload.invoke_return.return_value = (uint8_t)result;
-            ret.payload.invoke_return.error_code = (uint8_t)(rc < 0 ? -rc : rc);
-            ret.payload.invoke_return.ctx = call->ctx;
-            ret.payload.invoke_return.ctx.request = NULL;
-            ret.payload.invoke_return.ctx.request_len = 0;
-            ret.payload.invoke_return.ctx.response = NULL;
-            ret.payload.invoke_return.ctx.response_len = 0;
-            ResponseItem item = { .msg = ret, .result = result };
-            vector_push(&response, &item);
+            /* Build the response (shallow copy of InvokeReturn). */
+            NCodecDiagSrpcMessage response_msg = {
+                /* Message metadata. */
+                .call_id = msg.call_id,
+                .target = msg.target,
+                .origin = msg.origin,
+                .payload_type = NCodecDiagSrpcPayloadTypeInvokeReturn,
+                /* Context metadata from request. */
+                .payload.invoke_return.ctx = call->ctx,
+                .payload.invoke_return.ctx.request = NULL,
+                .payload.invoke_return.ctx.request_len = 0,
+                .payload.invoke_return.ctx.response = NULL,
+                .payload.invoke_return.ctx.response_len = 0,
+            };
+            if (ret != NULL) {
+                if (ret->ctx.response) {
+                    if (ret->ctx.response == call->ctx.request) {
+                        /* Response is reserved memory from flatbuffer,
+                         * deepcopy. */
+                        uint8_t* buf = malloc(ret->ctx.response_len);
+                        if (buf) {
+                            memcpy(
+                                buf, ret->ctx.response, ret->ctx.response_len);
+                        } else {
+                            ret->ctx.response_len = 0;
+                        }
+                        ret->ctx.response = buf;
+                    }
+                }
+                if (ret->ctx.request) {
+                    if (ret->ctx.request != call->ctx.request) {
+                        free((void*)ret->ctx.request);
+                    }
+                    /* Force the request to NULL in the return. */
+                    ret->ctx.request = NULL;
+                    ret->ctx.request_len = 0;
+                }
+
+                /* Set the response. */
+                response_msg.payload.invoke_return = *ret;
+                free(ret);
+            }
+            response_msg.payload.invoke_return.error_code = rc < 0 ? -rc : rc;
+            vector_push(&response, &response_msg);
         }
 
         ncodec_truncate(group->nc);
         for (size_t j = 0; j < vector_len(&response); j++) {
-            ResponseItem*          item = vector_at(&response, j, NULL);
-            NCodecDiagSrpcMessage* ret = &item->msg;
-            // The result is returned (native ffi_sarg) in ctx.response.
-            ret->payload.invoke_return.ctx.response =
-                (const uint8_t*)&item->result;
-            ret->payload.invoke_return.ctx.response_len = sizeof(ffi_sarg);
-            if (ncodec_write(group->nc, (NCodecMessage*)ret) < 0) {
+            NCodecDiagSrpcMessage* msg = vector_at(&response, j, NULL);
+
+            if (ncodec_write(group->nc, (NCodecMessage*)msg) < 0) {
                 log_error(group->nc,
                     "Service:Process: response write failed (call_id=%u)",
-                    ret->call_id);
+                    msg->call_id);
             }
+
+            /* Note: ctx.response is const because if can be from a flatbuffer.
+             */
+            free((void*)msg->payload.invoke_return.ctx.request);
+            free((void*)msg->payload.invoke_return.ctx.response);
         }
         ncodec_flush(group->nc);
         vector_reset(&response);
@@ -194,22 +245,23 @@ void service_process_requests(ServiceManager* sm)
 }
 
 
-int service_dispatch(
-    ServiceManager* sm, NCodecDiagSrpcInvokeCall* call, ffi_sarg* result)
+int service_dispatch(ServiceManager* sm, const NCodecDiagSrpcInvokeCall* call,
+    NCodecDiagSrpcInvokeReturn** ret)
 {
     if (sm == NULL || call == NULL || call->service == NULL ||
         call->function == NULL) {
         return -EINVAL;
     }
+    if (ret) *ret = NULL; /* Set no response as default. */
 
-    // Locate the service group.
+    /* Locate the service group. */
     ServiceGroup  group_key = { .name = call->service };
     ServiceGroup* group = vector_find(&sm->groups, &group_key, 0, NULL);
     if (group == NULL) {
         return -ENOENT;
     }
 
-    // Locate the function.
+    /* Locate the function. */
     ServiceFunction  func_key = { .name = call->function };
     ServiceFunction* func = vector_find(&group->funcs, &func_key, 0, NULL);
     if (func == NULL) {
@@ -220,7 +272,7 @@ int service_dispatch(
         return -ENOENT;
     }
 
-    // Generate the arguments.
+    /* Generate the arguments. */
     CallArguments arguments = { 0 };
     int           rc = call_arguments_decode(call, func, &arguments);
     if (rc != 0) {
@@ -229,12 +281,32 @@ int service_dispatch(
         return rc;
     }
 
-    // Call the function.
+    /* Call the function. */
     ffi_sarg _result = 0;
     ffi_call(&func->cif, func->fn_ptr, &_result, arguments.args.items);
     call_arguments_destroy(&arguments);
-    if (result) *result = _result;
 
+    /* Generate the response. */
+    if (!call->ctx.response_required || ret == NULL) return 0;
+
+    uint8_t* buf = malloc(sizeof(ffi_sarg));
+    if (buf == NULL) return -ENOMEM;
+    memcpy(buf, &_result, sizeof(ffi_sarg));
+
+    NCodecDiagSrpcInvokeReturn* _ret = calloc(1, sizeof(*_ret));
+    if (_ret == NULL) {
+        free(buf);
+        return -ENOMEM;
+    }
+    _ret->return_value = (uint32_t)_result;
+    _ret->ctx = call->ctx;
+    _ret->ctx.request = NULL;
+    _ret->ctx.request_len = 0;
+    _ret->ctx.response = buf;
+    _ret->ctx.response_len = sizeof(ffi_sarg);
+
+    /* Return the response. */
+    *ret = _ret;
     return 0;
 }
 
