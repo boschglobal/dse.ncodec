@@ -157,8 +157,6 @@ do-update:
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/platform.h $(NAMESPACE)/platform.h
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/util/ascii85.c $(NAMESPACE)/ncodec/stream/ascii85.c
 	sed -i 's/dse_ascii85_/ncodec_ascii85_/g' $(NAMESPACE)/ncodec/stream/ascii85.c
-	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/collections/vector.h $(NAMESPACE)/ncodec/codec/ab/vector.h
-	sed -i 's/DSE_CLIB_COLLECTIONS_VECTOR_H_/DSE_NCODEC_CODEC_AB_VECTOR_H_/g' $(NAMESPACE)/ncodec/codec/ab/vector.h
 
 .PHONY: format
 format:

@@ -45,6 +45,29 @@ static void _request_destroy(void* item, void* data)
 }
 
 
+/**
+service_manager_create
+======================
+
+Create a Service Manager with empty service and client request registries.
+
+Parameters
+----------
+ecu_name (const char*)
+: Local ECU name. The caller owns the string and must keep it valid for the
+    lifetime of the Service Manager.
+
+ecu_id (uint32_t)
+: Local ECU identifier, used when a request does not specify an ECU name.
+
+swc_id (uint32_t)
+: Local software component identifier.
+
+Returns
+-------
+ServiceManager
+: The initialized Service Manager. Release its resources with `service_destroy`.
+*/
 ServiceManager service_manager_create(
     const char* ecu_name, uint32_t ecu_id, uint32_t swc_id)
 {
@@ -58,6 +81,51 @@ ServiceManager service_manager_create(
 }
 
 
+/**
+service_register
+================
+
+Register a service group and prepare its functions for invocation through
+libffi. The default dispatch implementation is `service_dispatch`.
+
+Function definitions and argument type arrays are copied. Service and function
+names, function pointers, and FFI type objects remain caller owned and must
+remain valid while the service group is registered. Functions registered
+successfully remain available even if another function fails registration.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object.
+
+nc (void*)
+: Network Codec used to receive service requests and send responses.
+
+name (const char*)
+: Name of the service group.
+
+registry (ServiceFunction[])
+: Function definitions to register. Must not be NULL, including when count is
+    zero.
+
+count (size_t)
+: Number of function definitions in the registry.
+
+Returns
+-------
+0
+: The service group and its functions were registered.
+
+-EINVAL
+: A required argument is NULL or a function's FFI call interface is invalid.
+
+-EEXIST
+: A service group with the specified name is already registered.
+
+-ENOMEM
+: The service group could not be located after insertion or an argument type
+    array could not be allocated.
+*/
 int service_register(ServiceManager* sm, void* nc, const char* name,
     ServiceFunction registry[], size_t count)
 {
@@ -119,6 +187,35 @@ int service_register(ServiceManager* sm, void* nc, const char* name,
 }
 
 
+/**
+service_set_dispatch
+====================
+
+Set the dispatch implementation for a registered service group.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object.
+
+name (const char*)
+: Name of the service group.
+
+func (ServiceDispatch)
+: Dispatch implementation. Set to NULL to disable request processing for the
+    service group.
+
+Returns
+-------
+0
+: The dispatch implementation was set.
+
+-EINVAL
+: The Service Manager or service group name is NULL.
+
+-ENOENT
+: The service group is not registered.
+*/
 int service_set_dispatch(
     ServiceManager* sm, const char* name, ServiceDispatch func)
 {
@@ -133,6 +230,24 @@ int service_set_dispatch(
 }
 
 
+/**
+service_process_requests
+========================
+
+Process available requests from each service group's Network Codec. Requests
+are selected by the local ECU name or identifier and software component
+identifier, then passed to the group's dispatch implementation.
+
+Responses are encoded after draining and truncating the input stream, then
+flushed to the connected stream. Dispatch return objects and their owned
+request/response buffers are released after processing. Dispatch and write
+failures are logged.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object. If NULL, no requests are processed.
+*/
 void service_process_requests(ServiceManager* sm)
 {
     if (sm == NULL) return;
@@ -255,6 +370,48 @@ void service_process_requests(ServiceManager* sm)
 }
 
 
+/**
+service_dispatch
+================
+
+Invoke a registered service function through its prepared libffi interface.
+Request arguments are decoded before invocation and released afterwards.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object.
+
+call (const NCodecDiagSrpcInvokeCall*)
+: Request specifying the service, function, and encoded arguments.
+
+ret (NCodecDiagSrpcInvokeReturn**)
+: (out) Heap allocated return object when a response is required. Set to NULL
+    when no response is generated. The caller owns the returned object and its
+    response buffer. May be NULL to suppress response allocation.
+
+Returns
+-------
+0
+: The function was invoked successfully.
+
+-EINVAL
+: A required argument, service name, function name, or encoded argument is
+    invalid.
+
+-ENOENT
+: The service group or function is not registered.
+
+-ENOMEM
+: Argument decoding or response allocation failed.
+
+-EBADMSG
+: The request argument buffer is missing or contains an unsupported argument
+    representation.
+
+-EOVERFLOW
+: The decoded argument count exceeds the allocation size limit.
+*/
 int service_dispatch(ServiceManager* sm, const NCodecDiagSrpcInvokeCall* call,
     NCodecDiagSrpcInvokeReturn** ret)
 {
@@ -329,6 +486,19 @@ int service_dispatch(ServiceManager* sm, const NCodecDiagSrpcInvokeCall* call,
 }
 
 
+/**
+service_destroy
+===============
+
+Release all registered service functions and pending client requests. Pending
+request contexts and their owned buffers are deleted. Network Codecs and
+referenced name strings are not released.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object. If NULL, no resources are released.
+*/
 void service_destroy(ServiceManager* sm)
 {
     if (sm == NULL) return;

@@ -42,6 +42,28 @@ static int _append_argument(
 }
 
 
+/**
+call_arguments_builder_init
+===========================
+
+Initialize an argument builder. Destroy it after use, including after failure.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Fresh builder object to initialize.
+
+Returns
+-------
+0
+: The builder is ready to accept arguments.
+
+-EINVAL
+: The builder is NULL.
+
+-ENOMEM
+: Builder allocation failed.
+*/
 int call_arguments_builder_init(CallArgumentsBuilder* builder)
 {
     if (builder == NULL) return -EINVAL;
@@ -60,6 +82,17 @@ int call_arguments_builder_init(CallArgumentsBuilder* builder)
 }
 
 
+/**
+call_arguments_builder_destroy
+==============================
+
+Release builder resources, including the finalized request buffer.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Initialized builder to release and clear. May be NULL.
+*/
 void call_arguments_builder_destroy(CallArgumentsBuilder* builder)
 {
     if (builder == NULL) return;
@@ -78,20 +111,282 @@ void call_arguments_builder_destroy(CallArgumentsBuilder* builder)
                          sa(table##_create)(&builder->builder, value)));       \
     }
 
+/**
+call_arguments_add_i8
+=====================
+
+Append a signed 8-bit argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (int8_t)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(i8, int8_t, Int8Value)
+
+/**
+call_arguments_add_u8
+=====================
+
+Append an unsigned 8-bit argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (uint8_t)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(u8, uint8_t, UInt8Value)
+
+/**
+call_arguments_add_i16
+======================
+
+Append a signed 16-bit argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (int16_t)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(i16, int16_t, Int16Value)
+
+/**
+call_arguments_add_u16
+======================
+
+Append an unsigned 16-bit argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (uint16_t)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(u16, uint16_t, UInt16Value)
+
+/**
+call_arguments_add_i32
+======================
+
+Append a signed 32-bit argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (int32_t)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(i32, int32_t, Int32Value)
+
+/**
+call_arguments_add_u32
+======================
+
+Append an unsigned 32-bit argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (uint32_t)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(u32, uint32_t, UInt32Value)
+
+/**
+call_arguments_add_i64
+======================
+
+Append a signed 64-bit argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (int64_t)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(i64, int64_t, Int64Value)
+
+/**
+call_arguments_add_u64
+======================
+
+Append an unsigned 64-bit argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (uint64_t)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(u64, uint64_t, UInt64Value)
+
+/**
+call_arguments_add_f32
+======================
+
+Append a single-precision floating-point argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (float)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(f32, float, Float32Value)
+
+/**
+call_arguments_add_f64
+======================
+
+Append a double-precision floating-point argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (double)
+: Argument value.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 DEFINE_ADD(f64, double, Float64Value)
 
 #undef DEFINE_ADD
 
 
+/**
+call_arguments_add_string
+=========================
+
+Append a string argument. The string is copied into the builder.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (const char*)
+: Non-NULL, null-terminated string.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for an invalid builder or NULL string, or the builder's stored error
+    (-ENOMEM on allocation failure).
+*/
 int call_arguments_add_string(CallArgumentsBuilder* builder, const char* value)
 {
     int rc = _builder_ready(builder);
@@ -107,6 +402,33 @@ int call_arguments_add_string(CallArgumentsBuilder* builder, const char* value)
 }
 
 
+/**
+call_arguments_add_binary
+=========================
+
+Append copied binary bytes. Encode any length required by the called function
+as a separate argument.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+value (const uint8_t*)
+: Bytes to copy. May be NULL when length is zero.
+
+length (size_t)
+: Number of bytes to copy.
+
+Returns
+-------
+0
+: The argument was appended.
+
+<0
+: -EINVAL for invalid arguments, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 int call_arguments_add_binary(
     CallArgumentsBuilder* builder, const uint8_t* value, size_t length)
 {
@@ -123,6 +445,31 @@ int call_arguments_add_binary(
 }
 
 
+/**
+call_arguments_finalize
+=======================
+
+Finish encoding and set the context's request buffer and length. The buffer
+remains builder owned and is valid until `call_arguments_builder_destroy`.
+No more arguments may be added after success.
+
+Parameters
+----------
+builder (CallArgumentsBuilder*)
+: Active argument builder.
+
+ctx (NCodecDiagSrpcMessageContext*)
+: (out) Context receiving the request buffer. Any previous buffer is not freed.
+
+Returns
+-------
+0
+: The encoded request was assigned to the context.
+
+<0
+: -EINVAL for invalid arguments, or the builder's stored error (-ENOMEM on
+    allocation failure).
+*/
 int call_arguments_finalize(
     CallArgumentsBuilder* builder, NCodecDiagSrpcMessageContext* ctx)
 {
@@ -148,6 +495,18 @@ int call_arguments_finalize(
 }
 
 
+/**
+call_arguments_destroy
+======================
+
+Release decoded argument storage. Borrowed string and binary bytes are not
+freed.
+
+Parameters
+----------
+arguments (CallArguments*)
+: Decoded arguments to release. May be NULL.
+*/
 void call_arguments_destroy(CallArguments* arguments)
 {
     if (arguments == NULL) return;
@@ -156,6 +515,42 @@ void call_arguments_destroy(CallArguments* arguments)
 }
 
 
+/**
+call_arguments_decode
+=====================
+
+Decode request arguments and check their count and types against a registered
+function. String and binary values borrow the request buffer.
+
+Parameters
+----------
+call (const NCodecDiagSrpcInvokeCall*)
+: Request whose argument buffer must remain valid while decoded values are used.
+
+func (const ServiceFunction*)
+: Registered function defining the expected argument types.
+
+out (CallArguments*)
+: (out) Fresh, empty argument storage. Release with `call_arguments_destroy`.
+    Left unchanged on failure.
+
+Returns
+-------
+0
+: Arguments were decoded.
+
+-EINVAL
+: Invalid parameters or argument count/type mismatch.
+
+-EBADMSG
+: Missing argument bytes or unsupported argument representation.
+
+-ENOMEM
+: Argument allocation failed.
+
+-EOVERFLOW
+: Argument storage size exceeds the allocation limit.
+*/
 int call_arguments_decode(const NCodecDiagSrpcInvokeCall* call,
     const ServiceFunction* func, CallArguments* out)
 {

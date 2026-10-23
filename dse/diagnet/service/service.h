@@ -8,9 +8,27 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <ffi.h>
+#include <flatcc/flatcc_builder.h>
 #include <dse/clib/collections/vector.h>
 #include <dse/ncodec/interface/diag/srpc.h>
-#include "flatcc/flatcc_builder.h"
+#include <dse/platform.h>
+
+
+/**
+Diagnostic Network Service RPC
+===================
+
+The Diagnostic Network Service RPC API provides service registration, request
+dispatch, and client request/response handling over a Network Codec.
+
+A Service Manager identifies a local ECU and software component. Service
+groups associate a Network Codec with a group of named functions which represent
+that service. Clients use the same registration to send requests and collect
+responses from those remote services.
+
+Service functions are invoked through libffi by default. A service group can
+provide a custom dispatch implementation through `service_set_dispatch`.
+*/
 
 
 typedef struct ServiceManager {
@@ -25,9 +43,6 @@ typedef struct ServiceManager {
 } ServiceManager;
 
 
-/* The returned object and each non-NULL context buffer must be heap allocated.
- * Request and response buffers must be distinct. Ownership transfers to service
- * processing, which frees them after encoding the response. */
 typedef int (*ServiceDispatch)(ServiceManager* sm,
     const NCodecDiagSrpcInvokeCall* call, NCodecDiagSrpcInvokeReturn** ret);
 
@@ -58,28 +73,30 @@ typedef struct ServiceFunction {
 
 
 /* Service Manager API. */
-ServiceManager service_manager_create(
+DLL_PUBLIC ServiceManager service_manager_create(
     const char* ecu_name, uint32_t ecu_id, uint32_t swc_id);
 
 /* Service API. */
-int service_register(ServiceManager* sm, void* nc, const char* name,
+DLL_PUBLIC int service_register(ServiceManager* sm, void* nc, const char* name,
     ServiceFunction registry[], size_t count);
-int service_set_dispatch(
+DLL_PUBLIC int service_set_dispatch(
     ServiceManager* sm, const char* name, ServiceDispatch func);
-void service_process_requests(ServiceManager* sm);
-int  service_dispatch(ServiceManager* sm, const NCodecDiagSrpcInvokeCall* call,
-     NCodecDiagSrpcInvokeReturn** ret);
-void service_destroy(ServiceManager* sm);
+DLL_PUBLIC void service_process_requests(ServiceManager* sm);
+DLL_PUBLIC int  service_dispatch(ServiceManager* sm,
+     const NCodecDiagSrpcInvokeCall* call, NCodecDiagSrpcInvokeReturn** ret);
+DLL_PUBLIC void service_destroy(ServiceManager* sm);
+
 
 /* Client API. */
-int  service_request(ServiceManager* sm, const char* ecu_name, uint32_t ecu_id,
-     uint32_t swc_id, const char* service, const char* function,
+DLL_PUBLIC int  service_request(ServiceManager* sm, const char* ecu_name,
+     uint32_t ecu_id, uint32_t swc_id, const char* service, const char* function,
      NCodecDiagSrpcMessageContext* ctx);
-int  service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx,
-     uint32_t* return_value, int32_t* error_code);
-void service_reset(ServiceManager* sm);
-void service_ctx_cancel(ServiceManager* sm, uint32_t context_id);
-void service_ctx_delete(NCodecDiagSrpcMessageContext* ctx);
+DLL_PUBLIC int  service_response(ServiceManager* sm,
+     NCodecDiagSrpcMessageContext** ctx, uint32_t* return_value,
+     int32_t* error_code);
+DLL_PUBLIC void service_reset(ServiceManager* sm);
+DLL_PUBLIC void service_ctx_cancel(ServiceManager* sm, uint32_t context_id);
+DLL_PUBLIC void service_ctx_delete(NCodecDiagSrpcMessageContext* ctx);
 
 
 typedef union ArgumentValue {
@@ -109,27 +126,38 @@ typedef struct CallArgumentsBuilder {
 } CallArgumentsBuilder;
 
 /* Call builder API. */
-int  call_arguments_builder_init(CallArgumentsBuilder* builder);
-void call_arguments_builder_destroy(CallArgumentsBuilder* builder);
-int  call_arguments_add_i8(CallArgumentsBuilder* builder, int8_t value);
-int  call_arguments_add_u8(CallArgumentsBuilder* builder, uint8_t value);
-int  call_arguments_add_i16(CallArgumentsBuilder* builder, int16_t value);
-int  call_arguments_add_u16(CallArgumentsBuilder* builder, uint16_t value);
-int  call_arguments_add_i32(CallArgumentsBuilder* builder, int32_t value);
-int  call_arguments_add_u32(CallArgumentsBuilder* builder, uint32_t value);
-int  call_arguments_add_i64(CallArgumentsBuilder* builder, int64_t value);
-int  call_arguments_add_u64(CallArgumentsBuilder* builder, uint64_t value);
-int  call_arguments_add_f32(CallArgumentsBuilder* builder, float value);
-int  call_arguments_add_f64(CallArgumentsBuilder* builder, double value);
-int call_arguments_add_string(CallArgumentsBuilder* builder, const char* value);
-int call_arguments_add_binary(
+DLL_PUBLIC int  call_arguments_builder_init(CallArgumentsBuilder* builder);
+DLL_PUBLIC void call_arguments_builder_destroy(CallArgumentsBuilder* builder);
+DLL_PUBLIC int  call_arguments_add_i8(
+     CallArgumentsBuilder* builder, int8_t value);
+DLL_PUBLIC int call_arguments_add_u8(
+    CallArgumentsBuilder* builder, uint8_t value);
+DLL_PUBLIC int call_arguments_add_i16(
+    CallArgumentsBuilder* builder, int16_t value);
+DLL_PUBLIC int call_arguments_add_u16(
+    CallArgumentsBuilder* builder, uint16_t value);
+DLL_PUBLIC int call_arguments_add_i32(
+    CallArgumentsBuilder* builder, int32_t value);
+DLL_PUBLIC int call_arguments_add_u32(
+    CallArgumentsBuilder* builder, uint32_t value);
+DLL_PUBLIC int call_arguments_add_i64(
+    CallArgumentsBuilder* builder, int64_t value);
+DLL_PUBLIC int call_arguments_add_u64(
+    CallArgumentsBuilder* builder, uint64_t value);
+DLL_PUBLIC int call_arguments_add_f32(
+    CallArgumentsBuilder* builder, float value);
+DLL_PUBLIC int call_arguments_add_f64(
+    CallArgumentsBuilder* builder, double value);
+DLL_PUBLIC int call_arguments_add_string(
+    CallArgumentsBuilder* builder, const char* value);
+DLL_PUBLIC int call_arguments_add_binary(
     CallArgumentsBuilder* builder, const uint8_t* value, size_t length);
-int call_arguments_finalize(
+DLL_PUBLIC int call_arguments_finalize(
     CallArgumentsBuilder* builder, NCodecDiagSrpcMessageContext* ctx);
 
 /* Call arguments API. */
-void call_arguments_destroy(CallArguments* arguments);
-int  call_arguments_decode(const NCodecDiagSrpcInvokeCall* call,
+DLL_PUBLIC void call_arguments_destroy(CallArguments* arguments);
+DLL_PUBLIC int  call_arguments_decode(const NCodecDiagSrpcInvokeCall* call,
      const ServiceFunction* func, CallArguments* out);
 
 #endif  // DSE_DIAGNET_SERVICE_SERVICE_H_

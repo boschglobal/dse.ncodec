@@ -64,6 +64,61 @@ static ServiceGroup* _group_find(ServiceManager* sm, const char* name)
 }
 
 
+/**
+service_request
+===============
+
+Write and flush a service request through a registered service group's Network
+Codec. Requests requiring a response are tracked by context identifier. The
+request context and its buffers remain caller owned; a deep copy is retained
+for response tracking.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object.
+
+ecu_name (const char*)
+: Target ECU name. Must not be NULL.
+
+ecu_id (uint32_t)
+: Target ECU identifier.
+
+swc_id (uint32_t)
+: Target software component identifier.
+
+service (const char*)
+: Name of the registered service group and remote service.
+
+function (const char*)
+: Name of the remote function to invoke.
+
+ctx (NCodecDiagSrpcMessageContext*)
+: Request context containing encoded arguments, the context identifier, and
+    response requirements.
+
+Returns
+-------
+0
+: The request was written and flushed, and response tracking was established
+    when required.
+
+-EINVAL
+: A required pointer argument is NULL.
+
+-ENOENT
+: The service group is not registered or has no Network Codec.
+
+-EEXIST
+: A request with the same context identifier is already awaiting a response.
+
+-ENOMEM
+: The tracking context could not be copied or added to the request registry.
+    Failure to add the context can occur after the request has been sent.
+
+<int>
+: A negative error returned by `ncodec_write` or `ncodec_flush`.
+*/
 int service_request(ServiceManager* sm, const char* ecu_name, uint32_t ecu_id,
     uint32_t swc_id, const char* service, const char* function,
     NCodecDiagSrpcMessageContext* ctx)
@@ -115,6 +170,46 @@ int service_request(ServiceManager* sm, const char* ecu_name, uint32_t ecu_id,
 }
 
 
+/**
+service_response
+================
+
+Read a response matching a pending request and the Service Manager's ECU and
+software component identifiers. The matching request is removed from response
+tracking. Messages that are not matching responses are consumed and ignored.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object.
+
+ctx (NCodecDiagSrpcMessageContext**)
+: (out) Heap allocated copy of the response context and its request/response
+    buffers. The caller owns this object and must release it with
+    `service_ctx_delete`. Set to NULL when no response is returned, provided
+    both arguments are valid.
+
+return_value (uint32_t*)
+: Simple cast of the return value, if any.
+
+error_code (int32_t*)
+: Error code related to the request.
+
+Returns
+-------
+0
+: A matching response context was returned.
+
+-EINVAL
+: The Service Manager or output pointer is NULL.
+
+-ENOMEM
+: The response context could not be copied. The pending request remains
+    registered, but the response message has been consumed.
+
+-ENOMSG
+: No matching response was available from the registered Network Codecs.
+*/
 int service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx,
     uint32_t* return_value, int32_t* error_code)
 {
@@ -172,6 +267,18 @@ int service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx,
 }
 
 
+/**
+service_reset
+=============
+
+Truncate the Network Codec stream for every registered service group. Pending
+client request contexts remain registered. Codec truncation errors are ignored.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object. If NULL, no streams are truncated.
+*/
 void service_reset(ServiceManager* sm)
 {
     if (sm == NULL) return;
@@ -183,6 +290,21 @@ void service_reset(ServiceManager* sm)
 }
 
 
+/**
+service_ctx_cancel
+==================
+
+Remove a pending client request from response tracking and release its copied
+context and buffers. No cancellation message is sent to the remote service.
+
+Parameters
+----------
+sm (ServiceManager*)
+: Service Manager object. If NULL, no request is cancelled.
+
+context_id (uint32_t)
+: Identifier of the pending request. If no request matches, no action is taken.
+*/
 void service_ctx_cancel(ServiceManager* sm, uint32_t context_id)
 {
     if (sm == NULL) return;
@@ -196,6 +318,20 @@ void service_ctx_cancel(ServiceManager* sm, uint32_t context_id)
 }
 
 
+/**
+service_ctx_delete
+==================
+
+Release a client response context returned by `service_response`. The context
+and its copied buffers occupy a single allocation and are released together.
+Do not pass a caller-owned request context or free its copied buffers
+separately.
+
+Parameters
+----------
+ctx (NCodecDiagSrpcMessageContext*)
+: Client response context to release. If NULL, no memory is released.
+*/
 void service_ctx_delete(NCodecDiagSrpcMessageContext* ctx)
 {
     free(ctx);
