@@ -5,5 +5,6 @@
 # External Projects, to maintain an accurate inventory of OSS Projects.
 
 set(ExternalProject__YAML__URL        https://github.com/yaml/libyaml/archive/0.2.5.tar.gz)
-set(ExternalProject__DLFCNWIN32__URL    https://github.com/dlfcn-win32/dlfcn-win32/archive/refs/tags/v1.3.0.tar.gz)
+set(ExternalProject__DLFCNWIN32__URL  https://github.com/dlfcn-win32/dlfcn-win32/archive/refs/tags/v1.3.0.tar.gz)
 set(ExternalProject__LUA__URL         https://github.com/lua/lua/archive/refs/tags/v5.4.8.tar.gz)
+set(ExternalProject__FFI__URL         https://github.com/libffi/libffi/releases/download/v3.8.0/libffi-3.8.0.tar.gz)

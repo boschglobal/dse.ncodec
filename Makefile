@@ -6,12 +6,13 @@
 ## Docker Images.
 GCC_BUILDER_IMAGE ?= ghcr.io/boschglobal/dse-gcc-builder:latest
 DSE_CLANG_FORMAT_IMAGE ?= ghcr.io/boschglobal/dse-clang-format:main
+FLATC_BUILDER_IMAGE ?= ghcr.io/boschglobal/automotive-bus-schema-flatc-builder:main
 
 
 ###############
 ## External Projects.
 ABS_REPO ?= https://github.com/boschglobal/automotive-bus-schema
-ABS_VERSION ?= 1.0.17
+ABS_VERSION ?= 1.1.0
 export ABS_URL ?= $(ABS_REPO)/releases/download/v$(ABS_VERSION)/automotive-bus-schema.tar.gz
 
 DSE_CLIB_REPO ?= https://github.com/boschglobal/dse.clib
@@ -30,6 +31,7 @@ export PACKAGE_ARCH_LIST ?= $(PACKAGE_ARCH)
 export CMAKE_TOOLCHAIN_FILE ?= $(shell pwd -P)/extra/cmake/$(PACKAGE_ARCH).cmake
 export SRC_DIR = $(NAMESPACE)/$(MODULE)
 SUBDIRS = $(NAMESPACE)
+DIAG_SERVICE_ARGS_DIR = dse/diagnet/service
 
 
 ###############
@@ -75,9 +77,30 @@ DOCKER_BUILDER_CMD := \
 		$(GCC_BUILDER_IMAGE)
 endif
 
+# Clang Format: files/directories to format, and paths to exclude.
+# Add to (+=) or remove from (FORMAT_EXCLUDE) these lists as required.
+FORMAT_PATHS := \
+	dse/ncodec/codec.c \
+	dse/ncodec/codec.h \
+	dse/ncodec/codec/ab \
+	dse/ncodec/codec/diag \
+	dse/diagnet \
+	dse/ncodec/interface \
+	dse/ncodec/stream \
+	dse/ncodec/examples/ab-codec \
+	dse/pdunet \
+	tests/cmocka
+# Exclusions are `find -path` globs (e.g. generated code).
+FORMAT_EXCLUDE := \
+	*/build/* \
+	*/flatbuffers/*
+FORMAT_FILES = $(shell find $(FORMAT_PATHS) -type f \( -iname '*.c' -o -iname '*.h' \) \
+	$(foreach p,$(FORMAT_EXCLUDE),-not -path '$(p)') | sort)
+
 DSE_CLANG_FORMAT_CMD := docker run -it --rm \
 	--user $$(id -u):$$(id -g) \
 	--volume $$(pwd):/tmp/code \
+	--entrypoint /bin/bash \
 	${DSE_CLANG_FORMAT_IMAGE}
 
 
@@ -134,24 +157,22 @@ do-update:
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/platform.h $(NAMESPACE)/platform.h
 	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/util/ascii85.c $(NAMESPACE)/ncodec/stream/ascii85.c
 	sed -i 's/dse_ascii85_/ncodec_ascii85_/g' $(NAMESPACE)/ncodec/stream/ascii85.c
-	cp $(EXTERNAL_BUILD_DIR)/dse.clib/dse/clib/collections/vector.h $(NAMESPACE)/ncodec/codec/ab/vector.h
-	sed -i 's/DSE_CLIB_COLLECTIONS_VECTOR_H_/DSE_NCODEC_CODEC_AB_VECTOR_H_/g' $(NAMESPACE)/ncodec/codec/ab/vector.h
 
 .PHONY: format
 format:
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec.c
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec.h
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/ab
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/codec/diag
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/interface
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/stream
-	@${DSE_CLANG_FORMAT_CMD} dse/ncodec/examples/ab-codec
-	@${DSE_CLANG_FORMAT_CMD} dse/pdunet
-	@${DSE_CLANG_FORMAT_CMD} tests/cmocka/
+	@${DSE_CLANG_FORMAT_CMD} -c 'cp /usr/local/etc/clang-format .clang-format; \
+		clang-format --Wno-error=unknown -i --verbose $(FORMAT_FILES); \
+		rm -f .clang-format'
 
 .PHONY: generate
 generate:
 	$(MAKE) -C doc generate
+	docker run --rm \
+		--user $$(id -u):$$(id -g) \
+		--volume $$(pwd):/tmp/repo \
+		--workdir /tmp/repo \
+		$(FLATC_BUILDER_IMAGE) \
+		flatcc -a -o $(DIAG_SERVICE_ARGS_DIR)/flatbuffers $(DIAG_SERVICE_ARGS_DIR)/args.fbs
 
 .PHONY: clean
 clean:
@@ -220,7 +241,7 @@ super-linter:
 		--env RUN_LOCAL=true \
 		--env DEFAULT_BRANCH=main \
 		--env IGNORE_GITIGNORED_FILES=true \
-		--env FILTER_REGEX_EXCLUDE="(doc/content/.*|dse/ncodec/schema/.*)" \
+		--env FILTER_REGEX_EXCLUDE="(doc/content/.*|dse/ncodec/schema/.*|dse/diagnet/service/flatbuffers/.*)" \
 		--env VALIDATE_CPP=true \
 		--env VALIDATE_DOCKERFILE=true \
 		--env VALIDATE_MARKDOWN=true \

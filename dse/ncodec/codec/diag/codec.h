@@ -26,16 +26,17 @@ typedef struct DiagCodecInstance {
 
     /* Parameters: from MIMEtype or calls to ncodec_config(). */
     /* String representation (supporting ncodec_stat()). */
-    char*   node_id_str;
-    char*   swc_id_str;
-    char*   ecu_id_str;
-    char*   name;         /* Optional name of node. */
-    char*   loopback_str; /* Disable filter sender==receiver. */
+    char* node_id_str;
+    char* swc_id_str;
+    char* ecu_id_str;
+    char* name;         /* Optional name of node. Alias "ecu_name". */
+    char* loopback_str; /* Disable filter sender==receiver. */
+
     /* Internal representation. */
-    uint8_t node_id;
-    uint8_t swc_id;
-    uint8_t ecu_id;
-    bool    loopback;
+    uint32_t node_id;
+    uint32_t swc_id;
+    uint32_t ecu_id;
+    bool     loopback;
 
     /* Flatbuffer resources. */
     flatcc_builder_t fbs_builder;

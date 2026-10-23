@@ -248,6 +248,9 @@ void test_codec_config(void** state)
         { .name = "name",
             .value = "ecu",
             .offset_value = offsetof(DiagCodecInstance, name) },
+        { .name = "ecu_name",
+            .value = "ecu",
+            .offset_value = offsetof(DiagCodecInstance, name) },
         { .name = "loopback",
             .value = "1",
             .offset_value = offsetof(DiagCodecInstance, loopback_str) },
@@ -291,9 +294,9 @@ void test_codec_stat(void** state)
     assert_non_null(nc);
 
     const char* names[] = { "interface", "type", "schema", "node_id", "swc_id",
-        "ecu_id", "name", "loopback" };
+        "ecu_id", "name", "ecu_name", "loopback" };
     const char* values[] = { "diagnostic", "srpc", "fbs", "1", "2", "3", "ecu",
-        "1" };
+        "ecu", "1" };
     int32_t     index = 0;
     for (; index >= 0; index++) {
         NCodecConfigItem item = ncodec_stat(nc, &index);

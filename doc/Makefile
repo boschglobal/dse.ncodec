@@ -13,28 +13,35 @@ DSE_PLANTUML_IMAGE ?= ghcr.io/boschglobal/dse-plantuml:latest
 
 # Module "ncodec"
 DOC_INPUT_ncodec := dse/ncodec/codec.h
-DOC_OUTPUT_ncodec := doc/content/apis/ncodec/index.md
+DOC_OUTPUT_ncodec := doc/content/apis/ncodec/ncodec/index.md
 DOC_LINKTITLE_ncodec := NCodec
 DOC_TITLE_ncodec := "Network Codec API Reference"
 DOC_STATIC_ncodec := doc/static/dse.ncodec
 
 # Module "pdunet"
 DOC_INPUT_pdunet := dse/pdunet/pdunet.h
-DOC_OUTPUT_pdunet := doc/content/apis/pdunet/index.md
+DOC_OUTPUT_pdunet := doc/content/apis/ncodec/pdunet/index.md
 DOC_LINKTITLE_pdunet := PDUNet
 DOC_TITLE_pdunet := "PDU Network API Reference"
 DOC_STATIC_pdunet := doc/static/dse.pdunet
 
+# Module "diagnet_rpc"
+DOC_INPUT_diagnet_rpc := dse/diagnet/service/service.h
+DOC_OUTPUT_diagnet_rpc := doc/content/apis/ncodec/diagnet_rpc/index.md
+DOC_LINKTITLE_diagnet_rpc := "DIAGNet RPC"
+DOC_TITLE_diagnet_rpc := "Diagnostic Network Service RPC API Reference"
+DOC_STATIC_diagnet_rpc := doc/static/dse.diagnet_rpc
+
 
 # Targets
-DOC_C_MODULES := ncodec pdunet
+DOC_C_MODULES := ncodec pdunet diagnet_rpc
 
 .PHONY: examples
 examples:
-	cd ..;mkdir -p doc/content/apis/ncodec/examples
-	cd ..;cp dse/ncodec/examples/codec/example.c doc/content/apis/ncodec/examples/ncodec_api.c
-	cd ..;mkdir -p doc/content/apis/pdunet/examples
-	cd ..;cp dse/pdunet/examples/pdunet/example.c doc/content/apis/pdunet/examples/pdunet_api.c
+	cd ..;mkdir -p doc/content/apis/ncodec/ncodec/examples
+	cd ..;cp dse/ncodec/examples/codec/example.c doc/content/apis/ncodec/ncodec/examples/ncodec_api.c
+	cd ..;mkdir -p doc/content/apis/ncodec/pdunet/examples
+	cd ..;cp dse/pdunet/examples/pdunet/example.c doc/content/apis/ncodec/pdunet/examples/pdunet_api.c
 
 
 .PHONY: $(DOC_C_MODULES)

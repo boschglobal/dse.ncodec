@@ -186,6 +186,11 @@ static int32_t codec_config(NCODEC* nc, NCodecConfigItem item)
         _nc->name = strdup(item.value);
         return 0;
     }
+    if (strcmp(item.name, "ecu_name") == 0) { /* Alias of "name". */
+        if (_nc->name) free(_nc->name);
+        _nc->name = strdup(item.value);
+        return 0;
+    }
     if (strcmp(item.name, "loopback") == 0) {
         if (_nc->loopback_str) free(_nc->loopback_str);
         _nc->loopback_str = strdup(item.value);
@@ -236,6 +241,10 @@ static NCodecConfigItem codec_stat(NCODEC* nc, int32_t* index)
         value = _nc->name;
         break;
     case 7:
+        name = "ecu_name";
+        value = _nc->name;
+        break;
+    case 8:
         name = "loopback";
         value = _nc->loopback_str;
         break;

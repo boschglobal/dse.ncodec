@@ -15,7 +15,7 @@ NETWORK_YAML ?= $(BUILD_DIR)/$(NETWORK_NAME).yaml
 
 STEP_SIZE ?= 0.0005
 END_TIME ?= 1.0
-BENCH ?= ../../../build/_out/examples/bench/bin/bench
+BENCH ?= ../../../build/_out/examples/pdunet/bench/bin/bench
 
 .PHONY: help
 help:

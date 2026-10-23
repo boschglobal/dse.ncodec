@@ -1,0 +1,16 @@
+cd $REPODIR
+env example=dse/build/_out/examples/diagnet/plant/bin/plant
+
+# TEST: Diag Service Plant example
+exec valgrind -q --leak-check=yes --error-exitcode=88 $example
+cmp stdout $WORK/expected.stdout
+
+
+-- expected.stdout --
+Clear (0 bytes):
+Append (5 bytes): "Hello"
+Append (1 bytes): " "
+Append (6 bytes): "World!"
+Read (12 bytes): "Hello World!"
+Read Message: "Hello World!"
+read: returned Hello World! (context_id 5)
