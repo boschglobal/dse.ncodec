@@ -26,7 +26,6 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILTER_REGEX_EXCLUDE: (doc/content/.*|dse/ncodec/schema/.*)
           FILTER_REGEX_EXCLUDE: (doc/content/.*|dse/ncodec/schema/.*|dse/diagnet/service/flatbuffers/.*)
           VALIDATE_CPP: true
           VALIDATE_DOCKERFILE: true

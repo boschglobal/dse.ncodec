@@ -183,10 +183,12 @@ int32_t srpc_write(NCODEC* nc, NCodecMessage* msg)
     uint32_t    target_swc_id = _msg->target.swc_id;
 
     /* Set the Origin fields for this message. */
-    uint32_t origin_ecu_id =
-        _msg->origin.ecu_id ? _msg->origin.ecu_id : _nc->ecu_id;
-    uint32_t origin_swc_id =
-        _msg->origin.swc_id ? _msg->origin.swc_id : _nc->swc_id;
+    uint32_t origin_ecu_id = _msg->origin.ecu_id;
+    uint32_t origin_swc_id = _msg->origin.swc_id;
+    if (_msg->payload_type != NCodecDiagSrpcPayloadTypeInvokeReturn) {
+        if (origin_ecu_id == 0) origin_ecu_id = _nc->ecu_id;
+        if (origin_swc_id == 0) origin_swc_id = _nc->swc_id;
+    }
 
     /* Set the node_uid for the sender of _this_ message. */
     uint32_t node_uid = _msg->node_uid ? _msg->node_uid : _nc->node_id;

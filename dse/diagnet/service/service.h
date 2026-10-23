@@ -75,9 +75,10 @@ void service_destroy(ServiceManager* sm);
 int  service_request(ServiceManager* sm, const char* ecu_name, uint32_t ecu_id,
      uint32_t swc_id, const char* service, const char* function,
      NCodecDiagSrpcMessageContext* ctx);
-int  service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx);
+int  service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx,
+     uint32_t* return_value, int32_t* error_code);
 void service_reset(ServiceManager* sm);
-void service_ctx_cancel(ServiceManager* sm, uint8_t context_id);
+void service_ctx_cancel(ServiceManager* sm, uint32_t context_id);
 void service_ctx_delete(NCodecDiagSrpcMessageContext* ctx);
 
 

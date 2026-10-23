@@ -81,7 +81,8 @@ static int client_request(
     ncodec_seek(nc, 0, NCODEC_SEEK_SET);
     if (ctx.response_required) {
         NCodecDiagSrpcMessageContext* response = NULL;
-        while (service_response(sm, &response) >= 0) {
+        int32_t                       error_code = 0;
+        while (service_response(sm, &response, NULL, &error_code) >= 0) {
             if (response->context_id == ctx.context_id) {
                 if (response->response) {
                     printf("%s: returned %.*s (context_id %u)\n", func,
@@ -144,7 +145,7 @@ int service_plant_dispatch(ServiceManager* sm,
     ffi_call(&func->cif, func->fn_ptr, &_result, args);
 
     /* Generate the response. */
-    if (!call->ctx.response_required || ret == NULL) {
+    if ((!call->ctx.response_required && error_code == 0) || ret == NULL) {
         free(msg.res_data);
         return 0;
     }
@@ -155,6 +156,7 @@ int service_plant_dispatch(ServiceManager* sm,
         return -ENOMEM;
     }
     _ret->return_value = (uint32_t)_result;
+    _ret->error_code = error_code;
     _ret->ctx = call->ctx;
     _ret->ctx.request = NULL;
     _ret->ctx.request_len = 0;

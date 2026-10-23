@@ -63,9 +63,12 @@ int service_register(ServiceManager* sm, void* nc, const char* name,
 {
     if (sm == NULL || name == NULL || registry == NULL) return -EINVAL;
 
-    // The group must not already exist.
+    /* The group must not already exist. */
     ServiceGroup key = { .name = name };
     if (vector_find(&sm->groups, &key, 0, NULL) != NULL) return -EEXIST;
+    // TODO: also check a NC is not registered twice.
+
+    /* Create the new group. */
     ServiceGroup new_group = {
         .name = name,
         .nc = nc,
@@ -84,7 +87,7 @@ int service_register(ServiceManager* sm, void* nc, const char* name,
     int rc = 0;
 
     for (size_t i = 0; i < count; i++) {
-        // Deep copy of func.
+        /* Deep copy the func args. */
         ServiceFunction func = registry[i];
         memset(&func.cif, 0, sizeof(func.cif));
         func.arg_types =
@@ -99,7 +102,7 @@ int service_register(ServiceManager* sm, void* nc, const char* name,
                 sizeof(ffi_type*) * func.arg_count);
         }
 
-        // Check the CIF is valid.
+        /* Check the CIF is valid. */
         ffi_status status = ffi_prep_cif(&func.cif, FFI_DEFAULT_ABI,
             func.arg_count, func.return_type, func.arg_types);
         if (status == FFI_OK) {
@@ -141,7 +144,7 @@ void service_process_requests(ServiceManager* sm)
 
         Vector response = vector_make(sizeof(NCodecDiagSrpcMessage), 0, NULL);
 
-        // Drain the stream; ncodec_read returns a negative value when empty.
+        /* Drain the stream; ncodec_read return is negative when empty. */
         while (1) {
             NCodecDiagSrpcMessage msg = { 0 };
             if (ncodec_read(group->nc, (NCodecMessage*)&msg) < 0) break;
@@ -182,8 +185,8 @@ void service_process_requests(ServiceManager* sm)
             NCodecDiagSrpcMessage response_msg = {
                 /* Message metadata. */
                 .call_id = msg.call_id,
-                .target = msg.target,
                 .origin = msg.origin,
+                .target = msg.target,
                 .payload_type = NCodecDiagSrpcPayloadTypeInvokeReturn,
                 /* Context metadata from request. */
                 .payload.invoke_return.ctx = call->ctx,
@@ -192,6 +195,8 @@ void service_process_requests(ServiceManager* sm)
                 .payload.invoke_return.ctx.response = NULL,
                 .payload.invoke_return.ctx.response_len = 0,
             };
+            /* Deep copy of the ecu_name. */
+            response_msg.target.ecu_name = strdup(msg.target.ecu_name);
             if (ret != NULL) {
                 if (ret->ctx.response) {
                     if (ret->ctx.response == call->ctx.request) {
@@ -212,6 +217,7 @@ void service_process_requests(ServiceManager* sm)
                         free((void*)ret->ctx.request);
                     }
                     /* Force the request to NULL in the return. */
+                    // TODO: support ctx.response_include_request
                     ret->ctx.request = NULL;
                     ret->ctx.request_len = 0;
                 }
@@ -220,7 +226,10 @@ void service_process_requests(ServiceManager* sm)
                 response_msg.payload.invoke_return = *ret;
                 free(ret);
             }
-            response_msg.payload.invoke_return.error_code = rc < 0 ? -rc : rc;
+            if (rc != 0) {
+                response_msg.payload.invoke_return.error_code =
+                    rc < 0 ? -rc : rc;
+            }
             vector_push(&response, &response_msg);
         }
 
@@ -234,8 +243,9 @@ void service_process_requests(ServiceManager* sm)
                     msg->call_id);
             }
 
-            /* Note: ctx.response is const because if can be from a flatbuffer.
-             */
+            /* Note: These are defined const because they normally reference
+            memory in a flatbuffer. Here we free a deep copy of that. */
+            free((void*)msg->target.ecu_name);
             free((void*)msg->payload.invoke_return.ctx.request);
             free((void*)msg->payload.invoke_return.ctx.response);
         }
@@ -282,28 +292,36 @@ int service_dispatch(ServiceManager* sm, const NCodecDiagSrpcInvokeCall* call,
     }
 
     /* Call the function. */
-    ffi_sarg _result = 0;
-    ffi_call(&func->cif, func->fn_ptr, &_result, arguments.args.items);
+    size_t _result_size = func->return_type->size < sizeof(ffi_arg)
+                              ? sizeof(ffi_arg)
+                              : func->return_type->size;
+    void*  _result = calloc(_result_size, 1);
+    if (_result == NULL) {
+        return -ENOMEM;
+    }
+    ffi_call(&func->cif, func->fn_ptr, _result, arguments.args.items);
     call_arguments_destroy(&arguments);
 
     /* Generate the response. */
-    if (!call->ctx.response_required || ret == NULL) return 0;
-
-    uint8_t* buf = malloc(sizeof(ffi_sarg));
-    if (buf == NULL) return -ENOMEM;
-    memcpy(buf, &_result, sizeof(ffi_sarg));
+    // TODO: How can we determine if the call failed? No way to return on
+    // error. Add metadata in ServiceFunction to indicate which arg/return
+    // to check/determine the call state.
+    if (!call->ctx.response_required || ret == NULL) {
+        free(_result);
+        return 0;
+    }
 
     NCodecDiagSrpcInvokeReturn* _ret = calloc(1, sizeof(*_ret));
     if (_ret == NULL) {
-        free(buf);
+        free(_result);
         return -ENOMEM;
     }
-    _ret->return_value = (uint32_t)_result;
+    _ret->return_value = *(uint32_t*)_result;
     _ret->ctx = call->ctx;
     _ret->ctx.request = NULL;
     _ret->ctx.request_len = 0;
-    _ret->ctx.response = buf;
-    _ret->ctx.response_len = sizeof(ffi_sarg);
+    _ret->ctx.response = _result;
+    _ret->ctx.response_len = _result_size;
 
     /* Return the response. */
     *ret = _ret;

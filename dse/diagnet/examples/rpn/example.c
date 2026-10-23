@@ -92,7 +92,8 @@ static int client_request(ServiceManager* sm, const char* func, int val)
     ncodec_seek(nc, 0, NCODEC_SEEK_SET);
     if (request.response_required) {
         NCodecDiagSrpcMessageContext* response = NULL;
-        while (service_response(sm, &response) >= 0) {
+        int32_t                       error_code = 0;
+        while (service_response(sm, &response, NULL, &error_code) >= 0) {
             if (response->context_id == request.context_id) {
                 ffi_sarg value = 0;
                 if (response->response_len == sizeof(value)) {

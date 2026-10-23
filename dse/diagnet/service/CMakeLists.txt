@@ -35,7 +35,7 @@ set(DSE_CLIB_INCLUDE_DIR "${DSE_CLIB_SOURCE_DIR}/..")
 # -------------------------------------
 # Directly add the subdirectory to ensure targets are fully visible
 if(NOT TARGET ab-codec-shared-lib)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../ncodec" "${CMAKE_CURRENT_BINARY_DIR}/ncodec")
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../ncodec" "${CMAKE_CURRENT_BINARY_DIR}/ncodec")
 endif()
 set(DSE_NCODEC_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../ncodec")
 set(DSE_NCODEC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../..")

@@ -45,7 +45,7 @@ static NCodecDiagSrpcMessageContext* _ctx_copy(
 }
 
 static NCodecDiagSrpcMessageContext** _request_find(
-    ServiceManager* sm, uint8_t context_id, size_t* index)
+    ServiceManager* sm, uint32_t context_id, size_t* index)
 {
     for (size_t i = 0; i < vector_len(&sm->requests); i++) {
         NCodecDiagSrpcMessageContext** item = vector_at(&sm->requests, i, NULL);
@@ -68,8 +68,7 @@ int service_request(ServiceManager* sm, const char* ecu_name, uint32_t ecu_id,
     uint32_t swc_id, const char* service, const char* function,
     NCodecDiagSrpcMessageContext* ctx)
 {
-    if (sm == NULL || ecu_name == NULL || service == NULL || function == NULL ||
-        ctx == NULL) {
+    if (sm == NULL || service == NULL || function == NULL || ctx == NULL) {
         return -EINVAL;
     }
     ServiceGroup* group = _group_find(sm, service);
@@ -116,7 +115,8 @@ int service_request(ServiceManager* sm, const char* ecu_name, uint32_t ecu_id,
 }
 
 
-int service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx)
+int service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx,
+    uint32_t* return_value, int32_t* error_code)
 {
     if (sm == NULL || ctx == NULL) return -EINVAL;
 
@@ -149,14 +149,22 @@ int service_response(ServiceManager* sm, NCodecDiagSrpcMessageContext** ctx)
             size_t                         index = 0;
             NCodecDiagSrpcMessageContext** request =
                 _request_find(sm, ret->ctx.context_id, &index);
-            if (request == NULL) continue;
-
+            if (request == NULL) {
+                if (ret->error_code == 0) {
+                    continue;
+                } else {
+                    /* Error, return response. */
+                }
+            } else {
+                /* Response requested. */
+                service_ctx_delete(*request);
+                vector_delete_at(&sm->requests, index);
+            }
             NCodecDiagSrpcMessageContext* response = _ctx_copy(&ret->ctx);
             if (response == NULL) return -ENOMEM;
-
-            service_ctx_delete(*request);
-            vector_delete_at(&sm->requests, index);
             *ctx = response;
+            if (return_value) *return_value = ret->return_value;
+            if (error_code) *error_code = ret->error_code;
             return 0;
         }
     }
@@ -175,7 +183,7 @@ void service_reset(ServiceManager* sm)
 }
 
 
-void service_ctx_cancel(ServiceManager* sm, uint8_t context_id)
+void service_ctx_cancel(ServiceManager* sm, uint32_t context_id)
 {
     if (sm == NULL) return;
 

@@ -84,7 +84,7 @@ uint8_t plant_read(uint8_t status, PlantMessage* msg, uint8_t* error_code)
     if (read_len) memcpy(msg->res_data, plant_buffer, read_len);
     msg->res_data_len = read_len;
     printf("Read (%u bytes): \"%.*s\"\n", (unsigned int)read_len, (int)read_len,
-    (const char*)plant_buffer);
+        (const char*)plant_buffer);
     printf(
         "Read Message: \"%.*s\"\n", (int)read_len, (const char*)msg->res_data);
 
