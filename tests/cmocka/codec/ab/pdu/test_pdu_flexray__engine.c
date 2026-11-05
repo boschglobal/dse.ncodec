@@ -228,6 +228,7 @@ void test_flexray__engine_cycle__with_frame_config(void** state)
             .cycle_repetition = 1 },
         { .slot_id = 155,
             .payload_length = 64,
+            .cycle_repetition = 1,
             .direction = NCodecPduFlexrayDirectionTx,
             .status = NCodecPduFlexrayLpduStatusNotTransmitted },
     };

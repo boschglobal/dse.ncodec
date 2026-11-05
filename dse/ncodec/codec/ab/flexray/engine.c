@@ -282,8 +282,8 @@ static void lpdu_tx_rx(FlexrayBusModel* m, VectorSlotMapItem* slot_map_item,
             if (lpdu_item->node_ident.node_id == m->engine.node_ident.node_id) {
                 if (m->engine.pos_mt < m->engine.offset_network_mt) {
                     /* Static / Dynamic Part. */
-                    if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
                     /* Cycle match? */
+                    if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
                     if (m->engine.pos_cycle %
                             lpdu_item->lpdu_config.cycle_repetition !=
                         lpdu_item->lpdu_config.base_cycle)
@@ -442,9 +442,13 @@ int consume_slot(FlexrayBusModel* m)
             for (size_t i = 0; i < vector_len(&slot_map_item->lpdus); i++) {
                 FlexrayLpdu* lpdu_item =
                     vector_at(&slot_map_item->lpdus, i, NULL);
-
-                // FIXME: filter on cycle too.
-
+                /* Cycle match? */
+                if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
+                if (m->engine.pos_cycle %
+                        lpdu_item->lpdu_config.cycle_repetition !=
+                    lpdu_item->lpdu_config.base_cycle)
+                    continue;
+                /* Pending Tx? */
                 if (lpdu_item->lpdu_config.direction ==
                         NCodecPduFlexrayDirectionTx &&
                     lpdu_item->lpdu_config.status ==
