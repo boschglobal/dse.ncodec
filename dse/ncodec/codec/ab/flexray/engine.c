@@ -290,8 +290,13 @@ static void lpdu_tx_rx(FlexrayBusModel* m, VectorSlotMapItem* slot_map_item,
                         continue;
                     /* Channel match? */
                     if (lpdu_item->lpdu_config.channel !=
-                        tx_lpdu->lpdu_config.channel)
+                            tx_lpdu->lpdu_config.channel &&
+                        lpdu_item->lpdu_config.channel !=
+                            NCodecPduFlexrayChannelAB &&
+                        tx_lpdu->lpdu_config.channel !=
+                            NCodecPduFlexrayChannelAB) {
                         continue;
+                    }
                     /* Rx identified. */
                     rx_lpdu = lpdu_item;
                     log_debug(m->log_nc,
