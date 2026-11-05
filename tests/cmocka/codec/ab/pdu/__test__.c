@@ -18,6 +18,7 @@ extern int run_pdu_flexray_startup_tests(void);
 extern int run_pdu_flexray_single_node_tests(void);
 extern int run_pdu_flexray_multi_node_tests(void);
 extern int run_pdu_flexray_null_frame_tests(void);
+extern int run_pdu_flexray_channel_tests(void);
 extern int run_pdu_flexray_pop(void);
 
 
@@ -35,6 +36,7 @@ int main()
     rc |= run_pdu_flexray_single_node_tests();
     rc |= run_pdu_flexray_multi_node_tests();
     rc |= run_pdu_flexray_null_frame_tests();
+    rc |= run_pdu_flexray_channel_tests();
     rc |= run_pdu_flexray_pop();
     return rc;
 }

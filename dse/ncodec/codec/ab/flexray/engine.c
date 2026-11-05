@@ -234,65 +234,14 @@ int calculate_budget(FlexrayBusModel* m, double step_size)
     return 0;
 }
 
-static void process_slot(FlexrayBusModel* m)
+
+static void lpdu_tx_rx(FlexrayBusModel* m, VectorSlotMapItem* slot_map_item,
+    FlexrayLpdu* tx_lpdu, bool tx_null_frame)
 {
-    VectorSlotMapItem* slot_map_item = vector_find(&m->engine.slot_map,
-        &(VectorSlotMapItem){ .slot_id = m->engine.pos_slot }, 0, NULL);
-    if (slot_map_item == NULL) {
-        /* No configured slot. */
-        return;
-    }
-
-    log_debug(m->log_nc, "FlexRay%s: Process slot: %u (cycle=%u, mt=%u) len=%u",
-        m->engine.log_id, m->engine.pos_slot, m->engine.pos_cycle,
-        m->engine.pos_mt, vector_len(&slot_map_item->lpdus));
-
-    /* Search for Tx and Rx LPDUs in this slot. */
-    FlexrayLpdu* tx_lpdu = NULL;
     FlexrayLpdu* rx_lpdu = NULL;
-    bool         tx_null_frame = false;
-    for (size_t i = 0; i < vector_len(&slot_map_item->lpdus); i++) {
-        FlexrayLpdu* lpdu_item = vector_at(&slot_map_item->lpdus, i, NULL);
-        if (lpdu_item->lpdu_config.direction == NCodecPduFlexrayDirectionTx) {
-            /* TX LPDU. */
-            if (m->engine.pos_mt < m->engine.offset_network_mt) {
-                /* Static Part / Dynamic Part. */
-                if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
-                if (m->engine.pos_cycle %
-                        lpdu_item->lpdu_config.cycle_repetition !=
-                    lpdu_item->lpdu_config.base_cycle)
-                    continue;
-                /* Tx identified. */
-                tx_lpdu = lpdu_item;
-                log_debug(m->log_nc,
-                    "FlexRay%s:   Tx LPDU Identified (%s): "
-                    "index=%u, base=%u, repeat=%u, status=%u",
-                    m->engine.log_id,
-                    (m->engine.pos_mt < m->engine.offset_dynamic_mt)
-                        ? "static"
-                        : "dynamic",
-                    lpdu_item->lpdu_config.index.frame_table,
-                    lpdu_item->lpdu_config.base_cycle,
-                    lpdu_item->lpdu_config.cycle_repetition,
-                    lpdu_item->lpdu_config.status);
-                if (m->engine.pos_mt < m->engine.offset_dynamic_mt) {
-                    /* Determine if the Tx will represent a NULL Frame. */
-                    if (tx_lpdu->lpdu_config.status ==
-                            NCodecPduFlexrayLpduStatusNone ||
-                        tx_lpdu->lpdu_config.status ==
-                            NCodecPduFlexrayLpduStatusTransmitted) {
-                        tx_null_frame = true;
-                    }
-                }
-            }
-        }
-    }
-    if (tx_lpdu == NULL) return;
 
     /* Perform the Tx (-> Rx). */
-    if (tx_lpdu->lpdu_config.status ==
-            NCodecPduFlexrayLpduStatusNotTransmitted &&
-        tx_null_frame == false) {
+    if (tx_null_frame == false) {
         /* Process the TX. */
         if (tx_lpdu->lpdu_config.transmit_mode !=
             NCodecPduFlexrayTransmitModeContinuous) {
@@ -333,62 +282,133 @@ static void process_slot(FlexrayBusModel* m)
             if (lpdu_item->node_ident.node_id == m->engine.node_ident.node_id) {
                 if (m->engine.pos_mt < m->engine.offset_network_mt) {
                     /* Static / Dynamic Part. */
+                    /* Cycle match? */
                     if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
                     if (m->engine.pos_cycle %
                             lpdu_item->lpdu_config.cycle_repetition !=
                         lpdu_item->lpdu_config.base_cycle)
                         continue;
+                    /* Channel match? */
+                    if (lpdu_item->lpdu_config.channel !=
+                            tx_lpdu->lpdu_config.channel &&
+                        lpdu_item->lpdu_config.channel !=
+                            NCodecPduFlexrayChannelAB &&
+                        tx_lpdu->lpdu_config.channel !=
+                            NCodecPduFlexrayChannelAB) {
+                        continue;
+                    }
                     /* Rx identified. */
                     rx_lpdu = lpdu_item;
                     log_debug(m->log_nc,
                         "FlexRay%s:   Rx LPDU Identified (%s): "
-                        "index=%u, base=%u, repeat=%u, status=%u",
+                        "index=%u, ch=%u, base=%u, repeat=%u, status=%u",
                         m->engine.log_id,
                         (m->engine.pos_mt < m->engine.offset_dynamic_mt)
                             ? "static"
                             : "dynamic",
                         lpdu_item->lpdu_config.index.frame_table,
+                        lpdu_item->lpdu_config.channel,
                         lpdu_item->lpdu_config.base_cycle,
                         lpdu_item->lpdu_config.cycle_repetition,
                         lpdu_item->lpdu_config.status);
                 }
             }
         }
+        if (rx_lpdu == NULL) continue;
+
         /* Perform the Rx for this LPDU (on this node). */
-        if (rx_lpdu != NULL) {
-            if (tx_null_frame) {
-                if (rx_lpdu->lpdu_config.inhibit_null == false &&
-                    m->engine.inhibit_null_frames == false) {
-                    rx_lpdu->cycle = m->engine.pos_cycle;
-                    rx_lpdu->macrotick = m->engine.pos_mt;
-                    rx_lpdu->null_frame = true;
-                    log_debug(m->log_nc, "FlexRay%s:   LPDU %04x: Rx <- NULL",
-                        m->engine.log_id, rx_lpdu->lpdu_config.slot_id);
-                    vector_push(&m->engine.txrx_list, &rx_lpdu);
-                }
-            } else {
-                rx_lpdu->lpdu_config.status =
-                    NCodecPduFlexrayLpduStatusReceived;
-                if (rx_lpdu->payload == NULL) {
-                    rx_lpdu->payload = calloc(
-                        rx_lpdu->lpdu_config.payload_length, sizeof(uint8_t));
-                }
-                if (tx_lpdu->payload) {
-                    size_t len = rx_lpdu->lpdu_config.payload_length;
-                    if (len > tx_lpdu->lpdu_config.payload_length) {
-                        len = tx_lpdu->lpdu_config.payload_length;
-                    }
-                    log_debug(m->log_nc,
-                        "FlexRay%s:   LPDU %04x: Rx <- Tx: payload_length=%u",
-                        m->engine.log_id, tx_lpdu->lpdu_config.slot_id, len);
-                    memset(rx_lpdu->payload + len, 0,
-                        rx_lpdu->lpdu_config.payload_length - len);
-                    memcpy(rx_lpdu->payload, tx_lpdu->payload, len);
-                }
+        if (tx_null_frame) {
+            if (rx_lpdu->lpdu_config.inhibit_null == false &&
+                m->engine.inhibit_null_frames == false) {
                 rx_lpdu->cycle = m->engine.pos_cycle;
                 rx_lpdu->macrotick = m->engine.pos_mt;
-                rx_lpdu->null_frame = false;
+                rx_lpdu->null_frame = true;
+                log_debug(m->log_nc, "FlexRay%s:   LPDU %04x: Rx <- NULL",
+                    m->engine.log_id, rx_lpdu->lpdu_config.slot_id);
                 vector_push(&m->engine.txrx_list, &rx_lpdu);
+            }
+        } else {
+            rx_lpdu->lpdu_config.status = NCodecPduFlexrayLpduStatusReceived;
+            if (rx_lpdu->payload == NULL) {
+                rx_lpdu->payload = calloc(
+                    rx_lpdu->lpdu_config.payload_length, sizeof(uint8_t));
+            }
+            if (tx_lpdu->payload) {
+                size_t len = rx_lpdu->lpdu_config.payload_length;
+                if (len > tx_lpdu->lpdu_config.payload_length) {
+                    len = tx_lpdu->lpdu_config.payload_length;
+                }
+                log_debug(m->log_nc,
+                    "FlexRay%s:   LPDU %04x: Rx <- Tx: payload_length=%u",
+                    m->engine.log_id, tx_lpdu->lpdu_config.slot_id, len);
+                memset(rx_lpdu->payload + len, 0,
+                    rx_lpdu->lpdu_config.payload_length - len);
+                memcpy(rx_lpdu->payload, tx_lpdu->payload, len);
+            }
+            rx_lpdu->cycle = m->engine.pos_cycle;
+            rx_lpdu->macrotick = m->engine.pos_mt;
+            rx_lpdu->null_frame = false;
+            vector_push(&m->engine.txrx_list, &rx_lpdu);
+        }
+    }
+}
+
+static void process_slot(FlexrayBusModel* m)
+{
+    VectorSlotMapItem* slot_map_item = vector_find(&m->engine.slot_map,
+        &(VectorSlotMapItem){ .slot_id = m->engine.pos_slot }, 0, NULL);
+    if (slot_map_item == NULL) {
+        /* No configured slot. */
+        return;
+    }
+
+    log_debug(m->log_nc, "FlexRay%s: Process slot: %u (cycle=%u, mt=%u) len=%u",
+        m->engine.log_id, m->engine.pos_slot, m->engine.pos_cycle,
+        m->engine.pos_mt, vector_len(&slot_map_item->lpdus));
+
+    /* Search for Tx and Rx LPDUs in this slot. */
+    for (size_t i = 0; i < vector_len(&slot_map_item->lpdus); i++) {
+        FlexrayLpdu* lpdu_item = vector_at(&slot_map_item->lpdus, i, NULL);
+        if (lpdu_item->lpdu_config.direction == NCodecPduFlexrayDirectionTx) {
+            /* TX LPDU. */
+            if (m->engine.pos_mt < m->engine.offset_network_mt) {
+                /* Static Part / Dynamic Part. */
+                if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
+                if (m->engine.pos_cycle %
+                        lpdu_item->lpdu_config.cycle_repetition !=
+                    lpdu_item->lpdu_config.base_cycle)
+                    continue;
+                /* Tx identified. */
+                log_debug(m->log_nc,
+                    "FlexRay%s:   Tx LPDU Identified (%s): "
+                    "index=%u, ch=%u, base=%u, repeat=%u, status=%u",
+                    m->engine.log_id,
+                    (m->engine.pos_mt < m->engine.offset_dynamic_mt)
+                        ? "static"
+                        : "dynamic",
+                    lpdu_item->lpdu_config.index.frame_table,
+                    lpdu_item->lpdu_config.channel,
+                    lpdu_item->lpdu_config.base_cycle,
+                    lpdu_item->lpdu_config.cycle_repetition,
+                    lpdu_item->lpdu_config.status);
+
+                /* Determine if the Tx will represent a NULL Frame. */
+                bool tx_null_frame = false;
+                if (m->engine.pos_mt < m->engine.offset_dynamic_mt) {
+                    if (lpdu_item->lpdu_config.status ==
+                            NCodecPduFlexrayLpduStatusNone ||
+                        lpdu_item->lpdu_config.status ==
+                            NCodecPduFlexrayLpduStatusTransmitted) {
+                        tx_null_frame = true;
+                    }
+                }
+
+                /* Perform that Tx and associated Rx. */
+                if (tx_null_frame == true ||
+                    lpdu_item->lpdu_config.status ==
+                        NCodecPduFlexrayLpduStatusNotTransmitted) {
+                    lpdu_tx_rx(m, slot_map_item, lpdu_item, tx_null_frame);
+                }
             }
         }
     }
@@ -422,6 +442,13 @@ int consume_slot(FlexrayBusModel* m)
             for (size_t i = 0; i < vector_len(&slot_map_item->lpdus); i++) {
                 FlexrayLpdu* lpdu_item =
                     vector_at(&slot_map_item->lpdus, i, NULL);
+                /* Cycle match? */
+                if (lpdu_item->lpdu_config.cycle_repetition == 0) continue;
+                if (m->engine.pos_cycle %
+                        lpdu_item->lpdu_config.cycle_repetition !=
+                    lpdu_item->lpdu_config.base_cycle)
+                    continue;
+                /* Pending Tx? */
                 if (lpdu_item->lpdu_config.direction ==
                         NCodecPduFlexrayDirectionTx &&
                     lpdu_item->lpdu_config.status ==
@@ -432,7 +459,10 @@ int consume_slot(FlexrayBusModel* m)
                         (40 + (lpdu_item->lpdu_config.payload_length * 8) +
                             m->engine.bits_per_minislot - 1) /
                         m->engine.bits_per_minislot;
-                    need_mt = mini_slot_count * m->engine.minislot_length_mt;
+                    uint32_t tx_mt =
+                        mini_slot_count * m->engine.minislot_length_mt;
+                    /* The largest MT of all Tx determines consumption. */
+                    need_mt = (tx_mt > need_mt) ? tx_mt : need_mt;
                 }
             }
         }
