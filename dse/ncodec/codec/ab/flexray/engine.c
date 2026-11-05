@@ -241,9 +241,7 @@ static void lpdu_tx_rx(FlexrayBusModel* m, VectorSlotMapItem* slot_map_item,
     FlexrayLpdu* rx_lpdu = NULL;
 
     /* Perform the Tx (-> Rx). */
-    if (tx_lpdu->lpdu_config.status ==
-            NCodecPduFlexrayLpduStatusNotTransmitted &&
-        tx_null_frame == false) {
+    if (tx_null_frame == false) {
         /* Process the TX. */
         if (tx_lpdu->lpdu_config.transmit_mode !=
             NCodecPduFlexrayTransmitModeContinuous) {
@@ -401,7 +399,11 @@ static void process_slot(FlexrayBusModel* m)
                 }
 
                 /* Perform that Tx and associated Rx. */
-                lpdu_tx_rx(m, slot_map_item, lpdu_item, tx_null_frame);
+                if (tx_null_frame == true ||
+                    lpdu_item->lpdu_config.status ==
+                        NCodecPduFlexrayLpduStatusNotTransmitted) {
+                    lpdu_tx_rx(m, slot_map_item, lpdu_item, tx_null_frame);
+                }
             }
         }
     }
@@ -435,6 +437,9 @@ int consume_slot(FlexrayBusModel* m)
             for (size_t i = 0; i < vector_len(&slot_map_item->lpdus); i++) {
                 FlexrayLpdu* lpdu_item =
                     vector_at(&slot_map_item->lpdus, i, NULL);
+
+                // FIXME: filter on cycle too.
+
                 if (lpdu_item->lpdu_config.direction ==
                         NCodecPduFlexrayDirectionTx &&
                     lpdu_item->lpdu_config.status ==
