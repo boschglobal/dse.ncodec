@@ -61,9 +61,9 @@ typedef struct FlexrayEngine {
     uint32_t step_budget_mt;
     uint32_t bits_per_minislot;
 
-    Vector slot_map;
-    Vector txrx_list;
-    Vector config_list; /* Storage for NCodecPduFlexrayLpduConfig tables. */
+    Vector slot_map;    /* VectorSlotMapItem */
+    Vector txrx_list;   /* FlexrayLpdu */
+    Vector config_list; /* NCodecPduFlexrayLpduConfig */
 
     const char* log_id;
 } FlexrayEngine;
@@ -100,7 +100,7 @@ typedef struct FlexrayBusModel {
     ABCodecInstance* log_nc;
 
     /* Trace interface, duplicated from ABCodecBusModel. */
-    Vector* trace_tx_list;
+    Vector* trace_tx_list; /* FlexrayLpdu */
 } FlexrayBusModel;
 
 
