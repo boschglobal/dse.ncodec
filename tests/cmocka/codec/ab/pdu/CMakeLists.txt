@@ -20,6 +20,7 @@ add_executable(test_codec_ab_pdu
     test_pdu_flexray__single_node.c
     test_pdu_flexray__multi_node.c
     test_pdu_flexray__null_frame.c
+    test_pdu_flexray__channel.c
     flexray/pop/test_flexray_pop.c
     flexray_harness.c
 )
