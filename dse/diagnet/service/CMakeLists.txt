@@ -43,25 +43,7 @@ set(DSE_NCODEC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 
 # External Project - ffi
 # ----------------------
-set(FFI_SOURCE_DIR "$ENV{EXTERNAL_BUILD_DIR}/ffi")
-set(FFI_BINARY_DIR "$ENV{EXTERNAL_BUILD_DIR}/ffi")
-find_library(FFI_LIB
-    NAMES
-        libffi.a
-    PATHS
-        ${FFI_BINARY_DIR}
-    REQUIRED
-    NO_DEFAULT_PATH
-)
-if(NOT TARGET dse_ncodec_ffi)
-    add_library(dse_ncodec_ffi STATIC IMPORTED GLOBAL)
-    set_target_properties(dse_ncodec_ffi
-        PROPERTIES
-            IMPORTED_LOCATION "${FFI_LIB}"
-            INTERFACE_INCLUDE_DIRECTORIES "${FFI_BINARY_DIR}"
-    )
-endif()
-set(DSE_NCODEC_FFI_TARGET dse_ncodec_ffi)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../extra/external/ffi.cmake)
 
 
 # Targets
@@ -85,10 +67,10 @@ target_include_directories(diagnet_service
         ${DSE_DIAGNET_INCLUDE_DIR}
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}
-        ${FFI_SOURCE_DIR}
 )
 target_link_libraries(diagnet_service
     PUBLIC
+        dse_external_ffi
         ncodec-flatcc
         $<TARGET_OBJECTS:ncodec-flatcc>
 )

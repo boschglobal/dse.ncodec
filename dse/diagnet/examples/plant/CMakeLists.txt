@@ -24,7 +24,6 @@ target_link_libraries(plant_example
     PRIVATE
         diagnet_service
         ab-codec
-        dse_ncodec_ffi
         m
         $<$<BOOL:${WIN32}>:ws2_32>
         $<$<BOOL:${WIN32}>:iphlpapi>

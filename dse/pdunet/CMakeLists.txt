@@ -41,50 +41,10 @@ set(DSE_NCODEC_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../ncodec")
 set(DSE_NCODEC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 
-# External Project - yaml
-# -----------------------
-set(YAML_SOURCE_DIR "$ENV{EXTERNAL_BUILD_DIR}/yaml")
-set(YAML_BINARY_DIR "$ENV{EXTERNAL_BUILD_DIR}/yaml")
-find_library(YAML_LIB
-    NAMES
-        libyaml.a
-    PATHS
-        ${YAML_BINARY_DIR}
-    REQUIRED
-    NO_DEFAULT_PATH
-)
-if(NOT TARGET dse_ncodec_yaml)
-    add_library(dse_ncodec_yaml STATIC IMPORTED GLOBAL)
-    set_target_properties(dse_ncodec_yaml
-        PROPERTIES
-            IMPORTED_LOCATION "${YAML_LIB}"
-            INTERFACE_INCLUDE_DIRECTORIES "${YAML_BINARY_DIR}"
-    )
-endif()
-set(DSE_NCODEC_YAML_TARGET dse_ncodec_yaml)
-
-
-# External Project - lua
-# ----------------------
-set(LUA_SOURCE_DIR "$ENV{EXTERNAL_BUILD_DIR}/lua")
-set(LUA_BINARY_DIR "$ENV{EXTERNAL_BUILD_DIR}/lua")
-find_library(LUA_LIB
-    NAMES
-        liblua.a
-    PATHS
-        ${LUA_BINARY_DIR}
-    REQUIRED
-    NO_DEFAULT_PATH
-)
-if(NOT TARGET dse_ncodec_lua)
-    add_library(dse_ncodec_lua STATIC IMPORTED GLOBAL)
-    set_target_properties(dse_ncodec_lua
-        PROPERTIES
-            IMPORTED_LOCATION "${LUA_LIB}"
-            INTERFACE_INCLUDE_DIRECTORIES "${LUA_BINARY_DIR}"
-    )
-endif()
-set(DSE_NCODEC_LUA_TARGET dse_ncodec_lua)
+# External Projects - yaml, lua
+# -----------------------------
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../extra/external/yaml.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../extra/external/lua.cmake)
 
 # Targets
 # =======
@@ -114,8 +74,11 @@ target_include_directories(pdunet
         ${DSE_PDUNET_INCLUDE_DIR}
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}
-        ${LUA_SOURCE_DIR}
-        ${YAML_SOURCE_DIR}/include
+)
+target_link_libraries(pdunet
+    PUBLIC
+        dse_external_yaml
+        dse_external_lua
 )
 
 

@@ -60,29 +60,7 @@ add_subdirectory(diag)
 
 # External Project - dlfcn-win32
 # ------------------------------
-if(WIN32)
-    set(DLFCNWIN32_SOURCE_DIR "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32/src")
-    set(DLFCNWIN32_BINARY_DIR "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32-build/lib")
-    find_library(DLFCNWIN32_LIB
-        NAMES
-            libdl.a
-        PATHS
-            ${DLFCNWIN32_BINARY_DIR}
-        REQUIRED
-        NO_DEFAULT_PATH
-    )
-    if(NOT TARGET dse_ncodec_dl)
-        add_library(dse_ncodec_dl STATIC IMPORTED GLOBAL)
-        set_target_properties(dse_ncodec_dl
-            PROPERTIES
-                IMPORTED_LOCATION "${DLFCNWIN32_LIB}"
-                INTERFACE_INCLUDE_DIRECTORIES "${DLFCNWIN32_SOURCE_DIR}"
-        )
-    endif()
-    set(DSE_NCODEC_DL_TARGET dse_ncodec_dl)
-else()
-    set(DSE_NCODEC_DL_TARGET ${CMAKE_DL_LIBS})
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../extra/external/dlfcnwin32.cmake)
 
 
 # Targets
@@ -104,7 +82,7 @@ target_link_libraries(ab-codec
         $<TARGET_OBJECTS:ab-codec-impl>
         diag-codec-impl
         $<TARGET_OBJECTS:diag-codec-impl>
-        ${DSE_NCODEC_DL_TARGET}
+        dse_external_dl
 )
 add_library(ab-codec-shared-lib SHARED)
 target_link_libraries(ab-codec-shared-lib

@@ -20,8 +20,6 @@ target_link_libraries(bench
     PRIVATE
         pdunet
         ab-codec
-        ${DSE_NCODEC_YAML_TARGET}
-        ${DSE_NCODEC_LUA_TARGET}
         m
 )
 add_executable(bench_profile
@@ -32,8 +30,6 @@ target_link_libraries(bench_profile
     PRIVATE
         pdunet
         ab-codec
-        ${DSE_NCODEC_YAML_TARGET}
-        ${DSE_NCODEC_LUA_TARGET}
         m
 )
 

@@ -6,8 +6,6 @@ cmake_minimum_required(VERSION 3.21)
 
 set(FLATCC_SOURCE_DIR  ${DSE_NCODEC_SOURCE_DIR}/schema/abs/flatcc/src)
 set(FLATCC_INCLUDE_DIR ${DSE_NCODEC_SOURCE_DIR}/schema/abs/flatcc/include)
-set(DSE_NCODEC_YAML_TARGET dse_ncodec_yaml)
-set(DSE_NCODEC_LUA_TARGET dse_ncodec_lua)
 
 
 add_executable(test_pdunet
@@ -27,8 +25,6 @@ target_link_libraries(test_pdunet
         pdunet
     PRIVATE
         ab-codec
-        ${DSE_NCODEC_YAML_TARGET}
-        ${DSE_NCODEC_LUA_TARGET}
         cmocka
         dl
         m
@@ -39,8 +35,6 @@ target_include_directories(test_pdunet
         ${DSE_PDUNET_INCLUDE_DIR}
         ${DSE_NCODEC_INCLUDE_DIR}
         ${DSE_CLIB_INCLUDE_DIR}
-        ${LUA_SOURCE_DIR}
-        ${YAML_SOURCE_DIR}/include
 )
 target_compile_definitions(test_pdunet
     PUBLIC

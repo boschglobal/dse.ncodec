@@ -54,93 +54,27 @@ FetchContent_Declare(dse_clib
 FetchContent_MakeAvailable(dse_clib)
 
 
-# Lib YAML
-# --------
-ExternalProject_Add(yaml
-    URL                 ${ExternalProject__YAML__URL}
-    HTTP_USERNAME       ${ExternalProject__YAML__USERNAME}
-    HTTP_PASSWORD       ${ExternalProject__YAML__PASSWORD}
-    SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/yaml"
-    BINARY_DIR          "$ENV{EXTERNAL_BUILD_DIR}/yaml"
-    CMAKE_ARGS
-        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-        -DBUILD_SHARED_LIBS=OFF
-    INSTALL_COMMAND     ""
-)
-
-
-# dlfcn-win32
-# -----------
-if(NOT WIN32)
-    set(DLFCNWIN32_BUILD_COMMAND "")
-endif()
-ExternalProject_Add(dlfcnwin32
-    URL                 ${ExternalProject__DLFCNWIN32__URL}
-    HTTP_USERNAME       ${ExternalProject__DLFCNWIN32__USERNAME}
-    HTTP_PASSWORD       ${ExternalProject__DLFCNWIN32__PASSWORD}
-    SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32"
-    BINARY_DIR          "$ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32-build"
-    CMAKE_ARGS
-        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-        -DBUILD_SHARED_LIBS=OFF
-        -DBUILD_TESTS=OFF
-    BUILD_COMMAND       ${DLFCNWIN32_BUILD_COMMAND}
-    INSTALL_COMMAND     ""
-)
-
-
-# Lua
-# ---
-ExternalProject_Add(lua
-    URL                 ${ExternalProject__LUA__URL}
-    SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/lua"
-    BINARY_DIR          "$ENV{EXTERNAL_BUILD_DIR}/lua"
-    PATCH_COMMAND       ${CMAKE_COMMAND} -E copy
-                        ${CMAKE_CURRENT_SOURCE_DIR}/lua_makefile
-                        <SOURCE_DIR>/makefile
-    CONFIGURE_COMMAND   ""
-    BUILD_COMMAND       make
-                        CMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-                        CC=${CMAKE_C_COMPILER}
-    INSTALL_COMMAND     ""
-)
-
-
-# FFI
-# ---
-set(FFI_CONFIGURE_HOST "")
-if(DEFINED TOOLCHAIN_PREFIX)
-    set(FFI_CONFIGURE_HOST --host=${TOOLCHAIN_PREFIX})
-endif()
-ExternalProject_Add(ffi
-    URL                 ${ExternalProject__FFI__URL}
-    SOURCE_DIR          "$ENV{EXTERNAL_BUILD_DIR}/ffi"
-    BINARY_DIR          "$ENV{EXTERNAL_BUILD_DIR}/ffi"
-    CONFIGURE_COMMAND   ./configure
-                        ${FFI_CONFIGURE_HOST}
-                        CC=${CMAKE_C_COMPILER}
-                        "CFLAGS=${CMAKE_C_FLAGS} -Wno-deprecated-declarations"
-                        --disable-shared
-                        --enable-static
-                        --with-pic
-                        --disable-docs
-                        --disable-multi-os-directory
-    BUILD_COMMAND       make
-    INSTALL_COMMAND     sh -c "cp */.libs/libffi.a */include/ffi.h */include/ffitarget.h ."
-)
+# OSS Sources
+# ===========
+include(dlfcnwin32.cmake)
 
 
 # OSS Target
 # ==========
 add_custom_target(oss)
+
 function(oss_copy src dst)
+    if(TARGET ${src})
+        add_dependencies(oss ${src}-download)
+        ExternalProject_Get_Property(${src} SOURCE_DIR)
+        set(src ${SOURCE_DIR})
+    endif()
     add_custom_command(TARGET oss PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${src}"
             "../../../dse/__oss__/${dst}"
     )
 endfunction()
-# add_dependencies(oss)
-oss_copy(${dse_clib_SOURCE_DIR} boschglobal/automotive-bus-schema)
+oss_copy(${abs_SOURCE_DIR} boschglobal/automotive-bus-schema)
 oss_copy(${dse_clib_SOURCE_DIR} boschglobal/dse.clib)
-oss_copy($ENV{EXTERNAL_BUILD_DIR}/dlfcnwin32    dlfcn-win32/dlfcn-win32)
+oss_copy(dse_external_dl_build dlfcn-win32/dlfcn-win32)

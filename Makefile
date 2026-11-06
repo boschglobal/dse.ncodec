@@ -16,7 +16,7 @@ ABS_VERSION ?= 1.1.0
 export ABS_URL ?= $(ABS_REPO)/releases/download/v$(ABS_VERSION)/automotive-bus-schema.tar.gz
 
 DSE_CLIB_REPO ?= https://github.com/boschglobal/dse.clib
-DSE_CLIB_VERSION ?= 1.1.5
+DSE_CLIB_VERSION ?= 1.1.6
 export DSE_CLIB_URL ?= $(DSE_CLIB_REPO)/archive/refs/tags/v$(DSE_CLIB_VERSION).zip
 
 
@@ -26,6 +26,7 @@ export NAMESPACE = dse
 export MODULE = ncodec
 export REPO_DIR = $(shell pwd -P)
 export EXTERNAL_BUILD_DIR ?= /tmp/$(NAMESPACE).$(MODULE)
+export DSE_EXTERNAL_DOWNLOAD_DIR ?= /tmp/dse_cache
 export PACKAGE_ARCH ?= linux-amd64
 export PACKAGE_ARCH_LIST ?= $(PACKAGE_ARCH)
 export CMAKE_TOOLCHAIN_FILE ?= $(shell pwd -P)/extra/cmake/$(PACKAGE_ARCH).cmake
@@ -63,16 +64,18 @@ PACKAGE_PATH = $(NAMESPACE)/dist
 
 ifneq ($(CI), true)
 DOCKER_BUILDER_CMD := \
-	mkdir -p $(EXTERNAL_BUILD_DIR); \
+	mkdir -p $(EXTERNAL_BUILD_DIR) $(DSE_EXTERNAL_DOWNLOAD_DIR); \
 	docker run -it --rm \
 		--user $$(id -u):$$(id -g) \
 		--env CMAKE_TOOLCHAIN_FILE=/tmp/repo/extra/cmake/$(PACKAGE_ARCH).cmake \
 		--env EXTERNAL_BUILD_DIR=$(EXTERNAL_BUILD_DIR) \
+		--env DSE_EXTERNAL_DOWNLOAD_DIR=$(DSE_EXTERNAL_DOWNLOAD_DIR) \
 		--env PACKAGE_ARCH=$(PACKAGE_ARCH) \
 		--env PACKAGE_VERSION=$(PACKAGE_VERSION) \
 		--env MAKE_NPROC=$(MAKE_NPROC) \
 		--volume $$(pwd):/tmp/repo \
 		--volume $(EXTERNAL_BUILD_DIR):$(EXTERNAL_BUILD_DIR) \
+		--volume $(DSE_EXTERNAL_DOWNLOAD_DIR):$(DSE_EXTERNAL_DOWNLOAD_DIR) \
 		--workdir /tmp/repo \
 		$(GCC_BUILDER_IMAGE)
 endif
