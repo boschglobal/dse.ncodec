@@ -38,11 +38,11 @@ jobs:
       image: ghcr.io/boschglobal/dse-gcc-builder:latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Build package metadata
         id: package_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: dse/ncodec
           tags: |
@@ -83,7 +83,7 @@ jobs:
           make package
           tar -czf sandbox_out.tar.gz -C . ${{ env.build_dir }}/_out
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ env.package_name }}-${{ matrix.package_arch }}-package
           path: |
@@ -105,7 +105,7 @@ jobs:
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -157,7 +157,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Create Release from Tag
         env:
@@ -183,11 +183,11 @@ jobs:
           - windows-x86
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Build package metadata
         id: package_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: dse/ncodec
           tags: |
@@ -207,7 +207,7 @@ jobs:
             *)         echo "PACKAGE_EXT=tar.gz" >> $GITHUB_ENV ;;
           esac
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: ${{ env.package_name }}-${{ matrix.package_arch }}-package
           path: ${{ github.workspace }}/_dist
